@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+# MK-AdminPanel
+=======
+>>>>>>> f758c2c (.)
 # Islamic Admin Panel - Frontend Prototype
 
 A fully navigable, **frontend-only** clickable prototype of an enterprise multi-tenant admin panel with role-based access control (RBAC), multi-language support, multi-country configurations, and subscription plan feature gating.
@@ -291,3 +297,7 @@ When ready to build the backend:
 ---
 
 **Created for Islamic content platform administration** with a complete multi-tenant, role-based, multi-language interface design.
+<<<<<<< HEAD
+=======
+>>>>>>> 02bec2f (Admin Panel Updated)
+>>>>>>> f758c2c (.)
