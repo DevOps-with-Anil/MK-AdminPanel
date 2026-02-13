@@ -151,8 +151,8 @@ export const MOCK_ROLES: Record<AdminType, Role> = {
 export const MOCK_USERS: Record<AdminType, AdminUser> = {
   'root-admin': {
     id: 'user-1',
-    name: 'Ahmed Khan',
-    email: 'ahmed@admin.com',
+    name: 'Mamady Troare',
+    email: 'mamady.traore@mkproject.com',
     type: 'root-admin',
     role: MOCK_ROLES['root-admin'],
     country: 'AE',

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAdmin } from '@/contexts/AdminContext';
 import { MODULES, AdminType } from '@/lib/mock-data';
-import { Menu, X, Globe, LanguagesIcon, User, LogOut, ChevronDown } from 'lucide-react';
+import { Menu, X, Globe, LanguagesIcon, LogOut, ChevronDown } from 'lucide-react';
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const {
@@ -338,21 +338,6 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
           {/* Switchers */}
           <div className="flex items-center gap-3 flex-wrap">
-            {/* Admin Type Switcher */}
-            <div className="flex items-center gap-2">
-              <User size={18} className="text-muted-foreground flex-shrink-0" />
-              <select
-                value={currentAdminType}
-                onChange={(e) => setAdminType(e.target.value as AdminType)}
-                className="px-3 py-1 rounded-md bg-background border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="root-admin">Root Admin</option>
-                <option value="root-sub-admin">Root Sub-Admin</option>
-                <option value="affiliate-admin">Affiliate Admin</option>
-                <option value="affiliate-sub-admin">Affiliate Sub-Admin</option>
-              </select>
-            </div>
-
             {/* Language Switcher */}
             <div className="flex items-center gap-2">
               <LanguagesIcon size={18} className="text-muted-foreground flex-shrink-0" />
