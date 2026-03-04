@@ -2,11 +2,14 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAdmin } from '@/contexts/AdminContext';
 import { MODULES, AdminType } from '@/lib/mock-data';
 import { Menu, X, Globe, LanguagesIcon, LogOut, ChevronDown } from 'lucide-react';
+import { logout } from '@/components/AuthGuard';
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const {
     currentAdminType,
     currentLanguage,
@@ -26,6 +29,11 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     content: true,
     support: true,
   });
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
 
   const toggleCategory = (category: string) => {
     setExpandedCategories((prev) => ({
@@ -309,7 +317,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           )}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-sidebar-accent rounded-md transition-colors flex-shrink-0"
+            className="p-2 hover:bg-sidebar-accent rounded-md transition-colors "
           >
             {sidebarOpen ? (
               <X size={20} className="text-sidebar-foreground" />
@@ -340,7 +348,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-3 flex-wrap">
             {/* Language Switcher */}
             <div className="flex items-center gap-2">
-              <LanguagesIcon size={18} className="text-muted-foreground flex-shrink-0" />
+              <LanguagesIcon size={18} className="text-muted-foreground " />
               <select
                 value={currentLanguage}
                 onChange={(e) => setLanguage(e.target.value as any)}
@@ -354,7 +362,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
             {/* Country Switcher */}
             <div className="flex items-center gap-2">
-              <Globe size={18} className="text-muted-foreground flex-shrink-0" />
+              <Globe size={18} className="text-muted-foreground " />
               <select
                 value={currentCountry}
                 onChange={(e) => setCountry(e.target.value as any)}
@@ -372,7 +380,11 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Logout */}
-            <button className="p-2 hover:bg-background rounded-md transition-colors">
+            <button 
+              onClick={handleLogout}
+              className="p-2 hover:bg-background rounded-md transition-colors"
+              title="Logout"
+            >
               <LogOut size={18} className="text-muted-foreground" />
             </button>
           </div>

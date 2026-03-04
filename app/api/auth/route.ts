@@ -48,6 +48,7 @@ export async function GET(request: NextRequest) {
 async function handleLogin(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log("Request body:", request.body);
     const { email, password } = body;
 
     // Validate input

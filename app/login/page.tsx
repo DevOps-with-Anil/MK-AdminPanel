@@ -1,21 +1,31 @@
 'use client';
 
 import React from "react"
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
 
+// API Base URL - Update this to your backend URL
+const API_BASE_URL = 'http://localhost:4000';
+
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('admin@example.com');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin@system.com');
+  const [password, setPassword] = useState('Admin@12345');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check if already authenticated
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      router.push('/');
+    }
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,19 +33,28 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/auth', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           email,
           password,
         }),
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Login failed');
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      // Store the token and user data - backend returns { success, data: { token, user } }
+      if (data.data?.token) {
+        localStorage.setItem('authToken', data.data.token);
+        localStorage.setItem('userData', JSON.stringify(data.data.user));
+        localStorage.setItem('isAuthenticated', 'true');
       }
 
       // Redirect to dashboard
@@ -48,7 +67,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 flex items-center justify-center p-4">
+    <div className="min-h-screen from-primary/10 via-background to-secondary/10 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
@@ -70,7 +89,7 @@ export default function LoginPage() {
               {/* Error Message */}
               {error && (
                 <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                  <AlertCircle className="w-5 h-5 text-destructive mt-0.5" />
                   <p className="text-sm text-destructive">{error}</p>
                 </div>
               )}
@@ -83,7 +102,7 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="admin@example.com"
+                  placeholder="admin@system.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
@@ -144,8 +163,8 @@ export default function LoginPage() {
             <div className="mt-6 p-4 bg-secondary/10 border border-secondary/20 rounded-lg">
               <p className="text-xs font-medium text-foreground mb-2">Demo Credentials:</p>
               <div className="space-y-1 text-xs text-muted-foreground font-mono">
-                <p>Email: admin@example.com</p>
-                <p>Password: (any password)</p>
+                <p>Email: admin@system.com</p>
+                <p>Password: Admin@12345</p>
               </div>
             </div>
           </CardContent>
