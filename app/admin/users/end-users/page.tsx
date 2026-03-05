@@ -159,7 +159,7 @@ function EndUsersPageContent() {
                             </div>
                           </TableCell>
                           <TableCell className="text-right text-sm text-muted-foreground">
-                            {new Date(user.lastLoginAt || '').toLocaleDateString()}
+                            {new Date(user.lastLoginAt || '').toLocaleDateString('en-CA', { timeZone: 'UTC' })}
                           </TableCell>
                         </TableRow>
                       ))

@@ -55,6 +55,10 @@ export default function LoginPage() {
         localStorage.setItem('authToken', data.data.token);
         localStorage.setItem('userData', JSON.stringify(data.data.user));
         localStorage.setItem('isAuthenticated', 'true');
+        
+        // Debug: Log the user data to console
+        console.log('User logged in:', data.data.user);
+        console.log('User permissions:', data.data.user?.role?.permissions);
       }
 
       // Redirect to dashboard

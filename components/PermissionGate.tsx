@@ -1,163 +1,271 @@
 /**
  * PermissionGate Component
- * Conditionally renders content based on user permissions
+ * Conditionally renders content based on user permissions and subscription features
  */
 
 'use client';
 
-import React from "react"
-
+import React from 'react';
 import { ReactNode } from 'react';
-import { usePermission, useAuth } from '@/hooks/useAuth';
-import type { PermissionCheck } from '@/lib/rbac-engine';
+import { useAdmin } from '@/contexts/AdminContext';
+import { Lock, Crown, Zap } from 'lucide-react';
 
 interface PermissionGateProps {
   module: string;
-  action: string;
+  action?: string;
   children: ReactNode;
   fallback?: ReactNode;
-  requireAll?: boolean;
+  showUpgradePrompt?: boolean;
 }
 
-interface MultiPermissionGateProps {
-  permissions: PermissionCheck[];
+interface FeatureGateProps {
+  feature: string;
   children: ReactNode;
   fallback?: ReactNode;
-  requireAll?: boolean; // true = AND logic, false = OR logic
+  showUpgradePrompt?: boolean;
+  requiredPlan?: 'pro' | 'enterprise';
+}
+
+interface PlanGateProps {
+  requiredPlan: 'pro' | 'enterprise';
+  children: ReactNode;
+  fallback?: ReactNode;
 }
 
 /**
- * Single permission gate
+ * Single permission gate - checks both subscription plan AND role permissions
  */
 export function PermissionGate({
   module,
-  action,
+  action = 'view',
   children,
   fallback = null,
-  requireAll = true,
+  showUpgradePrompt = false,
 }: PermissionGateProps) {
-  const { hasPermission, isLoading } = usePermission(module, action);
+  const { hasPermission, canAccessModule, subscriptionPlan } = useAdmin();
 
-  if (isLoading) {
-    return <div className="animate-pulse bg-muted rounded" />;
+  // First check if the module is accessible based on subscription plan
+  if (!canAccessModule(module)) {
+    if (showUpgradePrompt) {
+      return (
+        <div className="p-4 border border-amber-200 bg-amber-50 rounded-lg">
+          <div className="flex items-center gap-2 text-amber-800">
+            <Lock size={16} />
+            <span className="font-medium">Upgrade Required</span>
+          </div>
+          <p className="text-sm text-amber-700 mt-1">
+            This feature is not available on your {subscriptionPlan} plan.
+          </p>
+        </div>
+      );
+    }
+    return fallback;
   }
 
-  return hasPermission ? children : fallback;
+  // Then check role permissions
+  if (!hasPermission(module, action)) {
+    return fallback;
+  }
+
+  return <>{children}</>;
 }
 
 /**
- * Multiple permissions gate with AND/OR logic
+ * Feature gate - checks subscription plan features only
  */
-export function MultiPermissionGate({
-  permissions,
+export function FeatureGate({
+  feature,
   children,
   fallback = null,
-  requireAll = true,
-}: MultiPermissionGateProps) {
-  const auth = useAuth();
-  const [hasPermission, setHasPermission] = require('react').useState(false);
-  const [isLoading, setIsLoading] = require('react').useState(true);
+  showUpgradePrompt = false,
+  requiredPlan,
+}: FeatureGateProps) {
+  const { hasFeature, subscriptionPlan } = useAdmin();
 
-  require('react').useEffect(() => {
-    const checkPermissions = async () => {
-      setIsLoading(true);
-      try {
-        const result = requireAll
-          ? await auth.hasAllPermissions(permissions)
-          : await auth.hasAnyPermission(permissions);
-        setHasPermission(result);
-      } catch {
-        setHasPermission(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Check if the feature is available in the subscription plan
+  const hasAccess = hasFeature(feature);
 
-    if (auth.isAuthenticated) {
-      checkPermissions();
+  if (!hasAccess) {
+    if (showUpgradePrompt) {
+      return (
+        <div className="p-4 border border-amber-200 bg-amber-50 rounded-lg">
+          <div className="flex items-center gap-2 text-amber-800">
+            <Lock size={16} />
+            <span className="font-medium">Upgrade Required</span>
+          </div>
+          <p className="text-sm text-amber-700 mt-1">
+            This feature requires a {requiredPlan || 'higher'} plan. 
+            Your current plan: {subscriptionPlan}.
+          </p>
+        </div>
+      );
     }
-  }, [auth, permissions, requireAll]);
-
-  if (isLoading) {
-    return <div className="animate-pulse bg-muted rounded" />;
+    return fallback;
   }
 
-  return hasPermission ? children : fallback;
+  return <>{children}</>;
 }
 
 /**
- * Permission-guarded button
+ * Plan gate - restricts access based on subscription plan level
  */
-interface PermissionButtonProps
+export function PlanGate({
+  requiredPlan,
+  children,
+  fallback = null,
+}: PlanGateProps) {
+  const { subscriptionPlan } = useAdmin();
+
+  // Define plan hierarchy
+  const planLevel: Record<string, number> = {
+    free: 0,
+    pro: 1,
+    enterprise: 2,
+  };
+
+  const currentLevel = planLevel[subscriptionPlan] || 0;
+  const requiredLevel = planLevel[requiredPlan] || 1;
+
+  if (currentLevel < requiredLevel) {
+    return <>{fallback}</>;
+  }
+
+  return <>{children}</>;
+}
+
+/**
+ * Pro only gate
+ */
+export function ProGate({
+  children,
+  fallback = null,
+}: {
+  children: ReactNode;
+  fallback?: ReactNode;
+}) {
+  return <PlanGate requiredPlan="pro">{children}</PlanGate>;
+}
+
+/**
+ * Enterprise only gate
+ */
+export function EnterpriseGate({
+  children,
+  fallback = null,
+}: {
+  children: ReactNode;
+  fallback?: ReactNode;
+}) {
+  return <PlanGate requiredPlan="enterprise">{children}</PlanGate>;
+}
+
+/**
+ * Upgrade prompt component - shows upgrade message with plan icon
+ */
+export function UpgradePrompt({
+  plan = 'pro',
+  message,
+}: {
+  plan?: 'pro' | 'enterprise';
+  message?: string;
+}) {
+  const { subscriptionPlan } = useAdmin();
+
+  const planConfig = {
+    pro: {
+      icon: Zap,
+      color: 'blue',
+      name: 'Pro',
+    },
+    enterprise: {
+      icon: Crown,
+      color: 'purple',
+      name: 'Enterprise',
+    },
+  };
+
+  const config = planConfig[plan];
+  const Icon = config.icon;
+
+  return (
+    <div className={`p-4 border rounded-lg ${
+      config.color === 'purple' 
+        ? 'border-purple-200 bg-purple-50' 
+        : 'border-blue-200 bg-blue-50'
+    }`}>
+      <div className={`flex items-center gap-2 ${
+        config.color === 'purple' ? 'text-purple-800' : 'text-blue-800'
+      }`}>
+        <Icon size={16} />
+        <span className="font-medium">Upgrade to {config.name}</span>
+      </div>
+      <p className={`text-sm mt-1 ${
+        config.color === 'purple' ? 'text-purple-700' : 'text-blue-700'
+      }`}>
+        {message || `This feature is available on the ${config.name} plan. Your current plan: ${subscriptionPlan}.`}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Permission-guarded button wrapper
+ */
+interface GuardedButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   module: string;
-  action: string;
-  fallback?: ReactNode;
+  action?: string;
   children: ReactNode;
 }
 
-export function PermissionButton({
+export function GuardedButton({
   module,
-  action,
-  fallback,
+  action = 'view',
   children,
   disabled,
+  className,
   ...props
-}: PermissionButtonProps) {
-  const { hasPermission, isLoading } = usePermission(module, action);
+}: GuardedButtonProps) {
+  const { hasPermission, canAccessModule } = useAdmin();
 
-  if (isLoading) {
-    return <button disabled className="opacity-50 cursor-not-allowed" {...props} />;
-  }
-
-  if (!hasPermission) {
-    return fallback || null;
-  }
+  const canAccess = canAccessModule(module) && hasPermission(module, action);
 
   return (
-    <button disabled={disabled || isLoading} {...props}>
+    <button
+      disabled={disabled || !canAccess}
+      className={`${className} ${!canAccess ? 'opacity-50 cursor-not-allowed' : ''}`}
+      {...props}
+    >
       {children}
     </button>
   );
 }
 
 /**
- * Admin-only gate
+ * Admin type gate
  */
-interface AdminGateProps {
+interface AdminTypeGateProps {
+  allowedTypes: Array<'root-admin' | 'root-sub-admin' | 'affiliate-admin' | 'affiliate-sub-admin'>;
   children: ReactNode;
   fallback?: ReactNode;
-  allowedRoles?: string[];
-  allowedAdminTypes?: ('root' | 'affiliate')[];
 }
 
-export function AdminGate({
+export function AdminTypeGate({
+  allowedTypes,
   children,
   fallback = null,
-  allowedRoles,
-  allowedAdminTypes,
-}: AdminGateProps) {
-  const auth = useAuth();
+}: AdminTypeGateProps) {
+  const { currentAdminType } = useAdmin();
 
-  if (!auth.isAuthenticated || auth.isLoading) {
-    return fallback;
+  if (!allowedTypes.includes(currentAdminType)) {
+    return <>{fallback}</>;
   }
 
-  // Check role
-  if (allowedRoles && !allowedRoles.includes(auth.user?.userRole || '')) {
-    return fallback;
-  }
-
-  // Check admin type
-  if (allowedAdminTypes && !allowedAdminTypes.includes(auth.user?.adminType as any)) {
-    return fallback;
-  }
-
-  return children;
+  return <>{children}</>;
 }
 
 /**
- * Root admin only gate
+ * Root admin gate
  */
 export function RootAdminGate({
   children,
@@ -167,14 +275,14 @@ export function RootAdminGate({
   fallback?: ReactNode;
 }) {
   return (
-    <AdminGate allowedAdminTypes={['root']} fallback={fallback}>
+    <AdminTypeGate allowedTypes={['root-admin', 'root-sub-admin']}>
       {children}
-    </AdminGate>
+    </AdminTypeGate>
   );
 }
 
 /**
- * Affiliate admin only gate
+ * Affiliate admin gate
  */
 export function AffiliateAdminGate({
   children,
@@ -184,8 +292,9 @@ export function AffiliateAdminGate({
   fallback?: ReactNode;
 }) {
   return (
-    <AdminGate allowedAdminTypes={['affiliate']} fallback={fallback}>
+    <AdminTypeGate allowedTypes={['affiliate-admin', 'affiliate-sub-admin']}>
       {children}
-    </AdminGate>
+    </AdminTypeGate>
   );
 }
+

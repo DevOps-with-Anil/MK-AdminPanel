@@ -179,7 +179,7 @@ function CampaignsPageContent() {
                             </div>
                           </TableCell>
                           <TableCell className="text-sm">
-                            {new Date(campaign.endDate).toLocaleDateString()}
+                            {new Date(campaign.endDate).toLocaleDateString('en-CA', { timeZone: 'UTC' })}
                           </TableCell>
                           <TableCell className="text-right flex items-center justify-end gap-2">
                             <Button

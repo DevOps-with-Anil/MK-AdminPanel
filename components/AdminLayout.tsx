@@ -4,30 +4,46 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAdmin } from '@/contexts/AdminContext';
-import { MODULES, AdminType } from '@/lib/mock-data';
-import { Menu, X, Globe, LanguagesIcon, LogOut, ChevronDown } from 'lucide-react';
+import { MODULES } from '@/lib/mock-data';
+import { Menu, X, Globe, LanguagesIcon, LogOut, ChevronDown, Lock, Crown, Zap } from 'lucide-react';
 import { logout } from '@/components/AuthGuard';
+
+interface MenuItem {
+  label: string;
+  href: string;
+  module: string;
+  feature?: string;
+  requiredPlan?: 'pro' | 'enterprise';
+}
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const {
-    currentAdminType,
     currentLanguage,
     currentCountry,
     currentUser,
-    setAdminType,
+    subscriptionPlan,
     setLanguage,
     setCountry,
     t,
-    hasPermission,
+    canAccessModule,
   } = useAdmin();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  // COMMENTED OUT: Original logic for expanded categories
+  // const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
+  //   system: true,
+  //   business: true,
+  //   content: true,
+  //   support: true,
+  // });
+
+  // NEW: Always show content and support sections expanded by default for all users
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
     system: true,
     business: true,
-    content: true,
-    support: true,
+    content: true,  // Always expanded by default
+    support: true, // Always expanded by default
   });
 
   const handleLogout = () => {
@@ -42,186 +58,172 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     }));
   };
 
-  // Get organized menu items by category
-  const getMenuByCategory = () => {
-    const categoryMenus: Record<string, Array<{ label: string; href: string; module: string }>> = {
-      system: [
-        {
-          label: t('sidebar.dashboard'),
-          href: '/admin/dashboard',
-          module: MODULES.DASHBOARD,
-        },
-      ],
+  // Get organized menu items by category - filtered by subscription plan
+  const getMenuByCategory = (): Record<string, MenuItem[]> => {
+    const categoryMenus: Record<string, MenuItem[]> = {
+      system: [],
       business: [],
       content: [],
       support: [],
     };
 
-    if (currentAdminType.startsWith('root')) {
-      categoryMenus.system = [
-        ...categoryMenus.system,
-        {
-          label: t('sidebar.admin_users'),
-          href: '/admin/users',
-          module: MODULES.ADMIN_USERS,
-        },
-        {
-          label: t('sidebar.roles_permissions'),
-          href: '/admin/roles',
-          module: MODULES.ROLES_PERMISSIONS,
-        },
-        {
-          label: t('sidebar.modules_actions'),
-          href: '/admin/modules',
-          module: MODULES.MODULES_ACTIONS,
-        },
-        {
-          label: t('sidebar.permission_packages'),
-          href: '/admin/permissions',
-          module: MODULES.PERMISSION_PACKAGES,
-        },
-        {
-          label: t('sidebar.settings'),
-          href: '/admin/settings',
-          module: MODULES.SETTINGS,
-        },
-      ];
-      categoryMenus.business = [
-        {
-          label: t('sidebar.subscription_plans'),
-          href: '/admin/plans',
-          module: MODULES.SUBSCRIPTION_PLANS,
-        },
-        {
-          label: t('sidebar.affiliates'),
-          href: '/admin/affiliates',
-          module: MODULES.AFFILIATES,
-        },
-        {
-          label: t('sidebar.countries'),
-          href: '/admin/countries',
-          module: MODULES.COUNTRIES,
-        },
-      ];
-      categoryMenus.content = [
-        {
-          label: t('sidebar.cms'),
-          href: '/admin/cms',
-          module: MODULES.CMS,
-        },
-        {
-          label: 'Articles',
-          href: '/admin/articles',
-          module: MODULES.CMS,
-        },
-        {
-          label: 'Videos',
-          href: '/admin/videos',
-          module: MODULES.CMS,
-        },
-        {
-          label: 'Categories',
-          href: '/admin/categories',
-          module: MODULES.CMS,
-        },
-        {
-          label: 'Challenges',
-          href: '/admin/challenges',
-          module: MODULES.CMS,
-        },
-        {
-          label: 'About Us',
-          href: '/admin/about-us',
-          module: MODULES.CMS,
-        },
-        {
-          label: t('sidebar.ads'),
-          href: '/admin/ads',
-          module: MODULES.ADS,
-        },
-      ];
-      categoryMenus.support = [
-        {
-          label: t('sidebar.support_tickets'),
-          href: '/admin/tickets',
-          module: MODULES.SUPPORT_TICKETS,
-        },
-        {
-          label: t('sidebar.policies_faq'),
-          href: '/admin/policies',
-          module: MODULES.POLICIES_FAQ,
-        },
-      ];
-    } else {
-      categoryMenus.business = [
-        {
-          label: t('sidebar.sub_admins'),
-          href: '/admin/sub-admins',
-          module: MODULES.SUB_ADMINS,
-        },
-      ];
-      categoryMenus.content = [
-        {
-          label: t('sidebar.cms'),
-          href: '/admin/cms',
-          module: MODULES.CMS,
-        },
-        {
-          label: 'Articles',
-          href: '/admin/articles',
-          module: MODULES.CMS,
-        },
-        {
-          label: 'Videos',
-          href: '/admin/videos',
-          module: MODULES.CMS,
-        },
-        {
-          label: 'Categories',
-          href: '/admin/categories',
-          module: MODULES.CMS,
-        },
-        {
-          label: 'Challenges',
-          href: '/admin/challenges',
-          module: MODULES.CMS,
-        },
-        {
-          label: 'About Us',
-          href: '/admin/about-us',
-          module: MODULES.CMS,
-        },
-        {
-          label: t('sidebar.ads'),
-          href: '/admin/ads',
-          module: MODULES.ADS,
-        },
-      ];
-      categoryMenus.support = [
-        {
-          label: t('sidebar.support_tickets'),
-          href: '/admin/tickets',
-          module: MODULES.SUPPORT_TICKETS,
-        },
-        {
-          label: t('sidebar.policies_faq'),
-          href: '/admin/policies',
-          module: MODULES.POLICIES_FAQ,
-        },
-      ];
-      categoryMenus.system = [
-        ...categoryMenus.system,
-        {
-          label: t('sidebar.profile'),
-          href: '/admin/profile',
-          module: MODULES.PROFILE,
-        },
-        {
-          label: t('sidebar.verification'),
-          href: '/admin/verification',
-          module: MODULES.VERIFICATION,
-        },
-      ];
+    if (canAccessModule(MODULES.ADMIN_USERS)) {
+      categoryMenus.system.push({
+        label: t('sidebar.admin_users'),
+        href: '/admin/users',
+        module: MODULES.ADMIN_USERS,
+        feature: 'admin_users',
+      });
+    }
+    if (canAccessModule(MODULES.ROLES_PERMISSIONS)) {
+      categoryMenus.system.push({
+        label: t('sidebar.roles_permissions'),
+        href: '/admin/roles',
+        module: MODULES.ROLES_PERMISSIONS,
+        feature: 'roles_permissions',
+      });
+    }
+    if (canAccessModule(MODULES.MODULES_ACTIONS)) {
+      categoryMenus.system.push({
+        label: t('sidebar.modules_actions'),
+        href: '/admin/modules',
+        module: MODULES.MODULES_ACTIONS,
+        feature: 'modules_actions',
+      });
+    }
+    if (canAccessModule('audit_logs')) {
+      categoryMenus.system.push({
+        label: 'Audit Logs',
+        href: '/admin/audit-logs',
+        module: 'audit_logs',
+      });
+    }
+    if (canAccessModule(MODULES.PERMISSION_PACKAGES)) {
+      categoryMenus.system.push({
+        label: t('sidebar.permission_packages'),
+        href: '/admin/permissions',
+        module: MODULES.PERMISSION_PACKAGES,
+        feature: 'permission_packages',
+      });
+    }
+    if (canAccessModule(MODULES.SETTINGS)) {
+      categoryMenus.system.push({
+        label: t('sidebar.settings'),
+        href: '/admin/settings',
+        module: MODULES.SETTINGS,
+        feature: 'settings',
+      });
+    }
+
+    if (canAccessModule(MODULES.SUBSCRIPTION_PLANS)) {
+      categoryMenus.business.push({
+        label: t('sidebar.subscription_plans'),
+        href: '/admin/plans',
+        module: MODULES.SUBSCRIPTION_PLANS,
+        feature: 'subscription_plans',
+      });
+    }
+    if (canAccessModule(MODULES.AFFILIATES)) {
+      categoryMenus.business.push({
+        label: t('sidebar.affiliates'),
+        href: '/admin/affiliates',
+        module: MODULES.AFFILIATES,
+        feature: 'affiliates',
+      });
+    }
+    if (canAccessModule(MODULES.COUNTRIES)) {
+      categoryMenus.business.push({
+        label: t('sidebar.countries'),
+        href: '/admin/countries',
+        module: MODULES.COUNTRIES,
+        feature: 'countries',
+      });
+    }
+    if (canAccessModule(MODULES.SUB_ADMINS)) {
+      categoryMenus.business.push({
+        label: t('sidebar.sub_admins'),
+        href: '/admin/sub-admins',
+        module: MODULES.SUB_ADMINS,
+        feature: 'sub_admins',
+      });
+    }
+
+    if (canAccessModule(MODULES.CMS)) {
+      categoryMenus.content.push({
+        label: t('sidebar.cms'),
+        href: '/admin/cms',
+        module: MODULES.CMS,
+        feature: 'cms_full',
+      });
+      categoryMenus.content.push({
+        label: 'Articles',
+        href: '/admin/articles',
+        module: 'articles',
+        feature: 'articles',
+      });
+      categoryMenus.content.push({
+        label: 'Videos',
+        href: '/admin/videos',
+        module: 'videos',
+        feature: 'videos',
+      });
+      categoryMenus.content.push({
+        label: 'Categories',
+        href: '/admin/categories',
+        module: 'categories',
+        feature: 'categories',
+      });
+    }
+    if (canAccessModule(MODULES.CHALLENGES)) {
+      categoryMenus.content.push({
+        label: 'Challenges',
+        href: '/admin/challenges',
+        module: MODULES.CHALLENGES,
+        feature: 'challenges',
+        requiredPlan: 'pro',
+      });
+    }
+    if (canAccessModule(MODULES.ADS)) {
+      categoryMenus.content.push({
+        label: t('sidebar.ads'),
+        href: '/admin/ads',
+        module: MODULES.ADS,
+        feature: 'ads_full',
+      });
+    }
+
+    if (canAccessModule(MODULES.SUPPORT_TICKETS)) {
+      categoryMenus.support.push({
+        label: t('sidebar.support_tickets'),
+        href: '/admin/tickets',
+        module: MODULES.SUPPORT_TICKETS,
+        feature: 'support_tickets',
+      });
+    }
+    if (canAccessModule(MODULES.POLICIES_FAQ)) {
+      categoryMenus.support.push({
+        label: t('sidebar.policies_faq'),
+        href: '/admin/policies',
+        module: MODULES.POLICIES_FAQ,
+        feature: 'policies_faq',
+        requiredPlan: 'enterprise',
+      });
+    }
+    if (canAccessModule(MODULES.PROFILE)) {
+      categoryMenus.support.push({
+        label: t('sidebar.profile'),
+        href: '/admin/profile',
+        module: MODULES.PROFILE,
+        feature: 'profile',
+      });
+    }
+    if (canAccessModule(MODULES.VERIFICATION)) {
+      categoryMenus.support.push({
+        label: t('sidebar.verification'),
+        href: '/admin/verification',
+        module: MODULES.VERIFICATION,
+        feature: 'verification',
+      });
     }
 
     return categoryMenus;
@@ -243,8 +245,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   const isRTL = currentLanguage === 'ar';
 
-  const renderMenuCategory = (categoryKey: string, items: Array<{ label: string; href: string; module: string }>) => {
-    const visibleItems = items.filter((item) => hasPermission(item.module, 'view'));
+  const renderMenuCategory = (categoryKey: string, items: MenuItem[]) => {
+    const visibleItems = items;
 
     if (visibleItems.length === 0) return null;
 
@@ -273,9 +275,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="block px-3 py-2 text-sm rounded-md hover:bg-sidebar-accent/50 text-sidebar-foreground transition-colors truncate"
+                    className=" px-3 py-2 text-sm rounded-md hover:bg-sidebar-accent/50 text-sidebar-foreground transition-colors truncate flex items-center justify-between"
                   >
-                    {item.label}
+                    <span>{item.label}</span>
+                    {item.requiredPlan && subscriptionPlan === 'free' && (
+                      <Lock size={12} className="ml-2 text-amber-500" />
+                    )}
                   </Link>
                 ))}
               </div>
@@ -297,6 +302,30 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         )}
       </div>
     );
+  };
+
+  // Get plan badge icon
+  const getPlanIcon = () => {
+    switch (subscriptionPlan) {
+      case 'enterprise':
+        return <Crown size={14} className="mr-1" />;
+      case 'pro':
+        return <Zap size={14} className="mr-1" />;
+      default:
+        return null;
+    }
+  };
+
+  // Get plan badge color
+  const getPlanBadgeClass = () => {
+    switch (subscriptionPlan) {
+      case 'enterprise':
+        return 'bg-gradient-to-r from-purple-600 to-purple-800 text-white';
+      case 'pro':
+        return 'bg-gradient-to-r from-blue-600 to-blue-800 text-white';
+      default:
+        return 'bg-accent text-accent-foreground';
+    }
   };
 
   return (
@@ -375,8 +404,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Plan Badge */}
-            <div className="px-3 py-1 rounded-md bg-accent text-accent-foreground text-sm font-medium whitespace-nowrap">
-              {currentUser.subscriptionPlan.toUpperCase()}
+            <div className={`px-3 py-1 rounded-md text-sm font-medium whitespace-nowrap flex items-center ${getPlanBadgeClass()}`}>
+              {getPlanIcon()}
+              {subscriptionPlan.toUpperCase()}
             </div>
 
             {/* Logout */}

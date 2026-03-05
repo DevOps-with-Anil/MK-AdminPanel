@@ -212,7 +212,9 @@ function UsersPageContent() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : '—'}
+                        {user.lastLogin
+                          ? new Date(user.lastLogin).toLocaleDateString('en-CA', { timeZone: 'UTC' })
+                          : '—'}
                       </TableCell>
                       <TableCell className="text-right flex items-center justify-end gap-2">
                         {hasPermission('admin_users', 'edit') && (

@@ -35,18 +35,22 @@ export const MODULES = {
   DASHBOARD: 'dashboard',
   ADMIN_USERS: 'admin_users',
   ROLES_PERMISSIONS: 'roles_permissions',
+  ROLES: 'roles',
   MODULES_ACTIONS: 'modules_actions',
   PERMISSION_PACKAGES: 'permission_packages',
   SUBSCRIPTION_PLANS: 'subscription_plans',
   AFFILIATES: 'affiliates',
   COUNTRIES: 'countries',
   CMS: 'cms',
+  ARTICLES: 'articles',
+  VIDEOS: 'videos',
+  CATEGORIES: 'categories',
+  CHALLENGES: 'challenges',
   ADS: 'ads',
   SUPPORT_TICKETS: 'support_tickets',
   POLICIES_FAQ: 'policies_faq',
   SETTINGS: 'settings',
   SUB_ADMINS: 'sub_admins',
-  CHALLENGES: 'challenges',
   VERIFICATION: 'verification',
   PROFILE: 'profile',
 };
@@ -187,15 +191,125 @@ export const MOCK_USERS: Record<AdminType, AdminUser> = {
   },
 };
 
+// Feature to Module Mapping
+// Each feature slug maps to one or more modules that require that feature
+export const FEATURE_MODULE_MAP: Record<string, string[]> = {
+  // Dashboard - always available
+  'dashboard': [MODULES.DASHBOARD],
+  
+  // Admin Users Management
+  'admin_users': [MODULES.ADMIN_USERS],
+  'admin_users_full': [MODULES.ADMIN_USERS],
+  
+  // Roles & Permissions
+  'roles_permissions': [MODULES.ROLES_PERMISSIONS],
+  'custom_roles': [MODULES.ROLES_PERMISSIONS],
+  
+  // Modules & Actions
+  'modules_actions': [MODULES.MODULES_ACTIONS],
+  
+  // Permission Packages
+  'permission_packages': [MODULES.PERMISSION_PACKAGES],
+  
+  // Subscription Plans - Root only
+  'subscription_plans': [MODULES.SUBSCRIPTION_PLANS],
+  
+  // Affiliates Management
+  'affiliates': [MODULES.AFFILIATES],
+  'affiliates_verification': [MODULES.AFFILIATES],
+  
+  // Countries
+  'countries': [MODULES.COUNTRIES],
+  
+  // CMS Features
+  'cms_basic': [MODULES.CMS],
+  'cms_full': [MODULES.CMS],
+  'articles': ['articles'],
+  'videos': ['videos'],
+  'categories': ['categories'],
+  
+  // Challenges - Pro and above
+  'challenges': [MODULES.CHALLENGES],
+  
+  // About Us
+  'about_us': ['about-us'],
+  
+  // Ads
+  'ads_basic': [MODULES.ADS],
+  'ads_full': [MODULES.ADS],
+  
+  // Support Tickets
+  'support_tickets': [MODULES.SUPPORT_TICKETS],
+  
+  // Policies & FAQ
+  'policies_faq': [MODULES.POLICIES_FAQ],
+  
+  // Settings
+  'settings': [MODULES.SETTINGS],
+  
+  // Sub Admins
+  'sub_admins': [MODULES.SUB_ADMINS],
+  
+  // Verification
+  'verification': [MODULES.VERIFICATION],
+  
+  // Profile
+  'profile': [MODULES.PROFILE],
+  
+  // Analytics - Pro and above
+  'analytics': ['analytics'],
+  
+  // API Access - Enterprise only
+  'api_access': ['api_access'],
+  
+  // Bulk Export - Enterprise only
+  'bulk_export': ['bulk_export'],
+};
+
 // Subscription Plans Feature Matrix
 export const SUBSCRIPTION_PLANS = {
   free: {
     name: 'Free',
-    features: ['dashboard', 'cms_basic', 'support_tickets'],
+    features: [
+      'dashboard',
+      'cms_basic',
+      'support_tickets',
+      'profile',
+      'categories',
+    ],
+    moduleAccess: [
+      MODULES.DASHBOARD,
+      MODULES.CMS,
+      MODULES.SUPPORT_TICKETS,
+      MODULES.PROFILE,
+      MODULES.CATEGORIES,
+    ],
   },
   pro: {
     name: 'Pro',
-    features: ['dashboard', 'cms_full', 'challenges', 'ads_basic', 'support_tickets', 'analytics'],
+    features: [
+      'dashboard',
+      'cms_full',
+      'challenges',
+      'ads_basic',
+      'support_tickets',
+      'analytics',
+      'profile',
+      'categories',
+      'videos',
+      'articles',
+    ],
+    moduleAccess: [
+      MODULES.DASHBOARD,
+      MODULES.CMS,
+      MODULES.CHALLENGES,
+      MODULES.ADS,
+      MODULES.SUPPORT_TICKETS,
+      MODULES.PROFILE,
+      MODULES.CATEGORIES,
+      'articles',
+      'videos',
+    ],
   },
   enterprise: {
     name: 'Enterprise',
@@ -209,9 +323,52 @@ export const SUBSCRIPTION_PLANS = {
       'api_access',
       'custom_roles',
       'bulk_export',
+      'profile',
+      'categories',
+      'videos',
+      'articles',
+    ],
+    moduleAccess: [
+      MODULES.DASHBOARD,
+      MODULES.CMS,
+      MODULES.CHALLENGES,
+      MODULES.ADS,
+      MODULES.SUPPORT_TICKETS,
+      MODULES.POLICIES_FAQ,
+      MODULES.PROFILE,
+      MODULES.CATEGORIES,
+      'articles',
+      'videos',
+      'analytics',
     ],
   },
 };
+
+// Get features available for a subscription plan
+export function getPlanFeatures(plan: SubscriptionPlan): string[] {
+  return SUBSCRIPTION_PLANS[plan]?.features || [];
+}
+
+// Get modules accessible for a subscription plan
+export function getPlanModuleAccess(plan: SubscriptionPlan): string[] {
+  return SUBSCRIPTION_PLANS[plan]?.moduleAccess || [];
+}
+
+// Check if a module is accessible for a subscription plan
+// Root admins (starting with 'root') have access to all modules
+export function isModuleAccessibleForPlan(module: string, plan: SubscriptionPlan, adminType?: string): boolean {
+  // Root admins have access to everything
+  if (adminType?.startsWith('root')) {
+    return true;
+  }
+  
+  const moduleAccess = getPlanModuleAccess(plan);
+  
+  // If wildcard exists, allow all
+  if (moduleAccess.includes('*')) return true;
+  
+  return moduleAccess.includes(module);
+}
 
 // Translations
 export const TRANSLATIONS: Record<Language, Record<string, string>> = {
