@@ -185,7 +185,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     const loadUserData = () => {
       try {
         const userDataStr = localStorage.getItem('userData');
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('auth-token') || localStorage.getItem('authToken');
         
         if (userDataStr && token) {
           const userData = JSON.parse(userDataStr);
@@ -326,7 +326,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       const userDataStr = localStorage.getItem('userData');
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('auth-token') || localStorage.getItem('authToken');
       
       if (userDataStr && token) {
         const userData = JSON.parse(userDataStr);

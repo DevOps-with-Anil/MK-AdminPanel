@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { apiClient } from '@/services/api-client';
 
 // API Base URL - Update this to your backend URL
 const API_BASE_URL = 'http://localhost:4000';
@@ -21,7 +22,7 @@ export default function LoginPage() {
 
   // Check if already authenticated
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('auth-token') || localStorage.getItem('authToken');
     if (token) {
       router.push('/');
     }
@@ -52,6 +53,8 @@ export default function LoginPage() {
 
       // Store the token and user data - backend returns { success, data: { token, user } }
       if (data.data?.token) {
+        apiClient.setAuthToken(data.data.token);
+        // Backward compatibility with older key usage
         localStorage.setItem('authToken', data.data.token);
         localStorage.setItem('userData', JSON.stringify(data.data.user));
         localStorage.setItem('isAuthenticated', 'true');

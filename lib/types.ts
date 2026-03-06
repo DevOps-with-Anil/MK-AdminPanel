@@ -75,6 +75,96 @@ export interface AdminUser {
   updatedAt: string;
 }
 
+// System User types from backend API (GET /api/systemusers)
+export interface SystemUserRole {
+  _id: string;
+  name: {
+    en: string;
+    fr: string;
+    ar: string;
+  };
+}
+
+export interface SystemRoleOption {
+  _id?: string;
+  id?: string;
+  name: string | {
+    en?: string;
+    fr?: string;
+    ar?: string;
+  };
+}
+
+export interface SystemUserLoginHistory {
+  ipAddress: string;
+  userAgent: string;
+  deviceType: string;
+  os: string;
+  browser: string;
+  loggedInAt: string;
+}
+
+export interface SystemUserCurrentDevice {
+  ipAddress: string;
+  userAgent: string;
+  deviceType: string;
+  os: string;
+  browser: string;
+  lastUsedAt: string;
+}
+
+export interface SystemUser {
+  _id: string;
+  name: string;
+  email: string;
+  phoneCode?: string;
+  phoneNumber?: string;
+  role: SystemUserRole;
+  allowedCountries: string[];
+  status: string;
+  createdBy?: string;
+  loginHistory: SystemUserLoginHistory[];
+  createdAt: string;
+  updatedAt: string;
+  __v?: number;
+  currentDevice?: SystemUserCurrentDevice;
+  lastLoginAt?: string;
+}
+
+export interface SystemUserFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  roleId?: string;
+  country?: string;
+}
+
+export interface SystemUsersResponse {
+  success: boolean;
+  status: number;
+  data: SystemUser[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  messageKey: string;
+  message: string;
+}
+
+export interface CreateSystemUserPayload {
+  name: string;
+  email: string;
+  phoneCode: string;
+  phoneNumber: string;
+  password: string;
+  role: string;
+  allowedCountries: string[];
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+}
+
 // ============= TENANT TYPES =============
 export type TenantType = 'root' | 'affiliate';
 export type SubscriptionPlanType = 'free' | 'pro' | 'enterprise';
@@ -173,10 +263,22 @@ export interface SubscriptionFeature {
 }
 
 // ============= AFFILIATE TYPES =============
-export interface Affiliate extends Tenant {
+export interface Affiliate {
+  id: string;
+  name: MultiLangText;
+  slug: string;
+  country: string;
+  website?: string;
+  email: string;
+  phone?: string;
+  subscriptionPlanId: string;
+  status: 'active' | 'inactive' | 'pending' | 'suspended';
+  features: string[];
+  limits: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
   parentTenantId: string;
   commissionRate?: number;
-  status: 'active' | 'inactive' | 'pending' | 'suspended';
 }
 
 // ============= AFFILIATE SETTINGS TYPES =============

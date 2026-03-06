@@ -1,4 +1,4 @@
-/**
+  /**
  * API Client Service
  * Handles all HTTP requests with authentication, error handling, and multi-language support
  */
@@ -10,7 +10,7 @@ class APIClient {
   private axiosInstance: AxiosInstance;
   private baseURL: string;
 
-  constructor(baseURL: string = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api') {
+  constructor(baseURL: string = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api') {
     this.baseURL = baseURL;
     this.axiosInstance = axios.create({
       baseURL: this.baseURL,
@@ -36,10 +36,23 @@ class APIClient {
     this.axiosInstance.interceptors.response.use(
       (response) => response,
       (error: AxiosError) => {
-        if (error.response?.status === 401) {
-          // Handle unauthorized - redirect to login
-          if (typeof window !== 'undefined') {
-            window.location.href = '/login';
+        // Skip redirect if already on login page or if it's a navigation error
+        if (typeof window !== 'undefined') {
+          const currentPath = window.location.pathname;
+          
+          // Don't redirect if already on login page
+          if (currentPath === '/login') {
+            return Promise.reject(error);
+          }
+          
+          // Check for unauthorized but don't redirect immediately if we're in the middle of a navigation
+          if (error.response?.status === 401) {
+            // Only redirect if we have a token (meaning it might be expired)
+            const token = localStorage.getItem('auth-token') || localStorage.getItem('authToken');
+            if (token) {
+              console.warn('API: Unauthorized access - token may be expired');
+              // Don't auto-redirect, let the component handle it
+            }
           }
         }
         return Promise.reject(error);
@@ -49,7 +62,7 @@ class APIClient {
 
   private getAuthToken(): string | null {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('auth-token');
+      return localStorage.getItem('auth-token') || localStorage.getItem('authToken');
     }
     return null;
   }
@@ -164,11 +177,22 @@ class APIClient {
     console.error('API Error:', error);
 
     if (axios.isAxiosError(error)) {
-      const response = error.response?.data as APIResponse<any>;
+      const response = error.response?.data as APIResponse<any> & {
+        errors?: Array<{ message?: string }>;
+      };
+      const status = error.response?.status;
+      const validationMessage = Array.isArray(response?.errors) && response.errors.length > 0
+        ? response.errors.map((item) => item?.message).filter(Boolean).join(', ')
+        : '';
+      const baseMessage = response?.message || response?.error || error.message || 'An error occurred';
+      const composedMessage = validationMessage
+        ? `${baseMessage}: ${validationMessage}`
+        : baseMessage;
+
       return {
         success: false,
         error: response?.error || error.message,
-        message: response?.message || 'An error occurred',
+        message: status ? `[${status}] ${composedMessage}` : composedMessage,
       };
     }
 

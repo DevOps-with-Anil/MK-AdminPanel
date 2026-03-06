@@ -2,6 +2,7 @@
 
 import { useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { apiClient } from '@/services/api-client';
 
 interface AuthGuardProps {
   children: ReactNode;
@@ -13,7 +14,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
 
   useEffect(() => {
     // Check localStorage for auth token
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('auth-token') || localStorage.getItem('authToken');
     
     if (token) {
       setIsAuthenticated(true);
@@ -45,14 +46,14 @@ export function AuthGuard({ children }: AuthGuardProps) {
  * Check if user is authenticated
  */
 export function checkAuth(): boolean {
-  return !!localStorage.getItem('authToken');
+  return !!(localStorage.getItem('auth-token') || localStorage.getItem('authToken'));
 }
 
 /**
  * Get stored auth token
  */
 export function getAuthToken(): string | null {
-  return localStorage.getItem('authToken');
+  return localStorage.getItem('auth-token') || localStorage.getItem('authToken');
 }
 
 /**
@@ -67,6 +68,7 @@ export function getUserData(): any {
  * Logout function - clears auth data
  */
 export function logout(): void {
+  apiClient.clearAuthToken();
   localStorage.removeItem('authToken');
   localStorage.removeItem('userData');
   localStorage.removeItem('isAuthenticated');
