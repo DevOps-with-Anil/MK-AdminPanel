@@ -95,6 +95,59 @@ export interface SystemRoleOption {
   };
 }
 
+// System Role types from backend API (GET /api/roles)
+export interface SystemRole {
+  _id: string;
+  name: {
+    en: string;
+    fr: string;
+    ar: string;
+  };
+  description?: {
+    en: string;
+    fr: string;
+    ar: string;
+  };
+  status: boolean;
+  permissions?: Array<{
+    moduleKey: string;
+    actions: Array<{
+      actionKey: string;
+      allowed: boolean;
+    }>;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+  __v?: number;
+}
+
+export interface SystemRoleFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string | boolean;
+  roleId?: string;
+  country?: string;
+}
+
+export interface SystemRolesResponse {
+  success: boolean;
+  status: number;
+  data: SystemRole[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    search?: string;
+    status?: string;
+    roleId?: string;
+    country?: string;
+  };
+  messageKey: string;
+  message: string;
+}
+
 export interface SystemUserLoginHistory {
   ipAddress: string;
   userAgent: string;

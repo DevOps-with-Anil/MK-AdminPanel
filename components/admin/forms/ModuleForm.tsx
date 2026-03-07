@@ -42,16 +42,18 @@ export default function ModuleForm({ module, onSubmit, onClose }: ModuleFormProp
     const newErrors: Record<string, string> = {};
 
     // Validate name
-    const nameValidation = validateMultiLang(formData.name, ['en']);
+    const nameValidation = validateMultiLang(formData.name, ['en', 'hi', 'ar']);
     if (!nameValidation.isValid) {
       newErrors.name = nameValidation.errors[0];
     }
 
-    // Validate slug
-    if (!formData.slug.trim()) {
-      newErrors.slug = 'Slug is required';
-    } else if (!/^[a-z0-9-]+$/.test(formData.slug)) {
-      newErrors.slug = 'Slug must contain only lowercase letters, numbers, and hyphens';
+    // Validate slug only while creating.
+    if (!module) {
+      if (!formData.slug.trim()) {
+        newErrors.slug = 'Slug is required';
+      } else if (!/^[a-z0-9-]+$/.test(formData.slug)) {
+        newErrors.slug = 'Slug must contain only lowercase letters, numbers, and hyphens';
+      }
     }
 
     setErrors(newErrors);
@@ -87,7 +89,7 @@ export default function ModuleForm({ module, onSubmit, onClose }: ModuleFormProp
         description="Enter the module name in each language"
         value={formData.name}
         onChange={handleNameChange}
-        requiredLanguages={['en']}
+        requiredLanguages={['en', 'hi', 'ar']}
         supportedLanguages={['en', 'hi', 'ar']}
         error={!!errors.name}
       />
@@ -102,11 +104,13 @@ export default function ModuleForm({ module, onSubmit, onClose }: ModuleFormProp
           onChange={handleSlugChange}
           placeholder="e.g., user-management"
           className={errors.slug ? 'border-red-500' : ''}
-          disabled={loading}
+          disabled={loading || !!module}
         />
         {errors.slug && <p className="text-sm text-red-500">{errors.slug}</p>}
         <p className="text-xs text-muted-foreground">
-          URL-friendly identifier for this module (lowercase, hyphens only)
+          {module
+            ? 'Slug is fixed after creation'
+            : 'URL-friendly identifier for this module (lowercase, hyphens only)'}
         </p>
       </div>
 
