@@ -16,19 +16,20 @@ import {
 
 interface AffiliateFormProps {
   affiliate?: Tenant | null;
-  onSubmit: (data: Partial<Tenant>) => Promise<void>;
+  onSubmit: (data: Partial<Tenant> & { password?: string }) => Promise<void>;
   onClose: () => void;
 }
 
 export default function AffiliateForm({ affiliate, onSubmit, onClose }: AffiliateFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<Partial<Tenant>>({
+  const [formData, setFormData] = useState<Partial<Tenant> & { password?: string }>({
     name: affiliate?.name || { en: '', hi: '', ar: '' },
     slug: affiliate?.slug || '',
     country: affiliate?.country || 'IN',
     email: affiliate?.email || '',
     phone: affiliate?.phone || '',
     website: affiliate?.website || '',
+    password: '',
     subscriptionPlanId: affiliate?.subscriptionPlanId || '',
     status: affiliate?.status || 'active',
   });
@@ -51,6 +52,9 @@ export default function AffiliateForm({ affiliate, onSubmit, onClose }: Affiliat
     }
     if (!formData.country?.trim()) {
       newErrors.country = 'Country is required';
+    }
+    if (!affiliate && !formData.password?.trim()) {
+      newErrors.password = 'Password is required';
     }
 
     setErrors(newErrors);
@@ -136,6 +140,20 @@ export default function AffiliateForm({ affiliate, onSubmit, onClose }: Affiliat
           />
         </div>
       </div>
+      {!affiliate && (
+        <div>
+          <Label htmlFor="password" className="text-base font-semibold mb-2 block">Password *</Label>
+          <Input
+            id="password"
+            type="password"
+            placeholder="Set initial password"
+            value={formData.password || ''}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            className={errors.password ? 'border-red-500' : ''}
+          />
+          {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+        </div>
+      )}
 
       {/* Website & Country */}
       <div className="grid grid-cols-2 gap-4">

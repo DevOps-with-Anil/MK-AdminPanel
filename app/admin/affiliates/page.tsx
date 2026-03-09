@@ -1,8 +1,8 @@
-'use client';
+﻿'use client';
 
 import { AdminProvider } from '@/contexts/AdminContext';
 import { AdminLayout } from '@/components/AdminLayout';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,47 +14,96 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tenant } from '@/lib/types';
 import { getLocalizedText } from '@/i18n/langHelper';
 import AffiliateForm from '@/components/admin/forms/AffiliateForm';
-
-const mockAffiliates: Tenant[] = [
-  {
-    id: 'TENANT001',
-    name: { en: 'TechCorp India', hi: 'टेककॉर्प इंडिया', ar: 'TechCorp الهند' },
-    slug: 'techcorp-india',
-    country: 'IN',
-    website: 'https://techcorp-india.com',
-    email: 'admin@techcorp-india.com',
-    phone: '+91-9876543210',
-    status: 'active',
-    subscriptionPlanId: 'PLAN003',
-    features: [],
-    limits: {},
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'TENANT002',
-    name: { en: 'Digital UAE', hi: 'डिजिटल यूएई', ar: 'ديجيتال الإمارات' },
-    slug: 'digital-uae',
-    country: 'AE',
-    website: 'https://digital-uae.com',
-    email: 'admin@digital-uae.com',
-    phone: '+971-123456789',
-    status: 'active',
-    subscriptionPlanId: 'PLAN002',
-    features: [],
-    limits: {},
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
+import {
+  AffiliateApiItem,
+  createAffiliate,
+  deleteAffiliate,
+  getAffiliateById,
+  getAffiliates,
+  updateAffiliate,
+} from '@/services/affiliate-service';
 
 function AffiliatesPageContent() {
-  const { t, currentLanguage } = useLanguage();
+  const { currentLanguage } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
-  const [affiliates, setAffiliates] = useState<Tenant[]>(mockAffiliates);
+  const [affiliates, setAffiliates] = useState<Tenant[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingAffiliate, setEditingAffiliate] = useState<Tenant | null>(null);
   const [selectedAffiliate, setSelectedAffiliate] = useState<Tenant | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const slugify = (input: string) =>
+    (input || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+  const mapApiToTenant = (affiliate: AffiliateApiItem): Tenant => {
+    const enName = affiliate.name?.en || '';
+    const phone = [affiliate.phoneCode || '', affiliate.phoneNumber || ''].join(' ').trim();
+    return {
+      id: affiliate._id,
+      name: {
+        en: enName,
+        hi: affiliate.name?.fr || enName,
+        ar: affiliate.name?.ar || '',
+      },
+      slug: slugify(enName || affiliate.email || affiliate._id),
+      country: '--',
+      website: affiliate.website || '',
+      email: affiliate.email || '',
+      phone,
+      subscriptionPlanId: '',
+      status: affiliate.status === 'ACTIVE' ? 'active' : 'inactive',
+      features: [],
+      limits: {},
+      createdAt: affiliate.createdAt || new Date().toISOString(),
+      updatedAt: affiliate.updatedAt || new Date().toISOString(),
+    };
+  };
+
+  const parsePhone = (phone?: string) => {
+    if (!phone?.trim()) return { phoneCode: undefined, phoneNumber: undefined };
+    const value = phone.trim();
+    const match = value.match(/^(\+\d{1,4})[\s-]*(.*)$/);
+    if (!match) return { phoneCode: undefined, phoneNumber: value };
+    return { phoneCode: match[1], phoneNumber: match[2] || undefined };
+  };
+
+  const loadAffiliates = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await getAffiliates();
+      if (!response.success) {
+        setError(response.message || 'Failed to load affiliates');
+        setAffiliates([]);
+        return;
+      }
+
+      const payload = response.data as unknown as { data?: AffiliateApiItem[] } | AffiliateApiItem[];
+      const list = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+        ? payload.data
+        : [];
+
+      setAffiliates(list.map(mapApiToTenant));
+    } catch (err) {
+      console.error('Load affiliates error:', err);
+      setError('Failed to load affiliates');
+      setAffiliates([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadAffiliates();
+  }, []);
 
   const filteredAffiliates = affiliates.filter(
     (aff) =>
@@ -74,52 +123,113 @@ function AffiliatesPageContent() {
   };
 
   const handleDeleteAffiliate = (affiliateId: string) => {
-    if (confirm('Are you sure you want to delete this affiliate? This action cannot be undone.')) {
-      setAffiliates(affiliates.filter(a => a.id !== affiliateId));
-      if (selectedAffiliate?.id === affiliateId) {
-        setSelectedAffiliate(null);
+    if (!confirm('Are you sure you want to delete this affiliate? This action cannot be undone.')) return;
+
+    void (async () => {
+      const response = await deleteAffiliate(affiliateId);
+      if (!response.success) {
+        alert(response.message || 'Failed to delete affiliate');
+        return;
       }
-    }
+
+      setAffiliates((prev) => prev.filter((a) => a.id !== affiliateId));
+      if (selectedAffiliate?.id === affiliateId) setSelectedAffiliate(null);
+    })();
+  };
+
+  const handleSelectAffiliate = (affiliateId: string) => {
+    void (async () => {
+      const response = await getAffiliateById(affiliateId);
+      if (!response.success) {
+        alert(response.message || 'Failed to fetch affiliate details');
+        return;
+      }
+
+      const payload = response.data as unknown as { data?: AffiliateApiItem } | AffiliateApiItem;
+      const affiliate = (payload as { data?: AffiliateApiItem })?.data || (payload as AffiliateApiItem);
+      if (!affiliate?._id) return;
+      setSelectedAffiliate(mapApiToTenant(affiliate));
+    })();
   };
 
   const handleToggleStatus = (affiliate: Tenant) => {
-    const updated = { ...affiliate, status: affiliate.status === 'active' ? 'inactive' : 'active' };
-    setAffiliates(affiliates.map(a => (a.id === affiliate.id ? updated : a)));
-    if (selectedAffiliate?.id === affiliate.id) {
-      setSelectedAffiliate(updated);
-    }
+    void (async () => {
+      const nextStatus = affiliate.status === 'active' ? 'INACTIVE' : 'ACTIVE';
+      const response = await updateAffiliate(affiliate.id, { status: nextStatus });
+      if (!response.success) {
+        alert(response.message || 'Failed to update affiliate status');
+        return;
+      }
+
+      const updated = { ...affiliate, status: nextStatus === 'ACTIVE' ? 'active' : 'inactive' };
+      setAffiliates((prev) => prev.map((a) => (a.id === affiliate.id ? updated : a)));
+      if (selectedAffiliate?.id === affiliate.id) setSelectedAffiliate(updated);
+    })();
   };
 
-  const handleFormSubmit = async (data: Partial<Tenant>) => {
-    if (editingAffiliate) {
-      const updated = { ...editingAffiliate, ...data, updatedAt: new Date().toISOString() };
-      setAffiliates(affiliates.map(a => (a.id === editingAffiliate.id ? updated : a)));
-    } else {
-      const newAffiliate: Tenant = {
-        id: `TENANT${Date.now()}`,
-        name: data.name || { en: '', hi: '', ar: '' },
-        slug: data.slug || '',
-        country: data.country || 'IN',
-        website: data.website || '',
-        email: data.email || '',
-        phone: data.phone || '',
-        status: data.status || 'active',
-        subscriptionPlanId: data.subscriptionPlanId || '',
-        features: data.features || [],
-        limits: data.limits || {},
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setAffiliates([...affiliates, newAffiliate]);
+  const handleFormSubmit = async (data: Partial<Tenant> & { password?: string }) => {
+    const nameEn = data.name?.en?.trim() || '';
+    const email = data.email?.trim() || '';
+    if (!nameEn || !email) {
+      alert('Name and email are required');
+      return;
     }
-    setIsFormOpen(false);
-    setEditingAffiliate(null);
+
+    const mappedName = {
+      en: nameEn,
+      fr: data.name?.hi?.trim() || nameEn,
+      ar: data.name?.ar?.trim() || nameEn,
+    };
+    const { phoneCode, phoneNumber } = parsePhone(data.phone);
+
+    try {
+      setIsSaving(true);
+      if (editingAffiliate) {
+        const response = await updateAffiliate(editingAffiliate.id, {
+          email,
+          phoneCode,
+          phoneNumber,
+          website: data.website?.trim() || undefined,
+          status: data.status === 'inactive' ? 'INACTIVE' : 'ACTIVE',
+        });
+
+        if (!response.success) {
+          alert(response.message || 'Failed to update affiliate');
+          return;
+        }
+      } else {
+        const password = data.password?.trim() || '';
+        if (!password) {
+          alert('Password is required for new affiliate');
+          return;
+        }
+
+        const response = await createAffiliate({
+          email,
+          phoneCode,
+          phoneNumber,
+          password,
+          website: data.website?.trim() || undefined,
+          status: data.status === 'inactive' ? 'INACTIVE' : 'ACTIVE',
+          languages: { name: mappedName },
+        });
+
+        if (!response.success) {
+          alert(response.message || 'Failed to create affiliate');
+          return;
+        }
+      }
+
+      setIsFormOpen(false);
+      setEditingAffiliate(null);
+      await loadAffiliates();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const getStatusBadgeColor = (status: 'active' | 'inactive') => {
-    return status === 'active' 
-      ? 'bg-green-100 text-green-800' 
-      : 'bg-gray-100 text-gray-800';
+    return status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
   };
 
   return (
@@ -154,7 +264,6 @@ function AffiliatesPageContent() {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Affiliates List */}
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
@@ -162,6 +271,11 @@ function AffiliatesPageContent() {
               <CardDescription>{filteredAffiliates.length} affiliate(s) found</CardDescription>
             </CardHeader>
             <CardContent>
+              {error && (
+                <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -174,7 +288,13 @@ function AffiliatesPageContent() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredAffiliates.length === 0 ? (
+                    {isLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          Loading affiliates...
+                        </TableCell>
+                      </TableRow>
+                    ) : filteredAffiliates.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                           No affiliates found
@@ -182,10 +302,10 @@ function AffiliatesPageContent() {
                       </TableRow>
                     ) : (
                       filteredAffiliates.map((affiliate) => (
-                        <TableRow 
+                        <TableRow
                           key={affiliate.id}
                           className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => setSelectedAffiliate(affiliate)}
+                          onClick={() => handleSelectAffiliate(affiliate.id)}
                         >
                           <TableCell>
                             <div>
@@ -198,9 +318,7 @@ function AffiliatesPageContent() {
                             <Badge variant="outline">{affiliate.country}</Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge className={getStatusBadgeColor(affiliate.status)}>
-                              {affiliate.status}
-                            </Badge>
+                            <Badge className={getStatusBadgeColor(affiliate.status)}>{affiliate.status}</Badge>
                           </TableCell>
                           <TableCell className="text-right flex items-center justify-end gap-2">
                             <Button
@@ -234,7 +352,6 @@ function AffiliatesPageContent() {
           </Card>
         </div>
 
-        {/* Affiliate Details */}
         <div>
           <Card className="sticky top-0">
             <CardHeader>
@@ -253,17 +370,15 @@ function AffiliatesPageContent() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Phone</p>
-                    <p className="text-sm">{selectedAffiliate.phone}</p>
+                    <p className="text-sm">{selectedAffiliate.phone || '--'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Country</p>
-                    <p className="text-sm">{selectedAffiliate.country}</p>
+                    <p className="text-sm">{selectedAffiliate.country || '--'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Status</p>
-                    <Badge className={getStatusBadgeColor(selectedAffiliate.status)}>
-                      {selectedAffiliate.status}
-                    </Badge>
+                    <Badge className={getStatusBadgeColor(selectedAffiliate.status)}>{selectedAffiliate.status}</Badge>
                   </div>
                   <div className="pt-2 space-y-2">
                     <Button
@@ -286,15 +401,14 @@ function AffiliatesPageContent() {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>
-              {editingAffiliate ? 'Edit Affiliate' : 'Create New Affiliate'}
-            </DialogTitle>
+            <DialogTitle>{editingAffiliate ? 'Edit Affiliate' : 'Create New Affiliate'}</DialogTitle>
           </DialogHeader>
           <AffiliateForm
             affiliate={editingAffiliate}
             onSubmit={handleFormSubmit}
             onClose={() => setIsFormOpen(false)}
           />
+          {isSaving && <p className="text-sm text-muted-foreground">Saving...</p>}
         </DialogContent>
       </Dialog>
     </div>

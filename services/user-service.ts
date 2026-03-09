@@ -106,6 +106,24 @@ class UserService {
   }
 
   /**
+   * Update currently logged-in user profile (self)
+   * Endpoint: POST /api/profile/me
+   */
+  async updateMyProfile(data: { name?: string; email?: string }): Promise<APIResponse<SystemUser>> {
+    try {
+      const response = await apiClient.post<SystemUser>('/profile/me', data);
+      return response;
+    } catch (error) {
+      console.error('Error updating my profile:', error);
+      return {
+        success: false,
+        error: 'Failed to update profile',
+        message: error instanceof Error ? error.message : 'Unknown error occurred'
+      };
+    }
+  }
+
+  /**
    * Delete a system user
    * Endpoint: DELETE /api/systemusers/:id
    */
