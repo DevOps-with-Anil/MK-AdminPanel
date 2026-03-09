@@ -1,7 +1,4 @@
-/**
- * Islamic Admin Panel - Database Schema
- * Multi-tenant RBAC system with subscription plans
- */
+
 
 // ============= CORE TENANT & USER TYPES =============
 

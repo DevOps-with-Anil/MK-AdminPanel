@@ -3,79 +3,96 @@
 import { AdminProvider } from '@/contexts/AdminContext';
 import { AdminLayout } from '@/components/AdminLayout';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Save, User, Shield } from 'lucide-react';
+import { ArrowLeft, Save, User } from 'lucide-react';
 import Link from 'next/link';
+import { userService } from '@/services/user-service';
+import { CreateSystemUserPayload } from '@/lib/types';
 
-interface NewAdminForm {
-  name: string;
-  email: string;
-  role: string;
-  country: string;
-  permissions: string[];
+interface NewAdminForm extends CreateSystemUserPayload {
+  allowedCountriesInput: string;
 }
 
-const AVAILABLE_PERMISSIONS = [
-  { id: 'dashboard', label: 'Dashboard Access', description: 'View main dashboard' },
-  { id: 'users_view', label: 'View Admin Users', description: 'View all admin users' },
-  { id: 'users_edit', label: 'Edit Admin Users', description: 'Edit admin user details' },
-  { id: 'users_delete', label: 'Delete Admin Users', description: 'Delete admin users' },
-  { id: 'roles_manage', label: 'Manage Roles', description: 'Create and edit roles' },
-  { id: 'plans_view', label: 'View Plans', description: 'View subscription plans' },
-  { id: 'plans_edit', label: 'Edit Plans', description: 'Edit subscription plans' },
-  { id: 'affiliates_view', label: 'View Affiliates', description: 'View affiliate partners' },
-  { id: 'affiliates_edit', label: 'Edit Affiliates', description: 'Edit affiliate details' },
-  { id: 'cms_manage', label: 'Manage CMS', description: 'Create and edit content' },
-  { id: 'reports_view', label: 'View Reports', description: 'View analytics and reports' },
-  { id: 'settings_manage', label: 'Manage Settings', description: 'Configure platform settings' },
-];
-
 function NewAdminContent() {
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
   const [formData, setFormData] = useState<NewAdminForm>({
     name: '',
     email: '',
-    role: 'root-sub-admin',
-    country: 'IN',
-    permissions: ['dashboard', 'users_view', 'plans_view', 'affiliates_view'],
+    phoneCode: '',
+    phoneNumber: '',
+    password: '',
+    role: '',
+    allowedCountries: [],
+    allowedCountriesInput: '',
+    status: 'ACTIVE',
   });
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: keyof NewAdminForm, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
 
-  const togglePermission = (permissionId: string) => {
+  const handleCountriesChange = (value: string) => {
+    const allowedCountries = value
+      .split(',')
+      .map((country) => country.trim().toUpperCase())
+      .filter(Boolean);
+
     setFormData((prev) => ({
       ...prev,
-      permissions: prev.permissions.includes(permissionId)
-        ? prev.permissions.filter((id) => id !== permissionId)
-        : [...prev.permissions, permissionId],
+      allowedCountriesInput: value,
+      allowedCountries,
     }));
   };
 
-  const handleSave = () => {
-    if (!formData.name || !formData.email) {
-      alert('Please fill in all required fields');
+  const handleSave = async () => {
+    setError('');
+
+    if (
+      !formData.name.trim() ||
+      !formData.email.trim() ||
+      !formData.phoneCode.trim() ||
+      !formData.phoneNumber.trim() ||
+      !formData.password.trim() ||
+      !formData.role.trim() ||
+      formData.allowedCountries.length === 0
+    ) {
+      setError('Please fill in all required fields.');
       return;
     }
-    alert('Admin user created successfully!');
-  };
 
-  const getRoleBadgeColor = (role: string) => {
-    const colors: Record<string, string> = {
-      'root-admin': 'bg-primary text-primary-foreground',
-      'root-sub-admin': 'bg-secondary text-secondary-foreground',
-      'affiliate-admin': 'bg-accent text-accent-foreground',
-      'affiliate-sub-admin': 'bg-muted text-muted-foreground',
+    setIsSubmitting(true);
+
+    const payload: CreateSystemUserPayload = {
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      phoneCode: formData.phoneCode.trim(),
+      phoneNumber: formData.phoneNumber.trim(),
+      password: formData.password,
+      role: formData.role.trim(),
+      allowedCountries: formData.allowedCountries,
+      status: formData.status,
     };
-    return colors[role] || 'bg-muted text-muted-foreground';
+
+    const response = await userService.createUser(payload);
+    setIsSubmitting(false);
+
+    if (!response.success) {
+      setError(response.message || response.error || 'Failed to create admin user.');
+      return;
+    }
+
+    router.push('/admin/users');
   };
 
   return (
@@ -89,18 +106,16 @@ function NewAdminContent() {
         </Link>
         <div>
           <h1 className="text-3xl font-bold text-foreground">Create New Admin User</h1>
-          <p className="text-muted-foreground">Add a new administrator and configure permissions</p>
+          <p className="text-muted-foreground">Add a new system administrator</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Main Form */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Basic Information */}
           <Card>
             <CardHeader>
               <CardTitle>User Information</CardTitle>
-              <CardDescription>Enter basic admin details</CardDescription>
+              <CardDescription>Enter API-required details for system user creation</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
@@ -111,7 +126,7 @@ function NewAdminContent() {
                   id="name"
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
-                  placeholder="e.g., John Smith"
+                  placeholder="John Doe"
                   required
                 />
               </div>
@@ -132,91 +147,106 @@ function NewAdminContent() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="role" className="mb-2 block">
-                    User Role *
+                  <Label htmlFor="phoneCode" className="mb-2 block">
+                    Phone Code *
                   </Label>
-                  <select
-                    id="role"
-                    value={formData.role}
-                    onChange={(e) => handleInputChange('role', e.target.value)}
-                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+                  <Input
+                    id="phoneCode"
+                    value={formData.phoneCode}
+                    onChange={(e) => handleInputChange('phoneCode', e.target.value)}
+                    placeholder="+1"
                     required
-                  >
-                    <option value="root-admin">Root Admin</option>
-                    <option value="root-sub-admin">Root Sub-Admin</option>
-                    <option value="affiliate-admin">Affiliate Admin</option>
-                    <option value="affiliate-sub-admin">Affiliate Sub-Admin</option>
-                  </select>
+                  />
                 </div>
-
                 <div>
-                  <Label htmlFor="country" className="mb-2 block">
-                    Country *
+                  <Label htmlFor="phoneNumber" className="mb-2 block">
+                    Phone Number *
                   </Label>
-                  <select
-                    id="country"
-                    value={formData.country}
-                    onChange={(e) => handleInputChange('country', e.target.value)}
-                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+                  <Input
+                    id="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                    placeholder="1234567890"
                     required
-                  >
-                    <option value="IN">India</option>
-                    <option value="AE">United Arab Emirates</option>
-                    <option value="US">United States</option>
-                  </select>
+                  />
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Permissions Assignment */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="w-4 h-4" />
-                Assign Permissions
-              </CardTitle>
-              <CardDescription>Select which features this user can access</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {AVAILABLE_PERMISSIONS.map((perm) => (
-                  <label
-                    key={perm.id}
-                    className="flex items-start gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                  >
-                    <Checkbox
-                      checked={formData.permissions.includes(perm.id)}
-                      onCheckedChange={() => togglePermission(perm.id)}
-                      className="mt-1"
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">{perm.label}</p>
-                      <p className="text-xs text-muted-foreground">{perm.description}</p>
-                    </div>
-                  </label>
-                ))}
+              <div>
+                <Label htmlFor="password" className="mb-2 block">
+                  Password *
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => handleInputChange('password', e.target.value)}
+                  placeholder="SecurePass123!"
+                  required
+                />
               </div>
+
+              <div>
+                <Label htmlFor="role" className="mb-2 block">
+                  Role Name *
+                </Label>
+                <Input
+                  id="role"
+                  value={formData.role}
+                  onChange={(e) => handleInputChange('role', e.target.value)}
+                  placeholder="e.g., Root Admin"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="allowedCountries" className="mb-2 block">
+                  Allowed Countries (comma-separated) *
+                </Label>
+                <Input
+                  id="allowedCountries"
+                  value={formData.allowedCountriesInput}
+                  onChange={(e) => handleCountriesChange(e.target.value)}
+                  placeholder="US, UK"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="status" className="mb-2 block">
+                  Status *
+                </Label>
+                <select
+                  id="status"
+                  value={formData.status}
+                  onChange={(e) => handleInputChange('status', e.target.value as NewAdminForm['status'])}
+                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+                  required
+                >
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="INACTIVE">INACTIVE</option>
+                  <option value="SUSPENDED">SUSPENDED</option>
+                </select>
+              </div>
+
+              {error && <p className="text-sm text-red-500">{error}</p>}
             </CardContent>
           </Card>
 
-          {/* Action Buttons */}
           <div className="flex gap-3">
-            <Button onClick={handleSave} className="gap-2 bg-primary hover:bg-primary/90 flex-1">
+            <Button onClick={handleSave} disabled={isSubmitting} className="gap-2 bg-primary hover:bg-primary/90 flex-1">
               <Save className="w-4 h-4" />
-              Create Admin User
+              {isSubmitting ? 'Creating...' : 'Create Admin User'}
             </Button>
             <Link href="/admin/users" className="flex-1">
-              <Button variant="outline" className="w-full bg-transparent">
+              <Button variant="outline" className="w-full bg-transparent" disabled={isSubmitting}>
                 Cancel
               </Button>
             </Link>
           </div>
         </div>
 
-        {/* Sidebar Preview */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Admin Summary */}
           <Card className="sticky top-0">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
@@ -236,38 +266,38 @@ function NewAdminContent() {
                     <p className="text-xs text-muted-foreground">Email</p>
                     <p className="font-mono text-sm text-foreground break-all">{formData.email || 'Not set'}</p>
                   </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Phone</p>
+                    <p className="text-sm text-foreground">
+                      {formData.phoneCode && formData.phoneNumber
+                        ? `${formData.phoneCode} ${formData.phoneNumber}`
+                        : 'Not set'}
+                    </p>
+                  </div>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <p className="text-sm font-semibold text-foreground">Role & Location</p>
-                <div className="flex gap-2">
-                  <Badge className={getRoleBadgeColor(formData.role)}>
-                    {formData.role.replace('-', ' ')}
-                  </Badge>
-                  <Badge variant="outline">{formData.country}</Badge>
+                <p className="text-sm font-semibold text-foreground">Role & Status</p>
+                <div className="flex gap-2 flex-wrap">
+                  <Badge variant="outline">{formData.role || 'Role not set'}</Badge>
+                  <Badge>{formData.status}</Badge>
                 </div>
               </div>
 
               <div className="pt-3 border-t border-border">
-                <p className="text-sm font-semibold text-foreground mb-3">Assigned Permissions</p>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {AVAILABLE_PERMISSIONS.filter((p) => formData.permissions.includes(p.id)).length > 0 ? (
-                    AVAILABLE_PERMISSIONS.filter((p) => formData.permissions.includes(p.id)).map((perm) => (
-                      <div key={perm.id} className="flex items-center justify-between p-2 bg-primary/10 rounded border border-primary/20">
-                        <span className="text-xs font-medium text-foreground">{perm.label}</span>
-                        <Badge className="bg-primary text-primary-foreground text-xs">✓</Badge>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-xs text-muted-foreground text-center py-4">No permissions selected</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-border">
-                <p className="text-sm text-muted-foreground mb-1">Total Permissions</p>
-                <p className="text-2xl font-bold text-primary">{formData.permissions.length}</p>
+                <p className="text-sm font-semibold text-foreground mb-2">Allowed Countries</p>
+                {formData.allowedCountries.length > 0 ? (
+                  <div className="flex gap-2 flex-wrap">
+                    {formData.allowedCountries.map((country) => (
+                      <Badge key={country} variant="outline">
+                        {country}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No countries selected</p>
+                )}
               </div>
             </CardContent>
           </Card>
