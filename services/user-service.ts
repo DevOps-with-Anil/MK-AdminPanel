@@ -5,15 +5,35 @@
 
 import { apiClient } from './api-client';
 import { 
+  AdminProfileResponse,
   SystemUser, 
   SystemUserFilters, 
   SystemUsersResponse,
   APIResponse,
   CreateSystemUserPayload,
+  UpdateSystemUserPayload,
   SystemRoleOption
 } from '@/lib/types';
 
 class UserService {
+  /**
+   * Get currently logged-in admin profile
+   * Endpoint: GET /api/profile/me
+   */
+  async getMyProfile(): Promise<APIResponse<AdminProfileResponse>> {
+    try {
+      const response = await apiClient.get<AdminProfileResponse>('/profile/me');
+      return response;
+    } catch (error) {
+      console.error('Error fetching my profile:', error);
+      return {
+        success: false,
+        error: 'Failed to fetch profile',
+        message: error instanceof Error ? error.message : 'Unknown error occurred'
+      };
+    }
+  }
+
   /**
    * Get paginated list of system users
    * Endpoint: GET /api/systemusers
@@ -91,7 +111,7 @@ class UserService {
    * Update an existing system user
    * Endpoint: POST /api/systemusers/:id
    */
-  async updateUser(userId: string, userData: Partial<SystemUser>): Promise<APIResponse<SystemUser>> {
+  async updateUser(userId: string, userData: UpdateSystemUserPayload): Promise<APIResponse<SystemUser>> {
     try {
       const response = await apiClient.post<SystemUser>(`/systemusers/${userId}`, userData);
       return response;

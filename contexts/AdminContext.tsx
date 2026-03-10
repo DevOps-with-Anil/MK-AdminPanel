@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   AdminType,
   Language,
@@ -171,6 +172,7 @@ function doesActionMatch(requestedAction: string, storedAction: string): boolean
 }
 
 export function AdminProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const [currentLanguage, setLanguage] = useState<Language>('en');
   const [currentCountry, setCountry] = useState<Country>('IN');
   const [subscriptionPlan, setSubscriptionPlan] = useState<SubscriptionPlan>('enterprise');
@@ -186,8 +188,14 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       try {
         const userDataStr = localStorage.getItem('userData');
         const token = localStorage.getItem('auth-token') || localStorage.getItem('authToken');
-        
-        if (userDataStr && token) {
+
+        if (!token) {
+          setBackendUser(null);
+          router.replace('/login');
+          return;
+        }
+
+        if (userDataStr) {
           const userData = JSON.parse(userDataStr);
           setBackendUser(userData);
           
@@ -216,7 +224,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     };
 
     loadUserData();
-  }, []);
+  }, [router]);
 
   // Build current user object from backend data (no fallback)
   const currentUser: AdminUser = {
@@ -327,8 +335,14 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     try {
       const userDataStr = localStorage.getItem('userData');
       const token = localStorage.getItem('auth-token') || localStorage.getItem('authToken');
-      
-      if (userDataStr && token) {
+
+      if (!token) {
+        setBackendUser(null);
+        router.replace('/login');
+        return;
+      }
+
+      if (userDataStr) {
         const userData = JSON.parse(userDataStr);
         setBackendUser(userData);
         
@@ -373,6 +387,10 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
+  }
+
+  if (!backendUser) {
+    return null;
   }
 
   return (

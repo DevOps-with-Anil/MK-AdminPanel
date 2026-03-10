@@ -2,56 +2,162 @@
 
 import { AdminProvider } from '@/contexts/AdminContext';
 import { AdminLayout } from '@/components/AdminLayout';
-import { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Save, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import Link from 'next/link';
+import { deleteAffiliate, getAffiliateById, updateAffiliate } from '@/services/affiliate-service';
 
 interface AffiliateForm {
   name: string;
   email: string;
   phone: string;
-  plan: string;
-  commission: number;
+  website: string;
   status: 'active' | 'inactive' | 'suspended';
-  verified: boolean;
+  kybVerified: boolean;
+}
+
+function parsePhone(phone: string) {
+  const value = phone.trim();
+  if (!value) return { phoneCode: undefined, phoneNumber: undefined };
+
+  const match = value.match(/^(\+\d{1,4})[\s-]*(.*)$/);
+  if (!match) return { phoneCode: undefined, phoneNumber: value };
+
+  return {
+    phoneCode: match[1],
+    phoneNumber: match[2] || undefined,
+  };
 }
 
 function EditAffiliateContent() {
   const params = useParams();
+  const router = useRouter();
   const affiliateId = params.id as string;
-  const [isEditing, setIsEditing] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<AffiliateForm>({
-    name: 'Ahmed Trading Co.',
-    email: 'info@ahmedtrading.com',
-    phone: '+971-501-234-567',
-    plan: 'pro',
-    commission: 15,
+    name: '',
+    email: '',
+    phone: '',
+    website: '',
     status: 'active',
-    verified: true,
+    kybVerified: false,
   });
 
-  const handleInputChange = (field: string, value: any) => {
+  useEffect(() => {
+    const loadAffiliate = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await getAffiliateById(affiliateId);
+      if (!response.success) {
+        setError(response.message || 'Failed to load affiliate.');
+        setIsLoading(false);
+        return;
+      }
+
+      const payload = response.data as { data?: any } | any;
+      const affiliate = payload?.data || payload;
+
+      setFormData({
+        name: affiliate?.name?.en || '',
+        email: affiliate?.email || '',
+        phone: [affiliate?.phoneCode || '', affiliate?.phoneNumber || ''].join(' ').trim(),
+        website: affiliate?.website || '',
+        status:
+          affiliate?.status === 'SUSPENDED'
+            ? 'suspended'
+            : affiliate?.status === 'INACTIVE'
+            ? 'inactive'
+            : 'active',
+        kybVerified: Boolean(affiliate?.kybVerified),
+      });
+      setIsLoading(false);
+    };
+
+    void loadAffiliate();
+  }, [affiliateId]);
+
+  const handleInputChange = (field: keyof AffiliateForm, value: string | boolean) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    alert('Affiliate updated successfully!');
+  const handleSave = async () => {
+    if (!formData.name.trim() || !formData.email.trim()) {
+      setError('Name and email are required.');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      setError(null);
+
+      const { phoneCode, phoneNumber } = parsePhone(formData.phone);
+      const localizedName = {
+        en: formData.name.trim(),
+        fr: formData.name.trim(),
+        ar: formData.name.trim(),
+      };
+
+      const response = await updateAffiliate(affiliateId, {
+        email: formData.email.trim(),
+        phoneCode,
+        phoneNumber,
+        website: formData.website.trim() || undefined,
+        kybVerified: formData.kybVerified,
+        status:
+          formData.status === 'suspended'
+            ? 'SUSPENDED'
+            : formData.status === 'inactive'
+            ? 'INACTIVE'
+            : 'ACTIVE',
+        languages: {
+          name: localizedName,
+          companyName: localizedName,
+        },
+      });
+
+      if (!response.success) {
+        setError(response.message || 'Failed to update affiliate.');
+        return;
+      }
+
+      router.push('/admin/affiliates');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const planDetails: Record<string, { color: string; features: number }> = {
-    free: { color: 'bg-blue-100 text-blue-800', features: 3 },
-    pro: { color: 'bg-purple-100 text-purple-800', features: 8 },
-    enterprise: { color: 'bg-amber-100 text-amber-800', features: 12 },
+  const handleDelete = async () => {
+    if (!confirm('Delete this affiliate?')) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      setError(null);
+
+      const response = await deleteAffiliate(affiliateId);
+      if (!response.success) {
+        setError(response.message || 'Failed to delete affiliate.');
+        return;
+      }
+
+      router.push('/admin/affiliates');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -65,195 +171,140 @@ function EditAffiliateContent() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Edit Affiliate Partner</h1>
-            <p className="text-muted-foreground">Manage affiliate account and settings</p>
+            <h1 className="text-3xl font-bold text-foreground">Edit Affiliate</h1>
+            <p className="text-muted-foreground">Update or delete this affiliate record</p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {/* Contact Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Contact Information</CardTitle>
-              <CardDescription>Affiliate business details</CardDescription>
+              <CardTitle>Affiliate Details</CardTitle>
+              <CardDescription>Loaded from the affiliate detail API</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div>
-                <Label htmlFor="name" className="mb-2 block">
-                  Business Name
-                </Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  placeholder="Enter business name"
-                  disabled={!isEditing}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="email" className="mb-2 block">
-                    Email Address
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    placeholder="email@business.com"
-                    disabled={!isEditing}
-                  />
+              {error && (
+                <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                  {error}
                 </div>
+              )}
 
-                <div>
-                  <Label htmlFor="phone" className="mb-2 block">
-                    Phone Number
-                  </Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    placeholder="+971-50-123-4567"
-                    disabled={!isEditing}
-                  />
-                </div>
-              </div>
+              {isLoading ? (
+                <p className="text-sm text-muted-foreground">Loading affiliate...</p>
+              ) : (
+                <>
+                  <div>
+                    <Label htmlFor="name" className="mb-2 block">
+                      Business Name
+                    </Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      placeholder="Enter business name"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="email" className="mb-2 block">
+                        Email Address
+                      </Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => handleInputChange('email', e.target.value)}
+                        placeholder="email@business.com"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="phone" className="mb-2 block">
+                        Phone Number
+                      </Label>
+                      <Input
+                        id="phone"
+                        value={formData.phone}
+                        onChange={(e) => handleInputChange('phone', e.target.value)}
+                        placeholder="+971-50-123-4567"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="website" className="mb-2 block">
+                        Website
+                      </Label>
+                      <Input
+                        id="website"
+                        value={formData.website}
+                        onChange={(e) => handleInputChange('website', e.target.value)}
+                        placeholder="https://affiliate.com"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="status" className="mb-2 block">
+                        Status
+                      </Label>
+                      <select
+                        id="status"
+                        value={formData.status}
+                        onChange={(e) => handleInputChange('status', e.target.value as AffiliateForm['status'])}
+                        className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+                      >
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="suspended">Suspended</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-lg border border-border p-4">
+                    <div>
+                      <p className="font-medium text-foreground">KYB Verification</p>
+                      <p className="text-sm text-muted-foreground">Update business verification status</p>
+                    </div>
+                    <select
+                      value={formData.kybVerified ? 'verified' : 'pending'}
+                      onChange={(e) => handleInputChange('kybVerified', e.target.value === 'verified')}
+                      className="px-3 py-2 border border-border rounded-md bg-background text-foreground"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="verified">Verified</option>
+                    </select>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
-          {/* Plan & Commission */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Plan & Commission</CardTitle>
-              <CardDescription>Subscription and earnings settings</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="plan" className="mb-2 block">
-                    Subscription Plan
-                  </Label>
-                  <select
-                    id="plan"
-                    value={formData.plan}
-                    onChange={(e) => handleInputChange('plan', e.target.value)}
-                    disabled={!isEditing}
-                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground disabled:opacity-50"
-                  >
-                    <option value="free">Free</option>
-                    <option value="pro">Pro</option>
-                    <option value="enterprise">Enterprise</option>
-                  </select>
-                </div>
-
-                <div>
-                  <Label htmlFor="commission" className="mb-2 block">
-                    Commission Rate (%)
-                  </Label>
-                  <Input
-                    id="commission"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.5"
-                    value={formData.commission}
-                    onChange={(e) => handleInputChange('commission', parseFloat(e.target.value))}
-                    placeholder="15"
-                    disabled={!isEditing}
-                  />
-                </div>
-              </div>
-
-              <div className="p-4 bg-muted/50 rounded-lg border border-border">
-                <p className="text-sm text-muted-foreground mb-2">Plan Features</p>
-                <Badge className={planDetails[formData.plan]?.color}>
-                  {planDetails[formData.plan]?.features} features available
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Status & Verification */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Status & Verification</CardTitle>
-              <CardDescription>Account status and verification</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <Label htmlFor="status" className="mb-2 block">
-                  Account Status
-                </Label>
-                <select
-                  id="status"
-                  value={formData.status}
-                  onChange={(e) => handleInputChange('status', e.target.value as any)}
-                  disabled={!isEditing}
-                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground disabled:opacity-50"
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                  <option value="suspended">Suspended</option>
-                </select>
-              </div>
-
-              <div className="flex items-center justify-between p-4 border border-border rounded-lg">
-                <div>
-                  <p className="font-medium text-foreground">Business Verified</p>
-                  <p className="text-sm text-muted-foreground">KYC verification status</p>
-                </div>
-                <Badge className={formData.verified ? 'bg-primary' : 'bg-muted'}>
-                  {formData.verified ? 'Verified' : 'Pending'}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Action Buttons */}
           <div className="flex gap-3">
             <Button
               onClick={handleSave}
-              disabled={!isEditing}
+              disabled={isLoading || isSaving || isDeleting}
               className="gap-2 bg-primary hover:bg-primary/90 flex-1"
             >
               <Save className="w-4 h-4" />
-              Save Changes
+              {isSaving ? 'Saving...' : 'Save Changes'}
             </Button>
             <Button
-              onClick={() => setIsEditing(!isEditing)}
-              variant="outline"
-              className="flex-1"
+              onClick={handleDelete}
+              disabled={isLoading || isSaving || isDeleting}
+              variant="destructive"
+              className="gap-2 flex-1"
             >
-              {isEditing ? 'Cancel' : 'Edit'}
+              <Trash2 className="w-4 h-4" />
+              {isDeleting ? 'Deleting...' : 'Delete Affiliate'}
             </Button>
           </div>
         </div>
 
-        {/* Performance Sidebar */}
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Performance</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm">
-              <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
-                <p className="text-muted-foreground mb-1">Total Revenue</p>
-                <p className="text-2xl font-bold text-primary">$45,230</p>
-              </div>
-              <div className="p-3 bg-accent/10 rounded-lg border border-accent/20">
-                <p className="text-muted-foreground mb-1">Earned Commission</p>
-                <p className="text-2xl font-bold text-accent">$6,785</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground mb-1">Joined Date</p>
-                <p className="text-foreground">2024-01-10</p>
-              </div>
-            </CardContent>
-          </Card>
-
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Quick Info</CardTitle>
@@ -261,28 +312,18 @@ function EditAffiliateContent() {
             <CardContent className="space-y-4 text-sm">
               <div>
                 <p className="text-muted-foreground mb-1">Affiliate ID</p>
-                <p className="font-mono text-foreground">{affiliateId}</p>
+                <p className="font-mono text-foreground break-all">{affiliateId}</p>
               </div>
               <div>
                 <p className="text-muted-foreground mb-1">Status</p>
-                <Badge className={formData.status === 'active' ? 'bg-primary' : formData.status === 'inactive' ? 'bg-secondary' : 'bg-destructive'}>
-                  {formData.status}
+                <Badge className="capitalize">{formData.status}</Badge>
+              </div>
+              <div>
+                <p className="text-muted-foreground mb-1">KYB</p>
+                <Badge variant={formData.kybVerified ? 'default' : 'secondary'}>
+                  {formData.kybVerified ? 'Verified' : 'Pending'}
                 </Badge>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-yellow-200 bg-yellow-50/50">
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-yellow-600" />
-                Notes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-yellow-800">
-                Verify business documents before enabling commission payments.
-              </p>
             </CardContent>
           </Card>
         </div>

@@ -8,6 +8,21 @@ export interface AffiliateApiItem {
   phoneNumber?: string;
   website?: string;
   kybVerified?: boolean;
+  companyName?: {
+    en?: string;
+    fr?: string;
+    ar?: string;
+  };
+  bio?: {
+    en?: string;
+    fr?: string;
+    ar?: string;
+  };
+  address?: {
+    en?: string;
+    fr?: string;
+    ar?: string;
+  };
   status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
   name?: {
     en?: string;
@@ -23,11 +38,27 @@ export interface CreateAffiliatePayload {
   phoneCode?: string;
   phoneNumber?: string;
   password: string;
+  photo?: string;
   website?: string;
   kybVerified?: boolean;
   status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
   languages: {
     name: {
+      en: string;
+      fr: string;
+      ar: string;
+    };
+    companyName?: {
+      en: string;
+      fr: string;
+      ar: string;
+    };
+    bio?: {
+      en: string;
+      fr: string;
+      ar: string;
+    };
+    address?: {
       en: string;
       fr: string;
       ar: string;
@@ -39,9 +70,32 @@ export interface UpdateAffiliatePayload {
   email?: string;
   phoneCode?: string;
   phoneNumber?: string;
+  photo?: string;
   website?: string;
   kybVerified?: boolean;
   status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+  languages?: {
+    name?: {
+      en: string;
+      fr: string;
+      ar: string;
+    };
+    companyName?: {
+      en: string;
+      fr: string;
+      ar: string;
+    };
+    bio?: {
+      en: string;
+      fr: string;
+      ar: string;
+    };
+    address?: {
+      en: string;
+      fr: string;
+      ar: string;
+    };
+  };
 }
 
 // Backend route is mounted as /api/affilaite (current project spelling)
