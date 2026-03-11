@@ -1,14 +1,16 @@
 'use client';
 
 import { AdminProvider } from '@/contexts/AdminContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { AdminLayout } from '@/components/AdminLayout';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Settings, Save } from 'lucide-react';
+import { userService } from '@/services/user-service';
 
 interface SettingsConfig {
   systemName: string;
@@ -21,6 +23,7 @@ interface SettingsConfig {
 }
 
 function SettingsPageContent() {
+  const { currentUser, refreshUserData } = useAdmin();
   const [settings, setSettings] = useState<SettingsConfig>({
     systemName: 'Islamic Admin Panel',
     supportEmail: 'support@admin.com',
@@ -30,12 +33,70 @@ function SettingsPageContent() {
     sessionTimeout: 30,
     maxUploadSize: 50,
   });
+  const [isSavingGeneral, setIsSavingGeneral] = useState(false);
+
+  useEffect(() => {
+    if (currentUser?.name || currentUser?.email) {
+      setSettings((prev) => ({
+        ...prev,
+        systemName: currentUser.name || prev.systemName,
+        supportEmail: currentUser.email || prev.supportEmail,
+      }));
+    }
+  }, [currentUser?.name, currentUser?.email]);
 
   const handleInputChange = (field: string, value: any) => {
     setSettings((prev) => ({
       ...prev,
       [field]: value,
     }));
+  };
+
+  const handleSaveGeneralSettings = async () => {
+    if (!settings.systemName.trim()) {
+      alert('System Name is required');
+      return;
+    }
+    if (!settings.supportEmail.trim()) {
+      alert('Email is required');
+      return;
+    }
+
+    try {
+      setIsSavingGeneral(true);
+      const response = await userService.updateMyProfile({
+        name: settings.systemName.trim(),
+        email: settings.supportEmail.trim().toLowerCase(),
+      });
+
+      if (!response.success) {
+        alert(response.message || 'Failed to update settings');
+        return;
+      }
+
+      const existingUserData = localStorage.getItem('userData');
+      if (existingUserData) {
+        try {
+          const parsed = JSON.parse(existingUserData);
+          const updated = {
+            ...parsed,
+            name: settings.systemName.trim(),
+            email: settings.supportEmail.trim().toLowerCase(),
+          };
+          localStorage.setItem('userData', JSON.stringify(updated));
+        } catch (storageErr) {
+          console.error('Failed to sync local userData:', storageErr);
+        }
+      }
+
+      refreshUserData();
+      alert('Settings updated successfully');
+    } catch (err) {
+      console.error('Error updating settings:', err);
+      alert('An error occurred while updating settings');
+    } finally {
+      setIsSavingGeneral(false);
+    }
   };
 
   return (
@@ -78,9 +139,13 @@ function SettingsPageContent() {
               placeholder="support@example.com"
             />
           </div>
-          <Button className="gap-2 bg-primary hover:bg-primary/90">
+          <Button
+            className="gap-2 bg-primary hover:bg-primary/90"
+            onClick={handleSaveGeneralSettings}
+            disabled={isSavingGeneral}
+          >
             <Save className="w-4 h-4" />
-            Save Changes
+            {isSavingGeneral ? 'Saving...' : 'Save Changes'}
           </Button>
         </CardContent>
       </Card>

@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Save, Search } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { createPlan } from '@/services/plan-service';
 
 interface PlanForm {
   name: string;
@@ -46,6 +48,7 @@ const availableFeatures: Feature[] = [
 ];
 
 function CreatePlanContent() {
+  const router = useRouter();
   const [formData, setFormData] = useState<PlanForm>({
     name: '',
     price: 0,
@@ -58,6 +61,7 @@ function CreatePlanContent() {
   });
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => ({
@@ -75,12 +79,51 @@ function CreatePlanContent() {
     }));
   };
 
-  const handleSave = () => {
-    if (!formData.name || formData.price < 0 || formData.selectedFeatures.length === 0) {
-      alert('Please fill in all required fields');
+  const handleSave = async () => {
+    if (!formData.name.trim() || formData.price < 0) {
+      alert('Please fill in required fields');
       return;
     }
-    alert('Plan created successfully!');
+
+    const normalizedName = formData.name.trim();
+    const normalizedDescription = formData.description.trim();
+
+    try {
+      setIsSaving(true);
+
+      const payload: Parameters<typeof createPlan>[0] = {
+        name: {
+          en: normalizedName,
+          fr: normalizedName,
+          ar: normalizedName,
+        },
+        price: Number.isFinite(formData.price) ? formData.price : 0,
+        currency: 'USD',
+        duration: formData.billing === 'yearly' ? 'YEARLY' : 'MONTHLY',
+      };
+
+      if (normalizedDescription) {
+        payload.description = {
+          en: normalizedDescription,
+          fr: normalizedDescription,
+          ar: normalizedDescription,
+        };
+      }
+
+      const response = await createPlan(payload);
+      if (!response.success) {
+        alert(response.message || 'Failed to create plan');
+        return;
+      }
+
+      alert('Plan created successfully');
+      router.push('/admin/plans');
+    } catch (err) {
+      console.error('Create plan error:', err);
+      alert('An error occurred while creating the plan');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const categories = Array.from(new Set(availableFeatures.map((f) => f.category)));
@@ -233,9 +276,13 @@ function CreatePlanContent() {
 
           {/* Action Buttons */}
           <div className="flex gap-3">
-            <Button onClick={handleSave} className="gap-2 bg-primary hover:bg-primary/90 flex-1">
+            <Button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="gap-2 bg-primary hover:bg-primary/90 flex-1"
+            >
               <Save className="w-4 h-4" />
-              Create Plan
+              {isSaving ? 'Creating...' : 'Create Plan'}
             </Button>
             <Link href="/admin/plans" className="flex-1">
               <Button variant="outline" className="w-full bg-transparent">

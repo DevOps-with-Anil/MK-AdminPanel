@@ -2,12 +2,13 @@
 
 import { AdminProvider } from '@/contexts/AdminContext';
 import { AdminLayout } from '@/components/AdminLayout';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import { Search, Download, Filter, Eye, LogOut, Edit, Plus, Trash, LogIn } from 'lucide-react';
 import {
   Table,
@@ -24,80 +25,91 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { AuditLog, AuditAction } from '@/lib/types';
-import { getAuditLogs } from '@/services/audit-service';
-
-// Mock audit logs for demonstration
-const mockAuditLogs: AuditLog[] = [
-  {
-    id: '1',
-    tenantId: 'tenant-1',
-    userId: 'user-1',
-    userName: 'Ahmed Khan',
-    action: 'create',
-    module: 'users',
-    entityType: 'User',
-    entityId: 'user-99',
-    newValues: { name: 'New User', email: 'newuser@test.com' },
-    status: 'success',
-    createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-  },
-  {
-    id: '2',
-    tenantId: 'tenant-1',
-    userId: 'user-2',
-    userName: 'Fatima Ali',
-    action: 'update',
-    module: 'roles',
-    entityType: 'Role',
-    entityId: 'role-1',
-    changes: 'Updated permissions',
-    status: 'success',
-    createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-  },
-  {
-    id: '3',
-    tenantId: 'tenant-1',
-    userId: 'user-3',
-    userName: 'Hassan Malik',
-    action: 'delete',
-    module: 'articles',
-    entityType: 'Article',
-    entityId: 'article-42',
-    status: 'success',
-    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-  },
-  {
-    id: '4',
-    tenantId: 'tenant-1',
-    userId: 'user-1',
-    userName: 'Ahmed Khan',
-    action: 'login',
-    module: 'auth',
-    entityType: 'User',
-    entityId: 'user-1',
-    status: 'success',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-  },
-  {
-    id: '5',
-    tenantId: 'tenant-1',
-    userId: 'user-4',
-    userName: 'Aisha Ahmed',
-    action: 'view',
-    module: 'permissions',
-    entityType: 'Module',
-    entityId: 'mod-1',
-    status: 'success',
-    createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-  },
-];
+import { AuditLogApiItem, getAuditLogs } from '@/services/audit-service';
+import { deleteAffiliate, getAffiliateById, updateAffiliate } from '@/services/affiliate-service';
 
 function AuditLogsPageContent() {
   const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>(mockAuditLogs);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [filterModule, setFilterModule] = useState<string>('');
+  const [editingLog, setEditingLog] = useState<AuditLog | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({
+    email: '',
+    phoneCode: '',
+    phoneNumber: '',
+    website: '',
+    status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED',
+    kybVerified: false,
+  });
+
+  const mapAction = (value: string): AuditAction => {
+    const action = value.toLowerCase();
+    if (action.includes('create') || action.includes('add')) return 'create';
+    if (action.includes('update') || action.includes('edit')) return 'update';
+    if (action.includes('delete') || action.includes('remove') || action.includes('disable')) return 'delete';
+    if (action.includes('login')) return 'login';
+    if (action.includes('logout')) return 'logout';
+    if (action.includes('permission')) return 'permission_change';
+    return 'view';
+  };
+
+  const mapLog = (item: AuditLogApiItem): AuditLog => ({
+    id: item._id,
+    tenantId: '',
+    userId: item.user || '',
+    userName: item.userEmail || 'Unknown',
+    action: mapAction(item.action || ''),
+    module: (item.module || '').toLowerCase(),
+    entityType: item.module || 'System',
+    entityId: item.entityId || '',
+    oldValues: (item.before as Record<string, unknown>) || undefined,
+    newValues: (item.after as Record<string, unknown>) || undefined,
+    changes: item.message,
+    ipAddress: item.ipAddress,
+    userAgent: item.userAgent,
+    status: (item.status || '').toUpperCase() === 'SUCCESS' ? 'success' : 'failure',
+    createdAt: item.createdAt,
+  });
+
+  const loadAuditLogs = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await getAuditLogs({ page: 1, limit: 200 });
+
+      if (!response.success) {
+        setError(response.message || 'Failed to fetch audit logs');
+        setAuditLogs([]);
+        return;
+      }
+
+      const payload = response.data as unknown;
+      const logs = Array.isArray(payload)
+        ? (payload as AuditLogApiItem[])
+        : Array.isArray((payload as { data?: unknown })?.data)
+          ? ((payload as { data: AuditLogApiItem[] }).data || [])
+          : [];
+
+      setAuditLogs(logs.map(mapLog));
+    } catch (err) {
+      console.error('Error loading audit logs:', err);
+      setError('An error occurred while loading audit logs');
+      setAuditLogs([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadAuditLogs();
+  }, [loadAuditLogs]);
 
   const filteredLogs = auditLogs.filter(log => {
     const matchesSearch =
@@ -157,7 +169,138 @@ function AuditLogsPageContent() {
     }).format(date);
   };
 
+  const getActionLabel = (action: AuditAction) => {
+    const labels: Record<AuditAction, string> = {
+      create: 'Create',
+      update: 'Update',
+      delete: 'Delete',
+      view: 'View',
+      login: 'Login',
+      logout: 'Logout',
+      permission_change: 'Permission Change',
+    };
+    return labels[action];
+  };
+
+  const handleExportLogs = async () => {
+    if (filteredLogs.length === 0) return;
+
+    const XLSX = await import('xlsx');
+    const rows = filteredLogs.map((log) => ({
+      'Date & Time': formatDate(log.createdAt),
+      User: log.userName || 'Unknown',
+      Action: getActionLabel(log.action),
+      Module: log.module,
+      Entity: log.entityType,
+      Status: log.status.charAt(0).toUpperCase() + log.status.slice(1),
+      'Entity ID': log.entityId || '',
+      Changes: log.changes || '',
+      'IP Address': log.ipAddress || '',
+      'User Agent': log.userAgent || '',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    worksheet['!cols'] = [
+      { wch: 22 },
+      { wch: 24 },
+      { wch: 20 },
+      { wch: 18 },
+      { wch: 20 },
+      { wch: 12 },
+      { wch: 26 },
+      { wch: 40 },
+      { wch: 18 },
+      { wch: 40 },
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Audit Logs');
+
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+    XLSX.writeFile(workbook, `audit-logs-${timestamp}.xlsx`);
+  };
+
   const uniqueModules = Array.from(new Set(auditLogs.map(log => log.module)));
+  const isAffiliateLog = (log: AuditLog) => log.module === 'affiliates' && !!log.entityId;
+
+  const handleOpenEdit = async (log: AuditLog) => {
+    if (!isAffiliateLog(log)) return;
+
+    try {
+      setActionLoadingId(log.id);
+      const response = await getAffiliateById(log.entityId);
+      if (!response.success) {
+        alert(response.message || 'Failed to load affiliate details');
+        return;
+      }
+
+      const payload = response.data as unknown as { data?: any };
+      const affiliate = payload?.data || payload;
+      if (!affiliate) {
+        alert('Affiliate details not found');
+        return;
+      }
+
+      setEditingLog(log);
+      setEditForm({
+        email: affiliate.email || '',
+        phoneCode: affiliate.phoneCode || '',
+        phoneNumber: affiliate.phoneNumber || '',
+        website: affiliate.website || '',
+        status: affiliate.status || 'ACTIVE',
+        kybVerified: !!affiliate.kybVerified,
+      });
+      setIsEditOpen(true);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingLog) return;
+    try {
+      setIsSavingEdit(true);
+      const response = await updateAffiliate(editingLog.entityId, {
+        email: editForm.email.trim().toLowerCase(),
+        phoneCode: editForm.phoneCode.trim(),
+        phoneNumber: editForm.phoneNumber.trim(),
+        website: editForm.website.trim(),
+        status: editForm.status,
+        kybVerified: editForm.kybVerified,
+      });
+
+      if (!response.success) {
+        alert(response.message || 'Failed to update affiliate');
+        return;
+      }
+
+      setIsEditOpen(false);
+      setEditingLog(null);
+      await loadAuditLogs();
+      alert('Affiliate updated successfully');
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  const handleDeleteLogEntity = async (log: AuditLog) => {
+    if (!isAffiliateLog(log)) return;
+    if (!confirm('Delete this affiliate (soft delete)?')) return;
+
+    try {
+      setActionLoadingId(log.id);
+      const response = await deleteAffiliate(log.entityId);
+      if (!response.success) {
+        alert(response.message || 'Failed to delete affiliate');
+        return;
+      }
+
+      await loadAuditLogs();
+      alert('Affiliate deleted successfully');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -166,7 +309,11 @@ function AuditLogsPageContent() {
           <h1 className="text-3xl font-bold tracking-tight">Audit Logs</h1>
           <p className="text-muted-foreground mt-2">Track all admin actions and system events</p>
         </div>
-        <Button className="gap-2">
+        <Button
+          className="gap-2"
+          onClick={handleExportLogs}
+          disabled={isLoading || filteredLogs.length === 0}
+        >
           <Download className="w-4 h-4" />
           Export Logs
         </Button>
@@ -254,6 +401,11 @@ function AuditLogsPageContent() {
           <CardDescription>{filteredLogs.length} log entries</CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+            <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -264,11 +416,17 @@ function AuditLogsPageContent() {
                   <TableHead>Module</TableHead>
                   <TableHead>Entity</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead></TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredLogs.length === 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      Loading audit logs...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredLogs.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       No audit logs found
@@ -300,14 +458,27 @@ function AuditLogsPageContent() {
                           {log.status.charAt(0).toUpperCase() + log.status.slice(1)}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedLog(log)}
-                        >
+                      <TableCell className="space-x-1">
+                        <Button variant="ghost" size="sm" onClick={() => setSelectedLog(log)}>
                           {t('ui.view')}
                         </Button>
+                        {/* <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={!isAffiliateLog(log) || actionLoadingId === log.id}
+                          onClick={() => handleOpenEdit(log)}
+                        >
+                          Edit
+                        </Button> */}
+                        {/* <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                          disabled={!isAffiliateLog(log) || actionLoadingId === log.id}
+                          onClick={() => handleDeleteLogEntity(log)}
+                        >
+                          Delete
+                        </Button> */}
                       </TableCell>
                     </TableRow>
                   ))
@@ -383,6 +554,88 @@ function AuditLogsPageContent() {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Affiliate Dialog (for AFFILIATES logs only) */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Affiliate</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="affiliate-email">Email</Label>
+              <Input
+                id="affiliate-email"
+                type="email"
+                value={editForm.email}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, email: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="affiliate-phone-code">Phone Code</Label>
+                <Input
+                  id="affiliate-phone-code"
+                  value={editForm.phoneCode}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, phoneCode: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="affiliate-phone-number">Phone Number</Label>
+                <Input
+                  id="affiliate-phone-number"
+                  value={editForm.phoneNumber}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, phoneNumber: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="affiliate-website">Website</Label>
+              <Input
+                id="affiliate-website"
+                value={editForm.website}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, website: e.target.value }))}
+                placeholder="https://example.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="affiliate-status">Status</Label>
+              <select
+                id="affiliate-status"
+                className="w-full px-3 py-2 rounded-md bg-background border border-border text-foreground text-sm"
+                value={editForm.status}
+                onChange={(e) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    status: e.target.value as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED',
+                  }))
+                }
+              >
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="INACTIVE">INACTIVE</option>
+                <option value="SUSPENDED">SUSPENDED</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="affiliate-kyb"
+                type="checkbox"
+                checked={editForm.kybVerified}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, kybVerified: e.target.checked }))}
+              />
+              <Label htmlFor="affiliate-kyb">KYB Verified</Label>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveEdit} disabled={isSavingEdit}>
+                {isSavingEdit ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

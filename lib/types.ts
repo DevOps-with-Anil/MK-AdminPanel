@@ -218,6 +218,127 @@ export interface CreateSystemUserPayload {
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
 }
 
+export interface UpdateSystemUserPayload {
+  name?: string;
+  email?: string;
+  phoneCode?: string;
+  phoneNumber?: string;
+  role?: string;
+  allowedCountries?: string[];
+  status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+}
+
+export interface AdminProfileResponse {
+  id: string;
+  name: string;
+  email: string;
+  phoneNumber?: string | null;
+  photo?: string | null;
+  role?: {
+    id: string;
+    name: string | {
+      en?: string;
+      fr?: string;
+      ar?: string;
+    };
+    permissions?: Array<{
+      moduleKey: string;
+      allowed: boolean;
+      actions: Array<{
+        actionKey: string;
+        allowed: boolean;
+      }>;
+    }>;
+  } | null;
+  allowedCountries: string[];
+  status: string;
+  lastLoginAt?: string | null;
+  tracking?: {
+    lastIp?: string | null;
+    lastBrowser?: string | null;
+    lastDevice?: string | null;
+    lastOs?: string | null;
+  };
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CMSLocalizedText {
+  en: string;
+  fr?: string;
+  ar?: string;
+}
+
+export interface CMSItemUser {
+  _id: string;
+  name?: string;
+  email?: string;
+}
+
+export interface CMSItem {
+  _id: string;
+  type: 'PAGE' | 'ARTICLE' | 'POST' | 'BANNER' | 'OTHER';
+  title: CMSLocalizedText;
+  content: CMSLocalizedText;
+  slug: string;
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  ownerAdmin: string;
+  createdBy?: CMSItemUser;
+  updatedBy?: CMSItemUser | null;
+  tags: string[];
+  meta?: Record<string, any>;
+  publishedAt?: string | null;
+  isDeleted?: boolean;
+  deletedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CMSFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  type?: string;
+}
+
+export interface CMSListResponse {
+  success: boolean;
+  status: number;
+  data: CMSItem[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    search?: string;
+    status?: string;
+    type?: string;
+  };
+  messageKey: string;
+  message: string;
+}
+
+export interface CreateCMSPayload {
+  type: 'PAGE' | 'ARTICLE' | 'POST' | 'BANNER' | 'OTHER';
+  title: CMSLocalizedText;
+  content: CMSLocalizedText;
+  slug?: string;
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  tags?: string[];
+  meta?: Record<string, any>;
+}
+
+export interface UpdateCMSPayload {
+  type?: 'PAGE' | 'ARTICLE' | 'POST' | 'BANNER' | 'OTHER';
+  title?: CMSLocalizedText;
+  content?: CMSLocalizedText;
+  slug?: string;
+  status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  tags?: string[];
+  meta?: Record<string, any>;
+}
+
 // ============= TENANT TYPES =============
 export type TenantType = 'root' | 'affiliate';
 export type SubscriptionPlanType = 'free' | 'pro' | 'enterprise';
