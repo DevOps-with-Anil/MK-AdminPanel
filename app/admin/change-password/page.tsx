@@ -8,8 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { KeyRound, ShieldCheck, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { changeRootAdminPassword } from '@/lib/client-auth';
+import { useAdmin } from '@/contexts/AdminContext';
 
 function ChangePasswordContent() {
+  const { currentLanguage } = useAdmin();
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -34,11 +37,22 @@ function ChangePasswordContent() {
       return;
     }
 
+    if (formData.currentPassword === formData.newPassword) {
+      setError('New password must be different from current password');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const apiLanguage = currentLanguage === 'ar' ? 'ar' : 'en';
+
+      await changeRootAdminPassword(
+        formData.currentPassword,
+        formData.newPassword,
+        apiLanguage
+      );
+
       setSuccess(true);
       setFormData({
         currentPassword: '',
@@ -46,7 +60,7 @@ function ChangePasswordContent() {
         confirmPassword: '',
       });
     } catch (err) {
-      setError('Failed to update password. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to update password. Please try again.');
     } finally {
       setIsLoading(false);
     }

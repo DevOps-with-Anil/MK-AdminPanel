@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAdmin } from '@/contexts/AdminContext';
 import { MODULES, LANGUAGES, COUNTRIES, Language, Country, MOCK_NOTIFICATIONS } from '@/lib/mock-data';
+import { getAuthToken, logout } from '@/lib/client-auth';
 import { 
   Menu, 
   X, 
@@ -51,7 +52,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     currentLanguage,
     currentCountry,
     currentUser,
-    setAdminType,
+    isProfileLoading,
     setLanguage,
     setCountry,
     t,
@@ -61,6 +62,18 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
+
+  useEffect(() => {
+    const token = getAuthToken();
+
+    if (!token) {
+      router.replace('/systemlogin');
+      return;
+    }
+
+    setIsAuthChecked(true);
+  }, [router]);
 
   // Use a media query to determine if the screen is mobile
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
@@ -69,11 +82,13 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const currentCountryData = COUNTRIES[currentCountry as Country] || COUNTRIES.IN;
 
   const handleLogout = () => {
+    logout();
+
     // Determine where to redirect based on current admin type
     if (currentAdminType.startsWith('root')) {
-      router.push('/systemlogin');
+      router.replace('/systemlogin');
     } else {
-      router.push('/affiliatelogin');
+      router.replace('/affiliatelogin');
     }
   };
 
@@ -375,6 +390,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     );
   };
 
+  if (!isAuthChecked || isProfileLoading) {
+    return null;
+  }
+
   return (
     <div className={`flex h-screen bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
       {/* Mobile Sidebar */}
@@ -622,7 +641,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                        </div>
                      </div>
                   </div>
-                  <DropdownMenuItem className="cursor-pointer">
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => router.push('/admin/profile')}
+                  >
                     <User size={16} className="mr-2" />
                     <span>View Profile</span>
                   </DropdownMenuItem>

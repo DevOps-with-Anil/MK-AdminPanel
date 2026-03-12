@@ -1,17 +1,16 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
 import {
   AdminType,
   Language,
   Country,
-  SubscriptionPlan,
   AdminUser,
   MOCK_USERS,
   TRANSLATIONS,
-  MODULES,
-  ACTIONS,
+  MOCK_ROLES,
 } from '@/lib/mock-data';
+import { clearAuthToken, getRootAdminProfile, type RootAdminProfile } from '@/lib/client-auth';
 
 interface AdminContextType {
   // Current State
@@ -19,11 +18,15 @@ interface AdminContextType {
   currentLanguage: Language;
   currentCountry: Country;
   currentUser: AdminUser;
+  rootProfile: RootAdminProfile | null;
+  isProfileLoading: boolean;
+  profileError: string;
 
   // Setters
   setAdminType: (type: AdminType) => void;
   setLanguage: (lang: Language) => void;
   setCountry: (country: Country) => void;
+  refreshProfile: () => Promise<void>;
 
   // Helper Functions
   t: (key: string) => string;
@@ -37,8 +40,75 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const [currentAdminType, setAdminType] = useState<AdminType>('root-admin');
   const [currentLanguage, setLanguage] = useState<Language>('en');
   const [currentCountry, setCountry] = useState<Country>('IN');
+  const [currentUser, setCurrentUser] = useState<AdminUser>(MOCK_USERS['root-admin']);
+  const [rootProfile, setRootProfile] = useState<RootAdminProfile | null>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState('');
 
-  const currentUser = MOCK_USERS[currentAdminType];
+  const refreshProfile = useCallback(async () => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const token = window.localStorage.getItem('authToken');
+
+    if (!token) {
+      setCurrentUser(MOCK_USERS[currentAdminType]);
+      setRootProfile(null);
+      setIsProfileLoading(false);
+      return;
+    }
+
+    setIsProfileLoading(true);
+    setProfileError('');
+
+    try {
+      const apiLanguage = currentLanguage === 'ar' ? 'ar' : 'en';
+      const profile = await getRootAdminProfile(apiLanguage);
+      const fallbackRole = MOCK_ROLES[currentAdminType];
+      const permissions = profile.role.permissions
+        .filter((permission) => permission.module && permission.action)
+        .map((permission, index) => ({
+          id: permission.id || permission._id || `${profile.role._id}-${index}`,
+          module: permission.module as string,
+          action: permission.action as string,
+        }));
+
+      setRootProfile(profile);
+      setCurrentUser({
+        id: profile.id,
+        name: profile.name,
+        email: profile.email,
+        type: currentAdminType,
+        role: {
+          id: profile.role._id,
+          name: profile.role.name,
+          permissions: permissions.length > 0 ? permissions : fallbackRole.permissions,
+        },
+        country: currentCountry,
+        subscriptionPlan: MOCK_USERS[currentAdminType].subscriptionPlan,
+        lastLogin: profile.lastLoginAt
+          ? new Date(profile.lastLoginAt).toLocaleString()
+          : 'N/A',
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to load profile';
+      setProfileError(message);
+
+      if (message.toLowerCase().includes('unauthorized')) {
+        clearAuthToken();
+      }
+
+      setRootProfile(null);
+      setCurrentUser(MOCK_USERS[currentAdminType]);
+    } finally {
+      setIsProfileLoading(false);
+    }
+  }, [currentAdminType, currentCountry, currentLanguage]);
+
+  useEffect(() => {
+    refreshProfile();
+  }, [refreshProfile]);
 
   // Translation helper
   const t = (key: string): string => {
@@ -100,9 +170,13 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         currentLanguage,
         currentCountry,
         currentUser,
+        rootProfile,
+        isProfileLoading,
+        profileError,
         setAdminType: handleSetAdminType,
         setLanguage: handleSetLanguage,
         setCountry: handleSetCountry,
+        refreshProfile,
         t,
         hasPermission,
         hasFeature,

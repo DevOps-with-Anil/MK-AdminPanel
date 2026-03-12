@@ -2,20 +2,27 @@
 
 import React from "react"
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { getAuthToken, loginRootAdmin, setAuthToken } from '@/lib/client-auth';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('admin@example.com');
+  const [email, setEmail] = useState('admin@system.com');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (getAuthToken()) {
+      router.replace('/admin/dashboard');
+    }
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,23 +30,9 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Login failed');
-      }
-
-      // Redirect to dashboard
-      router.push('/');
+      const token = await loginRootAdmin({ email, password });
+      setAuthToken(token);
+      router.push('/admin/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -144,8 +137,8 @@ export default function LoginPage() {
             <div className="mt-6 p-4 bg-secondary/10 border border-secondary/20 rounded-lg">
               <p className="text-xs font-medium text-foreground mb-2">Demo Credentials:</p>
               <div className="space-y-1 text-xs text-muted-foreground font-mono">
-                <p>Email: admin@example.com</p>
-                <p>Password: (any password)</p>
+                <p>Email: admin@system.com</p>
+                <p>Password: Admin@12345</p>
               </div>
             </div>
           </CardContent>
