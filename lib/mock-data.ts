@@ -3,6 +3,19 @@
 export type AdminType = 'root-admin' | 'root-sub-admin' | 'affiliate-admin' | 'affiliate-sub-admin';
 export type Language = 'en' | 'hi' | 'ar';
 export type Country = 'IN' | 'AE' | 'US';
+
+export const COUNTRIES: Record<Country, { label: string; flag: string }> = {
+  'US': { label: 'USA', flag: '🇺🇸' },
+  'IN': { label: 'India', flag: '🇮🇳' },
+  'AE': { label: 'UAE', flag: '🇦🇪' },
+};
+
+export const LANGUAGES: Record<Language, { label: string; flag: string }> = {
+  'en': { label: 'English', flag: '🇺🇸' },
+  'hi': { label: 'Hindi', flag: '🇮🇳' },
+  'ar': { label: 'Arabic', flag: '🇦🇪' },
+};
+
 export type SubscriptionPlan = 'free' | 'pro' | 'enterprise';
 
 // Permissions Structure
@@ -28,6 +41,7 @@ export interface AdminUser {
   role: Role;
   country: Country;
   subscriptionPlan: SubscriptionPlan;
+  lastLogin: string;
 }
 
 // Mock Modules & Actions
@@ -39,6 +53,12 @@ export const MODULES = {
   PERMISSION_PACKAGES: 'permission_packages',
   SUBSCRIPTION_PLANS: 'subscription_plans',
   AFFILIATES: 'affiliates',
+  TENANTS: 'tenants',
+  KYB_REQUESTS: 'kyb_requests',
+  BUSINESS_KYB: 'business_kyb',
+  CUSTOMERS: 'customers',
+  ANALYTICS_REPORT: 'analytics_report',
+  SECURITY_COMPLIANCE: 'security_compliance',
   COUNTRIES: 'countries',
   CMS: 'cms',
   ADS: 'ads',
@@ -67,6 +87,10 @@ export const MOCK_ROLES: Record<AdminType, Role> = {
     permissions: [
       { id: '1', module: MODULES.DASHBOARD, action: ACTIONS.VIEW },
       { id: '2', module: MODULES.ADMIN_USERS, action: ACTIONS.VIEW },
+      { id: '2b', module: MODULES.TENANTS, action: ACTIONS.VIEW },
+      { id: '2c', module: MODULES.KYB_REQUESTS, action: ACTIONS.VIEW },
+      { id: '2d', module: MODULES.ANALYTICS_REPORT, action: ACTIONS.VIEW },
+      { id: '2e', module: MODULES.SECURITY_COMPLIANCE, action: ACTIONS.VIEW },
       { id: '3', module: MODULES.ADMIN_USERS, action: ACTIONS.CREATE },
       { id: '4', module: MODULES.ADMIN_USERS, action: ACTIONS.EDIT },
       { id: '5', module: MODULES.ADMIN_USERS, action: ACTIONS.DELETE },
@@ -113,8 +137,8 @@ export const MOCK_ROLES: Record<AdminType, Role> = {
       { id: '24', module: MODULES.SUB_ADMINS, action: ACTIONS.VIEW },
       { id: '25', module: MODULES.SUB_ADMINS, action: ACTIONS.CREATE },
       { id: '26', module: MODULES.SUB_ADMINS, action: ACTIONS.EDIT },
-      { id: '27', module: MODULES.ROLES, action: ACTIONS.VIEW },
-      { id: '28', module: MODULES.ROLES, action: ACTIONS.EDIT },
+      { id: '27', module: MODULES.ROLES_PERMISSIONS, action: ACTIONS.VIEW },
+      { id: '28', module: MODULES.ROLES_PERMISSIONS, action: ACTIONS.EDIT },
       { id: '16', module: MODULES.CMS, action: ACTIONS.VIEW },
       { id: '16b', module: MODULES.CMS, action: ACTIONS.CREATE },
       { id: '16c', module: MODULES.CMS, action: ACTIONS.EDIT },
@@ -128,6 +152,13 @@ export const MOCK_ROLES: Record<AdminType, Role> = {
       { id: '32', module: MODULES.PROFILE, action: ACTIONS.VIEW },
       { id: '32b', module: MODULES.PROFILE, action: ACTIONS.EDIT },
       { id: '33', module: MODULES.VERIFICATION, action: ACTIONS.VIEW },
+      { id: '34', module: MODULES.BUSINESS_KYB, action: ACTIONS.VIEW },
+      { id: '35', module: MODULES.CUSTOMERS, action: ACTIONS.VIEW },
+      { id: '36', module: MODULES.ANALYTICS_REPORT, action: ACTIONS.VIEW },
+      { id: '37', module: MODULES.SECURITY_COMPLIANCE, action: ACTIONS.VIEW },
+      { id: '38', module: MODULES.SETTINGS, action: ACTIONS.VIEW },
+      { id: '39', module: MODULES.SUBSCRIPTION_PLANS, action: ACTIONS.VIEW },
+      { id: '40', module: MODULES.ADMIN_USERS, action: ACTIONS.VIEW },
     ],
   },
   'affiliate-sub-admin': {
@@ -147,6 +178,31 @@ export const MOCK_ROLES: Record<AdminType, Role> = {
   },
 };
 
+// Mock Notifications
+export interface Notification {
+  id: string;
+  title: string;
+  description: string;
+  time: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  isRead: boolean;
+}
+
+export const MOCK_NOTIFICATIONS: Notification[] = [
+  { id: '1', title: 'New Tenant Joined', description: 'Alpha Corp has successfully onboarded.', time: '2 mins ago', type: 'success', isRead: false },
+  { id: '2', title: 'Security Alert', description: 'Failed login attempt from unknown IP.', time: '15 mins ago', type: 'error', isRead: false },
+  { id: '3', title: 'KYB Request', description: 'New verification request from Beta Ltd.', time: '1 hour ago', type: 'info', isRead: false },
+  { id: '4', title: 'System Update', description: 'Scheduled maintenance in 2 hours.', time: '3 hours ago', type: 'warning', isRead: true },
+  { id: '5', title: 'Payment Received', description: 'Invoice #1234 has been paid.', time: '5 hours ago', type: 'success', isRead: true },
+  { id: '6', title: 'New Ticket', description: 'User reported a bug in CMS.', time: '8 hours ago', type: 'info', isRead: true },
+  { id: '7', title: 'Module Added', description: 'Analytics V2 is now active.', time: '12 hours ago', type: 'success', isRead: true },
+  { id: '8', title: 'Plan Expiring', description: 'Tenant Gamma\'s plan ends in 3 days.', time: '1 day ago', type: 'warning', isRead: true },
+  { id: '9', title: 'Role Changed', description: 'Admin Y role updated to Manager.', time: '1 day ago', type: 'info', isRead: true },
+  { id: '10', title: 'Audit Complete', description: 'Monthly security audit finalized.', time: '2 days ago', type: 'success', isRead: true },
+  { id: '11', title: 'New Message', description: 'Support team sent a reply.', time: '3 days ago', type: 'info', isRead: true },
+  { id: '12', title: 'Backup Successful', description: 'Nightly database backup completed.', time: '4 days ago', type: 'success', isRead: true },
+];
+
 // Mock Admin Users
 export const MOCK_USERS: Record<AdminType, AdminUser> = {
   'root-admin': {
@@ -157,6 +213,7 @@ export const MOCK_USERS: Record<AdminType, AdminUser> = {
     role: MOCK_ROLES['root-admin'],
     country: 'AE',
     subscriptionPlan: 'enterprise',
+    lastLogin: 'Mar 12, 2026, 02:45 PM',
   },
   'root-sub-admin': {
     id: 'user-2',
@@ -166,6 +223,7 @@ export const MOCK_USERS: Record<AdminType, AdminUser> = {
     role: MOCK_ROLES['root-sub-admin'],
     country: 'IN',
     subscriptionPlan: 'pro',
+    lastLogin: 'Mar 12, 2026, 11:30 AM',
   },
   'affiliate-admin': {
     id: 'user-3',
@@ -175,6 +233,7 @@ export const MOCK_USERS: Record<AdminType, AdminUser> = {
     role: MOCK_ROLES['affiliate-admin'],
     country: 'IN',
     subscriptionPlan: 'pro',
+    lastLogin: 'Mar 12, 2026, 09:15 AM',
   },
   'affiliate-sub-admin': {
     id: 'user-4',
@@ -184,6 +243,7 @@ export const MOCK_USERS: Record<AdminType, AdminUser> = {
     role: MOCK_ROLES['affiliate-sub-admin'],
     country: 'US',
     subscriptionPlan: 'free',
+    lastLogin: 'Mar 11, 2026, 04:20 PM',
   },
 };
 
@@ -217,12 +277,18 @@ export const SUBSCRIPTION_PLANS = {
 export const TRANSLATIONS: Record<Language, Record<string, string>> = {
   en: {
     'sidebar.dashboard': 'Dashboard',
-    'sidebar.admin_users': 'Admin Users',
+    'sidebar.admin_users': 'System Users',
     'sidebar.roles_permissions': 'Roles & Permissions',
     'sidebar.modules_actions': 'Modules & Actions',
-    'sidebar.permission_packages': 'Permission Packages',
-    'sidebar.subscription_plans': 'Subscription Plans',
+    'sidebar.permission_packages': 'Modules Packages',
+    'sidebar.subscription_plans': 'Subscriptions',
     'sidebar.affiliates': 'Affiliates',
+    'sidebar.tenants': 'Tenants',
+    'sidebar.kyb_requests': 'KYB Requests',
+    'sidebar.business_kyb': 'Business KYB',
+    'sidebar.customers': 'Customers',
+    'sidebar.analytics_report': 'Analytics Report',
+    'sidebar.security_compliance': 'Security and Compliance',
     'sidebar.countries': 'Countries & Regions',
     'sidebar.cms': 'CMS',
     'sidebar.ads': 'Ads',
