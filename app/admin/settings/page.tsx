@@ -41,9 +41,9 @@ function SettingsPageContent() {
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-start gap-4">
-        <Settings className="text-primary w-10 h-10 mt-1" />
+        <Settings className="text-primary w-7 h-7 mt-1" />
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+          <h1 className="text-xl font-medium text-foreground">Settings</h1>
           <p className="text-muted-foreground">Configure system settings and preferences</p>
         </div>
       </div>

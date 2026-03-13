@@ -54,21 +54,21 @@ function ChangePasswordContent() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center gap-4 mb-2">
+      {/* <div className="flex items-center gap-4 mb-2">
         <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
           <KeyRound className="text-primary w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Security</h1>
+          <h1 className="text-xl font-medium text-foreground">Security</h1>
           <p className="text-muted-foreground">Manage your account security and password</p>
         </div>
-      </div>
+      </div> */}
 
       <Card className="border-border/60 shadow-sm">
         <CardHeader className="border-b border-border/40 bg-muted/20">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-primary" />
-            <CardTitle className="text-xl">Change Password</CardTitle>
+            <ShieldCheck className="w-7 h-7 text-primary" />
+            <CardTitle className="text-xl font-medium">Change Password</CardTitle>
           </div>
           <CardDescription>
             Update your password to keep your account secure
@@ -150,12 +150,12 @@ function ChangePasswordContent() {
         </CardContent>
       </Card>
 
-      <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-xl">
-        <h3 className="text-sm font-bold text-blue-700 mb-1 flex items-center gap-2">
+      <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+        <h3 className="text-lg font-medium text-blue-700 mb-1 flex items-center gap-2">
           <AlertCircle className="w-4 h-4" />
           Password Requirements
         </h3>
-        <ul className="text-xs text-blue-600/80 space-y-1 list-disc pl-4">
+        <ul className="text-sm text-blue-600/80 space-y-1 list-disc pl-4">
           <li>Minimum 8 characters long</li>
           <li>At least one uppercase letter</li>
           <li>At least one number or special character</li>

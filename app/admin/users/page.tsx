@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit2, Trash2, MoreVertical, Search, CheckCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, MoreVertical, Search, CheckCircle, Users } from 'lucide-react';
 import Link from 'next/link';
 import {
   DropdownMenu,
@@ -91,9 +91,12 @@ function UsersPageContent() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
+        <div className="flex items-start gap-4">
+        <Users className="text-primary w-7 h-7 mt-1" />
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Admin Users</h1>
+          <h1 className="text-xl font-medium text-foreground">Admin Users</h1>
           <p className="text-muted-foreground">Manage system administrators and sub-admins</p>
+        </div>
         </div>
         {hasPermission('admin_users', 'create') && (
           <Link href="/admin/users/new">

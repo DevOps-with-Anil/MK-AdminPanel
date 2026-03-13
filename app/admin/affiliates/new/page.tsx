@@ -55,7 +55,7 @@ function NewAffiliateContent() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Create New Affiliate</h1>
+          <h1 className="text-xl font-medium text-foreground">Create New Affiliate</h1>
           <p className="text-muted-foreground">Add a new affiliate partner to the platform</p>
         </div>
       </div>

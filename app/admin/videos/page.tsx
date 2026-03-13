@@ -65,9 +65,9 @@ function VideosPageContent() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-start gap-4">
-          <Play className="text-primary w-10 h-10 mt-1" />
+          <Play className="text-primary w-7 h-7 mt-1" />
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Videos</h1>
+            <h1 className="text-xl font-medium text-foreground">Videos</h1>
             <p className="text-muted-foreground">Manage video content and recordings</p>
           </div>
         </div>

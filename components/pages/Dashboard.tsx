@@ -163,10 +163,13 @@ export default function Dashboard() {
     <div className="space-y-8 pb-10">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-start gap-4">
+        <LayoutDashboard className="text-primary w-7 h-7 mt-1" />
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Overview Dashboard</h1>
+          <h1 className="text-xl font-medium text-foreground">Overview Dashboard</h1>
           <p className="text-muted-foreground text-sm">Welcome back, {currentUser.name}. Here's what's happening today.</p>
         </div>
+         </div>
         <div className="flex items-center gap-2">
           <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-background border border-border rounded-lg hover:bg-accent transition-colors">
             <Calendar size={16} />
@@ -191,7 +194,7 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                  <h3 className="text-2xl font-bold text-foreground">{stat.value}</h3>
+                  <h3 className="text-2xl font-medium text-foreground">{stat.value}</h3>
                 </div>
               </CardContent>
             </Card>
@@ -205,7 +208,7 @@ export default function Dashboard() {
         <Card className="lg:col-span-8 border-none shadow-sm overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-7">
             <div>
-              <CardTitle className="text-lg font-bold">Performance Analytics</CardTitle>
+              <CardTitle className="text-lg font-medium">Performance Analytics</CardTitle>
               <CardDescription>Visual representation of growth metrics</CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -266,7 +269,7 @@ export default function Dashboard() {
           {/* Pie Chart Card */}
           <Card className="border-none shadow-sm overflow-hidden flex-1 flex flex-col">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-bold">Market Share</CardTitle>
+              <CardTitle className="text-lg font-medium">Market Share</CardTitle>
               <CardDescription>Distribution by plan type</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col justify-center">
@@ -300,7 +303,7 @@ export default function Dashboard() {
                       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
                       <span className="text-sm font-medium text-foreground">{entry.name}</span>
                     </div>
-                    <span className="text-sm font-bold">{Math.round((entry.value / 900) * 100)}%</span>
+                    <span className="text-sm font-medium">{Math.round((entry.value / 900) * 100)}%</span>
                   </div>
                 ))}
               </div>
@@ -317,7 +320,7 @@ export default function Dashboard() {
         <Card className="lg:col-span-8 border-none shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-4">
             <div>
-              <CardTitle className="text-lg font-bold">Recent Activities</CardTitle>
+              <CardTitle className="text-lg font-medium">Recent Activities</CardTitle>
               <CardDescription>Last 5 system updates</CardDescription>
             </div>
             <button className="text-sm font-medium text-primary hover:underline">View All</button>
@@ -333,17 +336,17 @@ export default function Dashboard() {
               ].map((item, i) => (
                 <div key={i} className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-all duration-200 group">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center font-bold text-sm text-muted-foreground group-hover:bg-background transition-colors">
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center font-bold text-md text-muted-foreground group-hover:bg-background transition-colors">
                       {item.name.charAt(0)}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-foreground">{item.name}</p>
-                      <p className="text-xs text-muted-foreground">{item.action}</p>
+                      <p className="text-md font-medium text-foreground">{item.name}</p>
+                      <p className="text-sm text-muted-foreground">{item.action}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs font-medium text-foreground">{item.time}</p>
-                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                    <p className="text-sm font-medium text-foreground">{item.time}</p>
+                    <span className={`text-[12px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full ${
                       item.status === 'completed' ? 'bg-emerald-50 text-emerald-600' : 
                       item.status === 'pending' ? 'bg-orange-50 text-orange-600' : 'bg-rose-50 text-rose-600'
                     }`}>
@@ -359,7 +362,7 @@ export default function Dashboard() {
         {/* Weekly Progress Card */}
         <Card className="lg:col-span-4 border-none shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg font-bold">Platform Status</CardTitle>
+            <CardTitle className="text-lg font-medium">Platform Status</CardTitle>
             <CardDescription>Live system performance</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -369,7 +372,7 @@ export default function Dashboard() {
               { label: 'Storage Usage', value: 65, color: 'bg-orange-500' },
             ].map((item, i) => (
               <div key={i} className="space-y-2">
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-md">
                   <span className="font-medium text-muted-foreground">{item.label}</span>
                   <span className="font-bold">{item.value}%</span>
                 </div>
@@ -384,11 +387,11 @@ export default function Dashboard() {
             <div className="pt-4 border-t border-border mt-4">
               <div className="flex items-center gap-3 p-4 rounded-2xl bg-muted/30">
                 <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
-                  <ShieldCheck size={20} />
+                  <ShieldCheck size={24} />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-foreground">System Protected</p>
-                  <p className="text-[10px] text-muted-foreground uppercase">Last scan: 5 mins ago</p>
+                  <p className="text-md font-medium text-foreground">System Protected</p> 
+                  <p className="text-[12px] text-muted-foreground uppercase">Last scan: 5 mins ago</p>
                 </div>
               </div>
             </div>

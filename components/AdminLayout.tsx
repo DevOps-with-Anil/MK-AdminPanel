@@ -142,12 +142,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         },
         {
           label: t('sidebar.tenants'),
-          href: '/admin/tenants',
-          module: MODULES.TENANTS,
+          href: '/admin/affiliates',
+          module: MODULES.AFFILIATES,
           icon: Building2,
           children: [
-            { label: 'List', href: '/admin/tenants' },
-            { label: 'Profile Page', href: '/admin/tenants/profile' },
+            { label: 'List', href: '/admin/affiliates' },
+            { label: 'Profile Page', href: '/admin/affiliates/profile' },
           ],
         },
         {
@@ -312,7 +312,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 <div>
                   <button
                     onClick={() => toggleItem(item.label)}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 group ${
+                    className={`w-full flex items-center justify-between px-3 py-2.5 text-md font-medium rounded-lg transition-all duration-200 group ${
                       isActive 
                         ? 'bg-primary/10 text-primary' 
                         : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
@@ -337,7 +337,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                           <Link
                             key={child.href}
                             href={child.href}
-                            className={`block px-3 py-2 text-sm rounded-md transition-colors ${
+                            className={`block px-3 py-2 text-md rounded-md transition-colors ${
                               isChildActive
                                 ? 'text-primary font-medium bg-primary/5'
                                 : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/30'
@@ -353,7 +353,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               ) : (
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 group ${
+                  className={`flex items-center gap-3 px-3 py-2.5 text-md font-medium rounded-lg transition-all duration-200 group ${
                     isActive 
                       ? 'bg-primary/10 text-primary' 
                       : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
@@ -422,7 +422,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           {sidebarOpen && (
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center font-bold text-primary-foreground text-sm">MK</div>
-              <h1 className="font-bold text-lg text-sidebar-primary truncate">MK Project</h1>
+              <h1 className="font-semibold text-xl text-sidebar-primary truncate">MK Project</h1>
             </div>
           )}
         </div>
@@ -456,8 +456,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
             {/* Logo and Title */}
             <div className="flex items-center gap-2 mr-2 md:mr-4 md:border-r md:border-border md:pr-4">
-               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center font-bold text-primary-foreground text-xs">MK</div>
-               <span className="font-bold text-foreground hidden sm:inline-block">MK Project Admin</span>
+               <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center font-bold text-primary-foreground text-xl">MK</div>
+               <span className="font-medium text-xl text-foreground hidden sm:inline-block">MK Project Admin</span>
             </div>
 
             {/* Breadcrumbs */}
@@ -465,7 +465,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               <BreadcrumbList>
                 <BreadcrumbItem>
                   <BreadcrumbLink href="/admin/dashboard" className="flex items-center gap-1 hover:text-primary transition-colors">
-                    <Home size={16} />
+                    <Home size={18} />
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 {breadcrumbs.length > 0 && <BreadcrumbSeparator />}
@@ -473,7 +473,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                   <React.Fragment key={crumb.href}>
                     <BreadcrumbItem>
                       {crumb.isLast ? (
-                        <BreadcrumbPage className="font-semibold text-foreground">
+                        <BreadcrumbPage className="font-regular text-sm">
                           {crumb.label}
                         </BreadcrumbPage>
                       ) : (

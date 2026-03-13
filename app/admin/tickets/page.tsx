@@ -90,9 +90,9 @@ function TicketsPageContent() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-start gap-4">
-          <Headphones className="text-primary w-10 h-10 mt-1" />
+          <Headphones className="text-primary w-7 h-7 mt-1" />
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Support Tickets</h1>
+            <h1 className="text-xl font-medium text-foreground">Support Tickets</h1>
             <p className="text-muted-foreground">Manage customer support requests</p>
           </div>
         </div>

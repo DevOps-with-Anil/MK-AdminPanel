@@ -58,7 +58,7 @@ export function AdminPageContent({
         <div className="flex items-start gap-4">
           <div className="text-4xl">{icon}</div>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">{title}</h1>
+            <h1 className="text-3xl font-medium text-foreground">{title}</h1>
             <p className="text-muted-foreground mt-1">{description}</p>
           </div>
         </div>
@@ -120,7 +120,7 @@ export function AdminPageContent({
                       <tr key={item.id} className="border-b border-border hover:bg-muted/50 transition-colors">
                         {columns.map((col) => (
                           <td key={col.key} className="py-4 px-4 text-sm">
-                            {col.render ? col.render(item[col.key], item) : item[col.key]}
+                            {col.render ? col.render((item as any)[col.key], item) : (item as any)[col.key]}
                           </td>
                         ))}
                         <td className="py-4 px-4 text-right">

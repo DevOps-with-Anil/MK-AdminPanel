@@ -102,7 +102,7 @@ function CreatePlanContent() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Create New Plan</h1>
+          <h1 className="text-xl font-medium text-foreground">Create New Plan</h1>
           <p className="text-muted-foreground">Design a new subscription plan with features</p>
         </div>
       </div>

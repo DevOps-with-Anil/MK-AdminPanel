@@ -32,8 +32,12 @@ export default function AdminPageTemplate({
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-4 mb-2">
-              {icon && React.isValidElement(icon) && <div className="text-primary">{React.cloneElement(icon, { size: 28 })}</div>}
-              <h1 className="text-3xl font-bold text-foreground">{title}</h1>
+              {icon && React.isValidElement(icon) && (
+                <div className="text-primary">
+                  {React.cloneElement(icon as React.ReactElement<any>, { size: 24 })}
+                </div>
+              )}
+              <h1 className="text-xl font-medium text-foreground">{title}</h1>
             </div>
             <p className="text-muted-foreground">{description}</p>
             <p className="text-xs text-muted-foreground mt-2">
