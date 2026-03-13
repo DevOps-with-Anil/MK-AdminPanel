@@ -189,18 +189,150 @@ export interface Notification {
 }
 
 export const MOCK_NOTIFICATIONS: Notification[] = [
-  { id: '1', title: 'New Tenant Joined', description: 'Alpha Corp has successfully onboarded.', time: '2 mins ago', type: 'success', isRead: false },
-  { id: '2', title: 'Security Alert', description: 'Failed login attempt from unknown IP.', time: '15 mins ago', type: 'error', isRead: false },
-  { id: '3', title: 'KYB Request', description: 'New verification request from Beta Ltd.', time: '1 hour ago', type: 'info', isRead: false },
-  { id: '4', title: 'System Update', description: 'Scheduled maintenance in 2 hours.', time: '3 hours ago', type: 'warning', isRead: true },
-  { id: '5', title: 'Payment Received', description: 'Invoice #1234 has been paid.', time: '5 hours ago', type: 'success', isRead: true },
-  { id: '6', title: 'New Ticket', description: 'User reported a bug in CMS.', time: '8 hours ago', type: 'info', isRead: true },
-  { id: '7', title: 'Module Added', description: 'Analytics V2 is now active.', time: '12 hours ago', type: 'success', isRead: true },
-  { id: '8', title: 'Plan Expiring', description: 'Tenant Gamma\'s plan ends in 3 days.', time: '1 day ago', type: 'warning', isRead: true },
-  { id: '9', title: 'Role Changed', description: 'Admin Y role updated to Manager.', time: '1 day ago', type: 'info', isRead: true },
-  { id: '10', title: 'Audit Complete', description: 'Monthly security audit finalized.', time: '2 days ago', type: 'success', isRead: true },
-  { id: '11', title: 'New Message', description: 'Support team sent a reply.', time: '3 days ago', type: 'info', isRead: true },
-  { id: '12', title: 'Backup Successful', description: 'Nightly database backup completed.', time: '4 days ago', type: 'success', isRead: true },
+  {
+    id: '1',
+    title: 'New Tenant Registered',
+    description: 'EduSmart Pvt Ltd has successfully registered and is awaiting KYB verification.',
+    time: '1 min ago',
+    type: 'success',
+    isRead: false
+  },
+  {
+    id: '2',
+    title: 'Failed Login Attempt',
+    description: 'Multiple failed login attempts detected for admin@alphacorp.com from IP 185.23.44.12.',
+    time: '8 mins ago',
+    type: 'error',
+    isRead: false
+  },
+  {
+    id: '3',
+    title: 'New KYB Verification Request',
+    description: 'Bright Future Academy submitted documents for business verification.',
+    time: '25 mins ago',
+    type: 'info',
+    isRead: false
+  },
+  {
+    id: '4',
+    title: 'Subscription Payment Received',
+    description: '₹24,999 payment received from Alpha Corp for Enterprise plan renewal.',
+    time: '45 mins ago',
+    type: 'success',
+    isRead: false
+  },
+  {
+    id: '5',
+    title: 'Server CPU Usage High',
+    description: 'Application server CPU usage exceeded 85% for the last 5 minutes.',
+    time: '1 hour ago',
+    type: 'warning',
+    isRead: false
+  },
+  {
+    id: '6',
+    title: 'New Support Ticket',
+    description: 'User reported a payment gateway issue while purchasing a course.',
+    time: '2 hours ago',
+    type: 'info',
+    isRead: true
+  },
+  {
+    id: '7',
+    title: 'New Course Published',
+    description: 'Tenant "TechLearn Hub" published a new course: Advanced React Development.',
+    time: '3 hours ago',
+    type: 'success',
+    isRead: true
+  },
+  {
+    id: '8',
+    title: 'Subscription Expiring Soon',
+    description: 'Tenant Bright Future Academy subscription will expire in 3 days.',
+    time: '5 hours ago',
+    type: 'warning',
+    isRead: true
+  },
+  {
+    id: '9',
+    title: 'Database Backup Completed',
+    description: 'Nightly backup for production database completed successfully.',
+    time: '7 hours ago',
+    type: 'success',
+    isRead: true
+  },
+  {
+    id: '10',
+    title: 'User Role Updated',
+    description: 'Admin Anil Singh changed role of user Rahul Sharma to Tenant Manager.',
+    time: '9 hours ago',
+    type: 'info',
+    isRead: true
+  },
+  {
+    id: '11',
+    title: 'Security Patch Applied',
+    description: 'Latest security patch v2.4.1 applied to authentication service.',
+    time: '12 hours ago',
+    type: 'success',
+    isRead: true
+  },
+  {
+    id: '12',
+    title: 'Storage Limit Warning',
+    description: 'Tenant "Digital Academy" has used 92% of allocated storage.',
+    time: '18 hours ago',
+    type: 'warning',
+    isRead: true
+  },
+  {
+    id: '13',
+    title: 'New Student Enrollment',
+    description: '152 students enrolled in the course "Full Stack Web Development".',
+    time: '1 day ago',
+    type: 'success',
+    isRead: true
+  },
+  {
+    id: '14',
+    title: 'Payment Gateway Error',
+    description: 'Razorpay API returned timeout error for transaction TXN948273.',
+    time: '1 day ago',
+    type: 'error',
+    isRead: true
+  },
+  {
+    id: '15',
+    title: 'Monthly Analytics Report Ready',
+    description: 'Your SaaS platform performance report for March is now available.',
+    time: '2 days ago',
+    type: 'info',
+    isRead: true
+  },
+  {
+    id: '16',
+    title: 'Tenant Domain Updated',
+    description: 'Alpha Corp changed their custom domain to learn.alphacorp.com.',
+    time: '2 days ago',
+    type: 'info',
+    isRead: true
+  },
+  {
+    id: '17',
+    title: 'System Maintenance Scheduled',
+    description: 'Platform maintenance scheduled on Sunday 2:00 AM – 4:00 AM UTC.',
+    time: '3 days ago',
+    type: 'warning',
+    isRead: true
+  },
+  {
+    id: '18',
+    title: 'Audit Log Generated',
+    description: 'Monthly security and activity audit logs have been generated.',
+    time: '4 days ago',
+    type: 'success',
+    isRead: true
+  }
 ];
 
 // Mock Admin Users

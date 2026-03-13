@@ -1,7 +1,7 @@
 'use client';
 
 import { AdminProvider } from '@/contexts/AdminContext';
-import { AdminLayout } from '@/components/AdminLayout';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { CheckCircle, Search } from 'lucide-react';
@@ -27,7 +27,7 @@ export default function VerificationPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Search by affiliate or request ID..."
+              placeholder="Search by user or company..."
               className="pl-10"
             />
           </div>
@@ -36,7 +36,7 @@ export default function VerificationPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Pending Requests</CardTitle>
+          <CardTitle>KYB Requests</CardTitle>
           <CardDescription>Review and process new KYB submissions.</CardDescription>
         </CardHeader>
         <CardContent>

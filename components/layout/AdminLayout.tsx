@@ -5,14 +5,14 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAdmin } from '@/contexts/AdminContext';
 import { MODULES, LANGUAGES, COUNTRIES, Language, Country, MOCK_NOTIFICATIONS } from '@/lib/mock-data';
-import { 
-  Menu, 
-  X, 
-  User, 
-  LogOut, 
-  ChevronDown, 
-  Bell, 
-  Home, 
+import {
+  Menu,
+  X,
+  User,
+  LogOut,
+  ChevronDown,
+  Bell,
+  Home,
   KeyRound,
   LayoutDashboard,
   Building2,
@@ -33,16 +33,16 @@ import {
   Info,
   Clock
 } from 'lucide-react';
-import { 
-  Breadcrumb, 
-  BreadcrumbItem, 
-  BreadcrumbLink, 
-  BreadcrumbList, 
-  BreadcrumbPage, 
-  BreadcrumbSeparator 
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator
 } from '@/components/ui/breadcrumb';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import Footer from './Footer';
+
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -71,9 +71,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const handleLogout = () => {
     // Determine where to redirect based on current admin type
     if (currentAdminType.startsWith('root')) {
-      router.push('/systemlogin');
+      router.push('/auth/root-login');
     } else {
-      router.push('/affiliatelogin');
+      router.push('/auth/admin-login');
     }
   };
 
@@ -91,19 +91,19 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     const paths = pathname.split('/').filter(Boolean);
     // Filter out 'admin' and 'dashboard' segments
     const filteredPaths = paths.filter(path => path !== 'admin' && path !== 'dashboard');
-    
+
     return filteredPaths.map((path, index) => {
       const href = `/${paths.slice(0, paths.indexOf(path) + 1).join('/')}`;
-      
+
       // Map common paths to professional labels
       let label = path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ');
       if (path === 'notifications') label = 'Notifications';
       if (path === 'sub-admins') label = 'Sub Administrators';
       if (path === 'verification') label = 'KYB Verifications';
-      
-      return { 
-        label, 
-        href, 
+
+      return {
+        label,
+        href,
         isLast: index === filteredPaths.length - 1
       };
     });
@@ -122,12 +122,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   // Get organized menu items by category
   const getMenuByCategory = () => {
-    const categoryMenus: Record<string, Array<{ 
-      label: string; 
-      href: string; 
-      module: string; 
+    const categoryMenus: Record<string, Array<{
+      label: string;
+      href: string;
+      module: string;
       icon: React.ElementType;
-      children?: Array<{ label: string; href: string }> 
+      children?: Array<{ label: string; href: string }>
     }>> = {
       main: [],
     };
@@ -145,10 +145,6 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           href: '/admin/affiliates',
           module: MODULES.AFFILIATES,
           icon: Building2,
-          children: [
-            { label: 'List', href: '/admin/affiliates' },
-            { label: 'Profile Page', href: '/admin/affiliates/profile' },
-          ],
         },
         {
           label: t('sidebar.subscription_plans'),
@@ -156,9 +152,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           module: MODULES.SUBSCRIPTION_PLANS,
           icon: CreditCard,
           children: [
-            { label: 'List', href: '/admin/plans' },
-            { label: 'Add', href: '/admin/plans/new' },
-            { label: 'Details', href: '/admin/plans/details' },
+            { label: 'Plans List', href: '/admin/plans' },
+            { label: 'Add Plan', href: '/admin/plans/new' },
             { label: 'Subscribers', href: '/admin/plans/subscribers' },
           ],
         },
@@ -167,11 +162,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           href: '/admin/verification',
           module: MODULES.KYB_REQUESTS,
           icon: ShieldCheck,
-          children: [
-            { label: 'List of pending request', href: '/admin/verification?status=pending' },
-            { label: 'Detail page', href: '/admin/verification/details' },
-          ],
-        },
+          },
         {
           label: t('sidebar.analytics_report'),
           href: '/admin/analytics',
@@ -289,12 +280,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   const isRTL = currentLanguage === 'ar';
 
-  const renderMenuCategory = (categoryKey: string, items: Array<{ 
-    label: string; 
-    href: string; 
-    module: string; 
+  const renderMenuCategory = (categoryKey: string, items: Array<{
+    label: string;
+    href: string;
+    module: string;
     icon: React.ElementType;
-    children?: Array<{ label: string; href: string }> 
+    children?: Array<{ label: string; href: string }>
   }>) => {
     const visibleItems = items.filter((item) => hasPermission(item.module, 'view'));
 
@@ -305,18 +296,17 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         {visibleItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href || (item.children && item.children.some(child => pathname === child.href));
-          
+
           return (
             <div key={item.href}>
               {item.children ? (
                 <div>
                   <button
                     onClick={() => toggleItem(item.label)}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 text-md font-medium rounded-lg transition-all duration-200 group ${
-                      isActive 
-                        ? 'bg-primary/10 text-primary' 
+                    className={`w-full flex items-center justify-between px-3 py-2.5 text-[15px] font-medium rounded-lg transition-all duration-200 group ${isActive
+                        ? 'bg-primary/10 text-primary'
                         : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-                    }`}
+                      }`}
                   >
                     <span className="flex items-center gap-3">
                       <Icon size={18} className={`${isActive ? 'text-primary' : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground'} transition-colors`} />
@@ -337,11 +327,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                           <Link
                             key={child.href}
                             href={child.href}
-                            className={`block px-3 py-2 text-md rounded-md transition-colors ${
-                              isChildActive
+                            className={`block px-3 py-2 text-[14px] rounded-md transition-colors ${isChildActive
                                 ? 'text-primary font-medium bg-primary/5'
                                 : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/30'
-                            }`}
+                              }`}
                           >
                             {child.label}
                           </Link>
@@ -353,11 +342,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               ) : (
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 text-md font-medium rounded-lg transition-all duration-200 group ${
-                    isActive 
-                      ? 'bg-primary/10 text-primary' 
+                  className={`flex items-center gap-3 px-3 py-2.5 text-[15px] font-medium rounded-lg transition-all duration-200 group ${isActive
+                      ? 'bg-primary/10 text-primary'
                       : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-                  }`}
+                    }`}
                 >
                   <Icon size={18} className={`${isActive ? 'text-primary' : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground'} transition-colors`} />
                   {sidebarOpen && <span className="truncate">{item.label}</span>}
@@ -379,9 +367,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     <div className={`flex h-screen bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
       {/* Mobile Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-full z-50 ${
-          mobileSidebarOpen ? 'w-64' : 'w-0'
-        } bg-sidebar border-r border-sidebar-border transition-all duration-300 flex flex-col overflow-hidden md:hidden`}
+        className={`fixed top-0 left-0 h-full z-50 ${mobileSidebarOpen ? 'w-64' : 'w-0'
+          } bg-sidebar border-r border-sidebar-border transition-all duration-300 flex flex-col overflow-hidden md:hidden`}
       >
         {/* Logo */}
         <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
@@ -413,9 +400,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
       {/* Desktop Sidebar */}
       <div
-        className={`hidden md:flex md:flex-col ${
-          sidebarOpen ? 'md:w-64' : 'md:w-20'
-        } bg-sidebar border-r border-sidebar-border transition-all duration-300`}
+        className={`hidden md:flex md:flex-col ${sidebarOpen ? 'md:w-64' : 'md:w-20'
+          } bg-sidebar border-r border-sidebar-border transition-all duration-300`}
       >
         {/* Logo */}
         <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
@@ -454,10 +440,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               <Menu size={20} className="text-sidebar-foreground" />
             </button>
 
-            {/* Logo and Title */}
+            {/* System Logo and Title */}
             <div className="flex items-center gap-2 mr-2 md:mr-4 md:border-r md:border-border md:pr-4">
-               <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center font-bold text-primary-foreground text-xl">MK</div>
-               <span className="font-medium text-xl text-foreground hidden sm:inline-block">MK Project Admin</span>
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center font-bold text-primary-foreground text-xl">MK</div>
+              <span className="font-medium text-xl text-foreground hidden sm:inline-block">MK Project Admin</span>
             </div>
 
             {/* Breadcrumbs */}
@@ -503,8 +489,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                     <DropdownMenuLabel>Select Country</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     {Object.entries(COUNTRIES).map(([code, data]) => (
-                      <DropdownMenuItem 
-                        key={code} 
+                      <DropdownMenuItem
+                        key={code}
                         onClick={() => setCountry(code as Country)}
                         className={`flex items-center gap-3 cursor-pointer ${currentCountry === code ? 'bg-accent text-accent-foreground' : ''}`}
                       >
@@ -529,8 +515,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                   <DropdownMenuLabel>Select Language</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {Object.entries(LANGUAGES).map(([code, data]) => (
-                    <DropdownMenuItem 
-                      key={code} 
+                    <DropdownMenuItem
+                      key={code}
                       onClick={() => setLanguage(code as Language)}
                       className={`flex items-center gap-3 cursor-pointer ${currentLanguage === code ? 'bg-accent text-accent-foreground' : ''}`}
                     >
@@ -555,28 +541,28 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuContent align="end" className="w-80 p-0 shadow-2xl border-border overflow-hidden rounded-xl">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/20">
                   <div>
-                    <h3 className="text-sm font-black text-foreground uppercase tracking-wider">Notifications</h3>
-                    <p className="text-[10px] text-muted-foreground font-bold">You have {MOCK_NOTIFICATIONS.filter(n => !n.isRead).length} unread alerts</p>
+                    <h3 className="text-md font-medium font-black text-foreground tracking-wider">Notifications</h3>
+                    <p className="text-[12px] text-muted-foreground font-medium">You have {MOCK_NOTIFICATIONS.filter(n => !n.isRead).length} unread alerts</p>
                   </div>
                   <button className="text-[10px] font-black text-primary hover:underline uppercase tracking-tighter">Mark all read</button>
                 </div>
-                
+
                 <div className="max-h-[400px] overflow-y-auto custom-scrollbar divide-y divide-border/50">
                   {MOCK_NOTIFICATIONS.slice(0, 10).map((notification) => (
-                    <DropdownMenuItem 
-                      key={notification.id} 
+                    <DropdownMenuItem
+                      key={notification.id}
                       className={`flex flex-col items-start gap-1 p-4 cursor-pointer focus:bg-muted/50 transition-colors ${!notification.isRead ? 'bg-primary/5' : ''}`}
                     >
                       <div className="flex items-start justify-between w-full gap-3">
                         <div className="flex items-center gap-2">
-                          <div className={`p-1.5 rounded-lg bg-background border border-border shadow-sm`}>
+                          <div className={`p-1.5 rounded-md bg-background border border-border shadow-sm`}>
                             {getNotificationIcon(notification.type)}
                           </div>
-                          <span className={`text-[12px] font-black tracking-tight ${!notification.isRead ? 'text-foreground' : 'text-muted-foreground'}`}>
+                          <span className={`text-md font-black font-medium tracking-tight ${!notification.isRead ? 'text-foreground' : 'text-muted-foreground'}`}>
                             {notification.title}
                           </span>
                         </div>
-                        <span className="text-[9px] font-bold text-muted-foreground/60 uppercase whitespace-nowrap pt-1">
+                        <span className="text-[9px] font-medium text-muted-foreground/60 uppercase whitespace-nowrap pt-1">
                           {notification.time}
                         </span>
                       </div>
@@ -587,10 +573,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                   ))}
                 </div>
 
-                <div className="p-2 border-t border-border bg-muted/10">
-                  <button 
+                <div className="p-2 border-t border-border bg-muted/50">
+                  <button
                     onClick={() => router.push('/admin/notifications')}
-                    className="w-full py-2 text-[11px] font-black text-center text-primary hover:bg-primary/5 rounded-lg transition-colors uppercase tracking-widest border border-dashed border-primary/20"
+                    className="w-full py-2 text-[12px] font-black text-center text-primary hover:bg-primary/50 rounded-lg transition-colors uppercase tracking-widest border border-dashed border-primary/20"
                   >
                     View All Activity Log
                   </button>
@@ -606,27 +592,35 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                     <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{currentUser.name}</p>
                     <p className="text-xs text-muted-foreground">{currentUser.role.name}</p>
                   </div>
-                  <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold group-hover:bg-primary/20 transition-all border border-primary/20">
+                  {/* <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold group-hover:bg-primary/20 transition-all border border-primary/20">
                     {currentUser.name.charAt(0)}
+                  </div> */}
+                  <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold group-hover:bg-primary/20 transition-all border border-primary/20">
+                    {/* {currentUser?.name ? (
+                      currentUser.name.charAt(0).toUpperCase()
+                    ) : (
+                      <User className="w-4 h-4" />
+                    )} */}
+                    <User className="w-4 h-4" />
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 p-0 overflow-hidden">
                   <div className="px-3 py-3 border-b border-border mb-1 bg-muted/20">
-                     <p className="text-sm font-black text-foreground leading-none mb-1">{currentUser.name}</p>
-                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">{currentUser.role.name}</p>
-                     <div className="flex items-center gap-1.5 pt-2 border-t border-border/50">
-                       <Clock size={12} className="text-primary" />
-                       <div>
-                          <p className="text-[9px] font-black text-muted-foreground uppercase tracking-tighter leading-none">Last Access</p>
-                          <p className="text-[10px] font-bold text-foreground">{currentUser.lastLogin}</p>
-                       </div>
-                     </div>
+                    <p className="text-sm font-black text-foreground leading-none mb-1">{currentUser.name}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">{currentUser.role.name}</p>
+                    <div className="flex items-center gap-1.5 pt-2 border-t border-border/50">
+                      <Clock size={12} className="text-primary" />
+                      <div>
+                        <p className="text-[9px] font-black text-muted-foreground uppercase tracking-tighter leading-none">Last Access</p>
+                        <p className="text-[10px] font-bold text-foreground">{currentUser.lastLogin}</p>
+                      </div>
+                    </div>
                   </div>
                   <DropdownMenuItem className="cursor-pointer">
                     <User size={16} className="mr-2" />
                     <span>View Profile</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     className="cursor-pointer"
                     onClick={() => router.push('/admin/change-password')}
                   >
@@ -634,7 +628,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                     <span>Change Password</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={handleLogout}
                     className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
                   >
@@ -649,7 +643,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
         {/* Content Area */}
         <main className="flex-1 overflow-auto bg-muted/20 p-4 md:p-6">{children}</main>
-        <Footer />
+        {/* <Footer /> */}
+        <footer className="py-4 text-center text-sm text-gray-500">
+          &copy; {new Date().getFullYear()} MK Projects. All rights reserved.
+        </footer>
       </div>
     </div>
   );

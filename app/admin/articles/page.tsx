@@ -1,7 +1,7 @@
 'use client';
 
 import { AdminProvider } from '@/contexts/AdminContext';
-import { AdminLayout } from '@/components/AdminLayout';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -65,9 +65,9 @@ function ArticlesPageContent() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-start gap-4">
-          <BookOpen className="text-primary w-10 h-10 mt-1" />
+          <BookOpen className="text-primary w-7 h-7 mt-1" />
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Articles</h1>
+            <h1 className="text-xl font-medium text-foreground">Articles</h1>
             <p className="text-muted-foreground">Manage news articles and blog posts</p>
           </div>
         </div>

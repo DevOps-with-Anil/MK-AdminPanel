@@ -1,7 +1,7 @@
 'use client';
 
 import { AdminProvider } from '@/contexts/AdminContext';
-import { AdminLayout } from '@/components/AdminLayout';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -75,7 +75,7 @@ function RolesPageContent() {
         <div className="flex items-start gap-4">
           <Shield className="text-primary w-7 h-7 mt-1" />
           <div>
-            <h1 className="text-xl font-bold text-foreground">Roles & Permissions</h1>
+            <h1 className="text-xl font-medium text-foreground">Roles & Permissions</h1>
             <p className="text-muted-foreground">Manage user roles and permission sets</p>
           </div>
         </div>

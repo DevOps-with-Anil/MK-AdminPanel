@@ -1,8 +1,9 @@
 'use client';
 
 import { AdminProvider } from '@/contexts/AdminContext';
-import { AdminLayout } from '@/components/AdminLayout';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useState } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -92,10 +93,15 @@ function ModulesPageContent() {
             <p className="text-muted-foreground">Manage platform modules and assign features to plans</p>
           </div>
         </div>
-        <Button className="gap-2 bg-primary hover:bg-primary/90">
+        
+
+        <Link href="/admin/modules/new">
+          <Button className="gap-2 bg-primary hover:bg-primary/90">
+          
           <Plus className="w-4 h-4" />
           New Module
         </Button>
+        </Link>
       </div>
 
       <Card>

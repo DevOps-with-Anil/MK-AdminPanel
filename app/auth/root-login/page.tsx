@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Eye, EyeOff, Loader2, ShieldCheck } from 'lucide-react';
 import { useAdmin } from '@/contexts/AdminContext';
+import Image from "next/image";
+
 
 export default function SystemLoginPage() {
   const router = useRouter();
@@ -41,11 +43,18 @@ export default function SystemLoginPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary/20">
-            <ShieldCheck className="w-10 h-10 text-primary-foreground" />
+            {/* <ShieldCheck className="w-10 h-10 text-primary-foreground" /> */}
+            <Image
+              src="/apple-icon.png"
+              alt=""
+              width={60}
+              height={60}
+              className="object-contain"
+              priority
+            />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">System Administration</h1>
-          <p className="text-slate-400">Root Access Portal</p>
-        </div>
+          <h1 className="text-3xl font-bold text-white mb-2">MK Administration</h1>
+         </div>
 
         {/* Login Card */}
         <Card className="border-slate-800 bg-slate-900 shadow-2xl">
@@ -129,9 +138,9 @@ export default function SystemLoginPage() {
             </form>
 
             <div className="mt-6 pt-6 border-t border-slate-800">
-                <p className="text-center text-xs text-slate-500">
-                    Secure root access for MK Project Platform
-                </p>
+              <p className="text-center text-xs text-slate-500">
+                &copy; {new Date().getFullYear()} MK Projects. All rights reserved.
+              </p>
             </div>
           </CardContent>
         </Card>

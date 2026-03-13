@@ -1,7 +1,7 @@
 'use client';
 
 import { AdminProvider } from '@/contexts/AdminContext';
-import { AdminLayout } from '@/components/AdminLayout';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Save, Plus } from 'lucide-react';
 import Link from 'next/link';
 
-interface FeatureForm {
+interface ModuleForm {
   name: string;
   description: string;
   module: string;
@@ -22,8 +22,8 @@ interface FeatureForm {
   status: 'draft' | 'published';
 }
 
-function AddFeatureContent() {
-  const [formData, setFormData] = useState<FeatureForm>({
+function AddModuleContent() {
+  const [formData, setFormData] = useState<ModuleForm>({
     name: '',
     description: '',
     module: 'dashboard',
@@ -80,8 +80,8 @@ function AddFeatureContent() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Add New Feature</h1>
-          <p className="text-muted-foreground">Create a new feature and assign it to plans</p>
+          <h1 className="text-xl font-medium text-foreground">Add New Modules</h1>
+          <p className="text-muted-foreground">Create a new module and its actions and assign it to plans</p>
         </div>
       </div>
 
@@ -91,13 +91,13 @@ function AddFeatureContent() {
           {/* Feature Details */}
           <Card>
             <CardHeader>
-              <CardTitle>Feature Information</CardTitle>
-              <CardDescription>Define the feature details</CardDescription>
+              <CardTitle>Module Information</CardTitle>
+              <CardDescription>Define the module details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
                 <Label htmlFor="name" className="mb-2 block">
-                  Feature Name *
+                  Module Name *
                 </Label>
                 <Input
                   id="name"
@@ -110,13 +110,13 @@ function AddFeatureContent() {
 
               <div>
                 <Label htmlFor="description" className="mb-2 block">
-                  Description *
+                  Module Description *
                 </Label>
                 <textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
-                  placeholder="Describe what this feature does..."
+                  placeholder="Describe what this module does..."
                   rows={4}
                   required
                   className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
@@ -126,7 +126,7 @@ function AddFeatureContent() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="module" className="mb-2 block">
-                    Module *
+                    Parent Module *
                   </Label>
                   <select
                     id="module"
@@ -196,7 +196,7 @@ function AddFeatureContent() {
           <Card>
             <CardHeader>
               <CardTitle>Assign to Plans</CardTitle>
-              <CardDescription>Select which subscription plans will have access to this feature</CardDescription>
+              <CardDescription>Select which subscription plans will have access to this module</CardDescription>  
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -233,7 +233,7 @@ function AddFeatureContent() {
           <div className="flex gap-3">
             <Button onClick={handleSave} className="gap-2 bg-primary hover:bg-primary/90 flex-1">
               <Save className="w-4 h-4" />
-              Create Feature
+              Create Module
             </Button>
             <Link href="/admin/modules" className="flex-1">
               <Button variant="outline" className="w-full bg-transparent">
@@ -248,7 +248,7 @@ function AddFeatureContent() {
           {/* Preview Card */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Feature Preview</CardTitle>
+              <CardTitle className="text-base">Module Preview</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="p-4 border border-border rounded-lg bg-muted/50">
@@ -259,7 +259,7 @@ function AddFeatureContent() {
                       {formData.name || 'Feature Name'}
                     </h3>
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                      {formData.description || 'Feature description will appear here'}
+                      {formData.description || 'Module description will appear here'}
                     </p>
                   </div>
                 </div>
@@ -331,7 +331,7 @@ export default function AddFeaturePage() {
   return (
     <AdminProvider>
       <AdminLayout>
-        <AddFeatureContent />
+        <AddModuleContent />
       </AdminLayout>
     </AdminProvider>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { AdminProvider } from '@/contexts/AdminContext';
-import { AdminLayout } from '@/components/AdminLayout';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,9 +45,9 @@ function AboutUsPageContent() {
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-center justify-between">
         <div className="flex items-start gap-4">
-          <Info className="text-primary w-10 h-10 mt-1" />
+          <Info className="text-primary w-7 h-8 mt-1" />
           <div>
-            <h1 className="text-3xl font-bold text-foreground">About Us Page</h1>
+            <h1 className="text-xl font-medium text-foreground">About Us Page</h1>
             <p className="text-muted-foreground">Manage platform about page content</p>
           </div>
         </div>

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Eye, EyeOff, Loader2, Store } from 'lucide-react';
 import { useAdmin } from '@/contexts/AdminContext';
+import Image from "next/image";
 
 export default function AffiliateLoginPage() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function AffiliateLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,14 +43,21 @@ export default function AffiliateLoginPage() {
         <div className="text-center mb-8">
           <div className="w-20 h-20 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-200">
             <Store className="w-10 h-10 text-white" />
+            {/* <Image
+              src="/apple-icon-tran.png"
+              alt=""
+              width={60}
+              height={60}
+              className="object-contain"
+              priority
+            /> */}
           </div>
           <h1 className="text-3xl font-bold text-indigo-900 mb-2">Affiliate Panel</h1>
-          <p className="text-indigo-600">Business Management Portal</p>
         </div>
 
         {/* Login Card */}
         <Card className="border-indigo-100 shadow-xl bg-white/80 backdrop-blur-sm">
-          <CardHeader className="space-y-1 border-b border-indigo-50">
+          <CardHeader className="space-y-1 border-b border-indigo-200">
             <CardTitle className="text-indigo-950">Affiliate Sign In</CardTitle>
             <CardDescription className="text-indigo-600/70">Enter business credentials to access your dashboard</CardDescription>
           </CardHeader>
@@ -128,9 +137,9 @@ export default function AffiliateLoginPage() {
             </form>
 
             <div className="mt-6 pt-6 border-t border-indigo-50">
-                <p className="text-center text-xs text-indigo-400">
-                    Enterprise business portal powered by MK Project
-                </p>
+              <p className="text-center text-xs text-indigo-400">
+                Enterprise business portal powered by MK Project
+              </p>
             </div>
           </CardContent>
         </Card>

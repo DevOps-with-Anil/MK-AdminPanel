@@ -1,7 +1,7 @@
 'use client';
 
 import { AdminProvider } from '@/contexts/AdminContext';
-import { AdminLayout } from '@/components/AdminLayout';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -69,9 +69,9 @@ function CategoriesPageContent() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-start gap-4">
-          <Tags className="text-primary w-10 h-10 mt-1" />
+          <Tags className="text-primary w-7 h-7 mt-1" />
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Categories</h1>
+            <h1 className="text-xl font-medium text-foreground">Categories</h1>
             <p className="text-muted-foreground">Organize content into categories</p>
           </div>
         </div>
@@ -161,7 +161,7 @@ function CategoriesPageContent() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-primary">{categories.length}</p>
+              <p className="text-xl font-medium text-primary">{categories.length}</p>   
               <p className="text-sm text-muted-foreground mt-1">Total Categories</p>
             </div>
           </CardContent>
@@ -169,7 +169,7 @@ function CategoriesPageContent() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-secondary">{categories.reduce((sum, c) => sum + c.itemCount, 0)}</p>
+              <p className="text-xl font-medium text-secondary">{categories.reduce((sum, c) => sum + c.itemCount, 0)}</p>   
               <p className="text-sm text-muted-foreground mt-1">Total Items</p>
             </div>
           </CardContent>
@@ -177,7 +177,7 @@ function CategoriesPageContent() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-accent">{categories.filter((c) => c.status === 'active').length}</p>
+              <p className="text-xl font-medium text-accent">{categories.filter((c) => c.status === 'active').length}</p>   
               <p className="text-sm text-muted-foreground mt-1">Active</p>
             </div>
           </CardContent>
