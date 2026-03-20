@@ -142,9 +142,7 @@ function EditVideoContent() {
 export default function EditVideoPage() {
   return (
     <AdminProvider>
-      <AdminLayout>
         <EditVideoContent />
-      </AdminLayout>
     </AdminProvider>
   );
 }

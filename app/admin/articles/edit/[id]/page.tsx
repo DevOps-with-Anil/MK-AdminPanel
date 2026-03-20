@@ -127,9 +127,7 @@ function EditArticleContent() {
 export default function EditArticlePage() {
   return (
     <AdminProvider>
-      <AdminLayout>
-        <EditArticleContent />
-      </AdminLayout>
+      <EditArticleContent />
     </AdminProvider>
   );
 }

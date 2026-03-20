@@ -127,9 +127,7 @@ function NewArticleContent() {
 export default function NewArticlePage() {
   return (
     <AdminProvider>
-      <AdminLayout>
-        <NewArticleContent />
-      </AdminLayout>
+      <NewArticleContent />
     </AdminProvider>
   );
 }

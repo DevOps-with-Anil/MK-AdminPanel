@@ -218,9 +218,9 @@ function AboutUsPageContent() {
 export default function AboutUsPage() {
   return (
     <AdminProvider>
-      <AdminLayout>
+      
         <AboutUsPageContent />
-      </AdminLayout>
+      
     </AdminProvider>
   );
 }

@@ -142,9 +142,7 @@ function NewVideoContent() {
 export default function NewVideoPage() {
   return (
     <AdminProvider>
-      <AdminLayout>
-        <NewVideoContent />
-      </AdminLayout>
+      <NewVideoContent />
     </AdminProvider>
   );
 }

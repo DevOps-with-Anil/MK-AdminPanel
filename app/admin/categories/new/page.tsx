@@ -112,9 +112,7 @@ function NewCategoryContent() {
 export default function NewCategoryPage() {
   return (
     <AdminProvider>
-      <AdminLayout>
-        <NewCategoryContent />
-      </AdminLayout>
+      <NewCategoryContent />
     </AdminProvider>
   );
 }

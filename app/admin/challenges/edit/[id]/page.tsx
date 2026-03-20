@@ -145,9 +145,7 @@ function EditChallengeContent() {
 export default function EditChallengePage() {
   return (
     <AdminProvider>
-      <AdminLayout>
-        <EditChallengeContent />
-      </AdminLayout>
+      <EditChallengeContent />
     </AdminProvider>
   );
 }

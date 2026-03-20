@@ -1,238 +1,402 @@
 'use client';
 
 import { AdminProvider } from '@/contexts/AdminContext';
-import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card, CardContent, CardHeader, CardTitle, CardDescription
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import Link from 'next/link';
+import {
+    Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from '@/components/ui/select';
 
-interface NewAffiliateForm {
-  businessName: string;
-  email: string;
-  phone: string;
-  plan: string;
-  commission: number;
-  status: 'active' | 'inactive';
+/* ================= TYPES ================= */
+
+type LangKey = 'en' | 'fr' | 'ar';
+
+interface MultiLang {
+    en: string;
+    fr: string;
+    ar: string;
 }
 
-function NewAffiliateContent() {
-  const [formData, setFormData] = useState<NewAffiliateForm>({
-    businessName: '',
-    email: '',
-    phone: '',
-    plan: 'pro',
-    commission: 15,
-    status: 'active',
-  });
+interface TenantForm {
+    companyName: MultiLang;
+    description: MultiLang;
+    contact_email: string;
+    phoneCode: string;
+    contact_phoneNumber: string;
+    website: string;
+    adminPanelUrl: string;
+    apiDomains: string[];
 
-  const handleInputChange = (field: string, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+    country: string;
+    state: string;
+    city: string;
 
-  const handleSave = () => {
-    if (!formData.businessName || !formData.email || !formData.phone) {
-      alert('Please fill in all required fields');
-      return;
-    }
-    alert('Affiliate created successfully!');
-  };
-
-  return (
-    <div className="space-y-6 max-w-4xl">
-      <div className="flex items-center gap-4">
-        <Link href="/admin/affiliates">
-          <Button variant="ghost" size="sm" className="gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-xl font-medium text-foreground">Create New Affiliate</h1>
-          <p className="text-muted-foreground">Add a new affiliate partner to the platform</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          {/* Business Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Business Details</CardTitle>
-              <CardDescription>Affiliate business information</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <Label htmlFor="businessName" className="mb-2 block">
-                  Business Name *
-                </Label>
-                <Input
-                  id="businessName"
-                  value={formData.businessName}
-                  onChange={(e) => handleInputChange('businessName', e.target.value)}
-                  placeholder="e.g., Ahmed Trading Co."
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="email" className="mb-2 block">
-                    Email Address *
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    placeholder="email@business.com"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="phone" className="mb-2 block">
-                    Phone Number *
-                  </Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    placeholder="+971-50-123-4567"
-                    required
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Plan & Commission */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Plan & Commission</CardTitle>
-              <CardDescription>Select subscription plan and commission rate</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="plan" className="mb-2 block">
-                    Subscription Plan *
-                  </Label>
-                  <select
-                    id="plan"
-                    value={formData.plan}
-                    onChange={(e) => handleInputChange('plan', e.target.value)}
-                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
-                    required
-                  >
-                    <option value="free">Free</option>
-                    <option value="pro">Pro</option>
-                    <option value="enterprise">Enterprise</option>
-                  </select>
-                </div>
-
-                <div>
-                  <Label htmlFor="commission" className="mb-2 block">
-                    Commission Rate (%) *
-                  </Label>
-                  <Input
-                    id="commission"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.5"
-                    value={formData.commission}
-                    onChange={(e) => handleInputChange('commission', parseFloat(e.target.value))}
-                    placeholder="15"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="status" className="mb-2 block">
-                  Initial Status
-                </Label>
-                <select
-                  id="status"
-                  value={formData.status}
-                  onChange={(e) => handleInputChange('status', e.target.value as any)}
-                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            <Button onClick={handleSave} className="gap-2 bg-primary hover:bg-primary/90 flex-1">
-              <Save className="w-4 h-4" />
-              Create Affiliate
-            </Button>
-            <Link href="/admin/affiliates" className="flex-1">
-              <Button variant="outline" className="w-full bg-transparent">
-                Cancel
-              </Button>
-            </Link>
-          </div>
-        </div>
-
-        {/* Preview Sidebar */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Affiliate Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm">
-              <div>
-                <p className="text-muted-foreground mb-1">Business Name</p>
-                <p className="font-medium text-foreground">{formData.businessName || 'Not set'}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground mb-1">Email</p>
-                <p className="font-medium text-foreground break-all">{formData.email || 'Not set'}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground mb-1">Phone</p>
-                <p className="font-medium text-foreground">{formData.phone || 'Not set'}</p>
-              </div>
-              <div className="pt-3 border-t border-border">
-                <p className="text-muted-foreground mb-2">Plan Details</p>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span>Plan:</span>
-                    <Badge className="capitalize bg-primary text-primary-foreground">{formData.plan}</Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>Commission:</span>
-                    <Badge variant="outline">{formData.commission}%</Badge>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
+    addressLine1: string;
+    addressLine2: string;
+    pincode: string;
 }
 
-export default function NewAffiliatePage() {
-  return (
-    <AdminProvider>
-      <AdminLayout>
-        <NewAffiliateContent />
-      </AdminLayout>
-    </AdminProvider>
-  );
+type Option = {
+    code?: string;
+    value?: string;
+    label: string;
+};
+
+interface DropdownProps {
+    options: Option[];
+    value?: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
+}
+
+/* ================= CONSTANTS ================= */
+
+const LANGUAGES = [
+    { key: 'en', label: 'English' },
+    { key: 'fr', label: 'French' },
+    { key: 'ar', label: 'Arabic' },
+];
+
+const PHONE_CODES: Option[] = [
+    { code: '+91', label: 'India (+91)' },
+    { code: '+1', label: 'USA (+1)' },
+    { code: '+971', label: 'UAE (+971)' },
+];
+
+const COUNTRIES: Option[] = [
+    { value: 'india', label: 'India' },
+    { value: 'usa', label: 'USA' },
+    { value: 'uae', label: 'UAE' },
+];
+
+const STATES: Option[] = [
+    { value: 'mp', label: 'Madhya Pradesh' },
+    { value: 'maharashtra', label: 'Maharashtra' },
+    { value: 'delhi', label: 'Delhi' },
+];
+
+const CITIES: Option[] = [
+    { value: 'bhopal', label: 'Bhopal' },
+    { value: 'indore', label: 'Indore' },
+    { value: 'mumbai', label: 'Mumbai' },
+];
+
+/* ================= COMPONENT ================= */
+
+function Dropdown({
+    options,
+    value,
+    onChange,
+    placeholder = 'Select',
+}: DropdownProps) {
+    return (
+        <Select value={value} onValueChange={onChange}>
+            <SelectTrigger className="w-full">
+                <SelectValue placeholder={placeholder} />
+            </SelectTrigger>
+            <SelectContent>
+                {options.map((opt, i) => {
+                    const val = opt.code || opt.value || '';
+                    return (
+                        <SelectItem key={i} value={val}>
+                            {opt.label}
+                        </SelectItem>
+                    );
+                })}
+            </SelectContent>
+        </Select>
+    );
+}
+
+/* ================= PAGE ================= */
+
+function NewTenantContent() {
+    const [currentLang, setCurrentLang] = useState<LangKey>('en');
+
+    const [formData, setFormData] = useState<TenantForm>({
+        companyName: { en: '', fr: '', ar: '' },
+        description: { en: '', fr: '', ar: '' },
+        contact_email: '',
+        phoneCode: '+91',
+        contact_phoneNumber: '',
+        website: '',
+        adminPanelUrl: '',
+        apiDomains: [''],
+
+        country: '',
+        state: '',
+        city: '',
+
+        addressLine1: '',
+        addressLine2: '',
+        pincode: '',
+    });
+
+    const setLangField = (field: 'companyName' | 'description', value: string) => {
+        setFormData(prev => ({
+            ...prev,
+            [field]: {
+                ...prev[field],
+                [currentLang]: value,
+            },
+        }));
+    };
+
+    const setField = (field: string, value: string) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const setDomain = (i: number, value: string) => {
+        const updated = [...formData.apiDomains];
+        updated[i] = value;
+        setFormData(prev => ({ ...prev, apiDomains: updated }));
+    };
+
+    const addDomain = () => {
+        setFormData(prev => ({
+            ...prev,
+            apiDomains: [...prev.apiDomains, ''],
+        }));
+    };
+
+    const removeDomain = (i: number) => {
+        if (formData.apiDomains.length === 1) return;
+        const updated = formData.apiDomains.filter((_, idx) => idx !== i);
+        setFormData(prev => ({ ...prev, apiDomains: updated }));
+    };
+
+    /* ================= UI ================= */
+
+    return (
+        <div className="space-y-6 max-w-6xl">
+
+            {/* Header */}
+            <div className="flex items-center gap-4">
+                <Link href="/admin/tenants">
+                    <Button variant="ghost" size="sm">
+                        <ArrowLeft className="w-4 h-4" />
+                    </Button>
+                </Link>
+                <div>
+                    <h1 className="text-xl font-medium">Create Tenant</h1>
+                    <p className="text-muted-foreground">Multi-tenant setup</p>
+                </div>
+            </div>
+
+            {/* Language Tabs */}
+            <div className="flex gap-2">
+                {LANGUAGES.map(lang => (
+                    <Button
+                        key={lang.key}
+                        size="sm"
+                        variant={currentLang === lang.key ? 'default' : 'outline'}
+                        onClick={() => setCurrentLang(lang.key as LangKey)}
+                    >
+                        {lang.label}
+                    </Button>
+                ))}
+            </div>
+
+            {/* GRID */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                {/* LEFT */}
+                <div className="space-y-6">
+
+                    {/* Company Info */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Company Info</CardTitle>
+                            <CardDescription>
+                                Provide company name and description in multiple languages
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+
+                            <div>
+                                <Label className="mb-2 block">Company Name ({currentLang})*</Label>
+                                <Input
+                                    value={formData.companyName[currentLang]}
+                                    onChange={e => setLangField('companyName', e.target.value)}
+                                />
+                            </div>
+
+                            <div>
+                                <Label className="mb-2 block">Description ({currentLang})</Label>
+                                <Input
+                                    value={formData.description[currentLang]}
+                                    onChange={e => setLangField('description', e.target.value)}
+                                />
+                            </div>
+
+                        </CardContent>
+                    </Card>
+
+                    {/* Contact Info */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Contact Info</CardTitle>
+                            <CardDescription>Basic contact and address details</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+
+                            {/* Email */}
+                            <div>
+                                <Label className="mb-2 block">Email*</Label>
+                                <Input
+                                    value={formData.contact_email}
+                                    onChange={e => setField('contact_email', e.target.value)}
+                                />
+                            </div>
+
+                            {/* Phone */}
+                            <div className="grid grid-cols-[120px_1fr] gap-4">
+                                <div>
+                                    <Label className="mb-2 block">Phone Code</Label>
+                                    <Dropdown
+                                        options={PHONE_CODES}
+                                        value={formData.phoneCode}
+                                        onChange={(val) => setField('phoneCode', val)}
+                                    />
+                                </div>
+
+                                <div>
+                                    <Label className="mb-2 block">Phone Number *</Label>
+                                    <Input
+                                        value={formData.contact_phoneNumber}
+                                        onChange={e =>
+                                            setField('contact_phoneNumber', e.target.value)
+                                        }
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Address */}
+                            <Input
+                                placeholder="Address Line 1"
+                                value={formData.addressLine1}
+                                onChange={e => setField('addressLine1', e.target.value)}
+                            />
+
+                            <Input
+                                placeholder="Address Line 2"
+                                value={formData.addressLine2}
+                                onChange={e => setField('addressLine2', e.target.value)}
+                            />
+
+                            {/* Location */}
+                            <div className="grid grid-cols-3 gap-4">
+                                <Dropdown options={COUNTRIES} value={formData.country} onChange={(v) => setField('country', v)} />
+                                <Dropdown options={STATES} value={formData.state} onChange={(v) => setField('state', v)} />
+                                <Dropdown options={CITIES} value={formData.city} onChange={(v) => setField('city', v)} />
+                            </div>
+
+                            <Input
+                                placeholder="Pincode"
+                                value={formData.pincode}
+                                onChange={e => setField('pincode', e.target.value)}
+                            />
+
+                        </CardContent>
+                    </Card>
+
+                </div>
+
+                {/* RIGHT */}
+                <div className="space-y-6">
+
+                    {/* Platform */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Platform Config</CardTitle>
+                            <CardDescription>Configure publicly accessible URLs</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <Label className="mb-2 block">Company Website*</Label>
+                            <Input
+                                placeholder=""
+                                value={formData.website}
+                                onChange={e => setField('website', e.target.value)}
+                            />
+                            <Label className="mb-2 block">Admin Panel URL*</Label>
+                            <Input
+                                placeholder=""
+                                value={formData.adminPanelUrl}
+                                onChange={e => setField('adminPanelUrl', e.target.value)}
+                            />
+                        </CardContent>
+                    </Card>
+
+                    {/* API Domains */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>API Domains</CardTitle>
+                            <CardDescription>
+                                Backend API domains used for service communication
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+
+                            {formData.apiDomains.map((d, i) => (
+                                <div key={i} className="flex gap-2 items-start">
+                                    <div className="flex-1">
+                                        <Input
+                                            value={d}
+                                            onChange={e => setDomain(i, e.target.value)}
+                                        />
+                                    </div>
+
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => removeDomain(i)}
+                                        disabled={formData.apiDomains.length === 1}
+                                    >
+                                        <Trash2 className="w-4 h-4 text-red-500" />
+                                    </Button>
+                                </div>
+                            ))}
+
+                            <Button variant="outline" onClick={addDomain}>
+                                + Add Domain
+                            </Button>
+
+                        </CardContent>
+                    </Card>
+
+                </div>
+            </div>
+
+            {/* ACTION */}
+            <div className="flex gap-3">
+                <Button className="flex-1">
+                    <Save className="w-4 h-4 mr-2" />
+                    Create Tenant
+                </Button>
+
+                <Link href="/admin/tenants" className="flex-1">
+                    <Button variant="outline" className="w-full">
+                        Cancel
+                    </Button>
+                </Link>
+            </div>
+
+        </div>
+    );
+}
+
+export default function NewTenantPage() {
+    return (
+        <AdminProvider>
+            <NewTenantContent />
+        </AdminProvider>
+    );
 }

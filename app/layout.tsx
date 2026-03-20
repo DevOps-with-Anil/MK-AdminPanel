@@ -1,56 +1,36 @@
-import React from "react"
-import type { Metadata } from 'next'
-import { Outfit, Geist_Mono } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/next'
-import './globals.css'
-import { Providers } from './providers'
+import React from "react";
+import type { Metadata } from "next";
+import { Outfit, Geist_Mono } from "next/font/google";
+import "./globals.css";
+import { AdminProvider } from "@/contexts/AdminContext";
 
-const outfit = Outfit({ 
+const outfit = Outfit({
   subsets: ["latin"],
-  variable: '--font-outfit',
+  variable: "--font-outfit",
 });
 
-const geistMono = Geist_Mono({ 
+const geistMono = Geist_Mono({
   subsets: ["latin"],
-  variable: '--font-geist-mono',
+  variable: "--font-geist-mono",
 });
 
 export const metadata: Metadata = {
-  title: 'MK Project | Enterprise Admin Management',
-  description: 'Enterprise multi-tenant admin panel with role-based access control, subscription plans, and modular permissions for MK Project',
-  generator: 'v0.app',
-  icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
-  },
-}
+  title: "MK Project | Enterprise Admin Management",
+  description: "Enterprise multi-tenant admin panel",
+};
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" className={`${outfit.variable} ${geistMono.variable}`}>
-      <body className={`font-sans antialiased`}>
-        <Providers>
+      <body className="font-sans antialiased">
+        <AdminProvider>
           {children}
-        </Providers>
-        <Analytics />
+        </AdminProvider>
       </body>
     </html>
-  )
+  );
 }

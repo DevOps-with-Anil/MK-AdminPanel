@@ -1,52 +1,75 @@
 'use client';
 
 import { AdminProvider } from '@/contexts/AdminContext';
-import { AdminLayout } from '@/components/layout/AdminLayout';
+import { useRouter } from 'next/navigation';
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { KeyRound, ShieldCheck, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Lock, AlertCircle, CheckCircle2, Loader2, EyeOff, Eye } from 'lucide-react';
+import { changePassword } from '@/services/auth.service';
+import { validatePasswordChange } from '@/utils/validators';
 
 function ChangePasswordContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const router = useRouter();
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     setError('');
     setSuccess(false);
 
-    if (formData.newPassword !== formData.confirmPassword) {
-      setError('New passwords do not match');
-      return;
-    }
+    // Centralized validation
+    const validationError = validatePasswordChange(formData);
 
-    if (formData.newPassword.length < 8) {
-      setError('Password must be at least 8 characters long');
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const res = await changePassword({
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
+      });
+
+      console.log("Chnage Password Response on Page ::  " + JSON.stringify(res));
+
+      // Success
       setSuccess(true);
+      // Reset form
       setFormData({
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
       });
-    } catch (err) {
-      setError('Failed to update password. Please try again.');
+
+    } catch (err: any) {
+      console.error(err);
+
+      // Unauthorized case
+      if (err?.status === 401) {
+        router.push('/admin/dashboard');
+        return;
+      }
+
+      setError(err?.message || 'Failed to update password.');
     } finally {
       setIsLoading(false);
     }
@@ -54,20 +77,10 @@ function ChangePasswordContent() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* <div className="flex items-center gap-4 mb-2">
-        <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-          <KeyRound className="text-primary w-6 h-6" />
-        </div>
-        <div>
-          <h1 className="text-xl font-medium text-foreground">Security</h1>
-          <p className="text-muted-foreground">Manage your account security and password</p>
-        </div>
-      </div> */}
-
       <Card className="border-border/60 shadow-sm">
         <CardHeader className="border-b border-border/40 bg-muted/20">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-7 h-7 text-primary" />
+            <Lock className="w-7 h-7 text-primary" />
             <CardTitle className="text-xl font-medium">Change Password</CardTitle>
           </div>
           <CardDescription>
@@ -92,49 +105,83 @@ function ChangePasswordContent() {
 
             <div className="space-y-2">
               <Label htmlFor="currentPassword">Current Password</Label>
-              <Input
-                id="currentPassword"
-                type="password"
-                placeholder="••••••••"
-                required
-                value={formData.currentPassword}
-                onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
-                className="bg-muted/30"
-              />
+              <div className="relative">
+
+                <Input
+                  id="currentPassword"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  required
+                  value={formData.currentPassword}
+                  onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
+                  className="bg-muted/30"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                  disabled={isLoading}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="newPassword">New Password</Label>
-                <Input
-                  id="newPassword"
-                  type="password"
-                  placeholder="••••••••"
-                  required
-                  value={formData.newPassword}
-                  onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
-                  className="bg-muted/30"
-                />
+                <div className="relative">
+                  {/* New Password */}
+                  <Input
+                    id="newPassword"
+                    type={showNewPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    required
+                    value={formData.newPassword}
+                    onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
+                    className="bg-muted/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                    disabled={isLoading}
+                  >
+                    {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="••••••••"
-                  required
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  className="bg-muted/30"
-                />
+                <div className="relative">
+
+                  {/* Confirm Password */}
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    required
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    className="bg-muted/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                    disabled={isLoading}
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
             </div>
 
             <div className="pt-2">
-              <Button 
-                type="submit" 
-                className="w-full md:w-auto min-w-[150px] shadow-sm shadow-primary/20" 
-                disabled={isLoading}
+              <Button
+                type="submit"
+                className="w-full md:w-auto min-w-[150px] shadow-sm shadow-primary/20"
+                disabled={isLoading || !formData.newPassword || !formData.confirmPassword || !formData.currentPassword}
               >
                 {isLoading ? (
                   <>
@@ -169,9 +216,7 @@ function ChangePasswordContent() {
 export default function ChangePasswordPage() {
   return (
     <AdminProvider>
-      <AdminLayout>
-        <ChangePasswordContent />
-      </AdminLayout>
+      <ChangePasswordContent />
     </AdminProvider>
   );
 }

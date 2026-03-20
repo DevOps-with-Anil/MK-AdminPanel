@@ -112,9 +112,7 @@ function EditCategoryContent() {
 export default function EditCategoryPage() {
   return (
     <AdminProvider>
-      <AdminLayout>
         <EditCategoryContent />
-      </AdminLayout>
     </AdminProvider>
   );
 }

@@ -188,9 +188,7 @@ function VideosPageContent() {
 export default function VideosPage() {
   return (
     <AdminProvider>
-      <AdminLayout>
-        <VideosPageContent />
-      </AdminLayout>
+      <VideosPageContent />
     </AdminProvider>
   );
 }

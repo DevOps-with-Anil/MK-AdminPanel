@@ -24,6 +24,7 @@ interface AdminContextType {
   setAdminType: (type: AdminType) => void;
   setLanguage: (lang: Language) => void;
   setCountry: (country: Country) => void;
+  setCurrentUser: (user: AdminUser) => void; // ✅ Added setter
 
   // Helper Functions
   t: (key: string) => string;
@@ -38,7 +39,10 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const [currentLanguage, setLanguage] = useState<Language>('en');
   const [currentCountry, setCountry] = useState<Country>('IN');
 
-  const currentUser = MOCK_USERS[currentAdminType];
+  // ✅ Add state for currentUser so it can be manually updated
+  const [currentUser, setCurrentUser] = useState<AdminUser>(
+    MOCK_USERS[currentAdminType]
+  );
 
   // Translation helper
   const t = (key: string): string => {
@@ -83,6 +87,8 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const handleSetAdminType = (type: AdminType) => {
     setAdminType(type);
+    // Update currentUser automatically when admin type changes
+    setCurrentUser(MOCK_USERS[type]);
   };
 
   const handleSetLanguage = (lang: Language) => {
@@ -103,6 +109,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         setAdminType: handleSetAdminType,
         setLanguage: handleSetLanguage,
         setCountry: handleSetCountry,
+        setCurrentUser, // ✅ Provide setter
         t,
         hasPermission,
         hasFeature,

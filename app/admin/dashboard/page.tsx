@@ -1,17 +1,18 @@
 'use client';
 
-import { AdminProvider } from '@/contexts/AdminContext';
+import { useState, useEffect } from 'react';
+// import { AdminProvider } from '@/contexts/AdminContext';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import React from 'react';
 import { useAdmin } from '@/contexts/AdminContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  TrendingUp, 
-  Users, 
-  Zap, 
-  CheckCircle, 
-  ArrowUpRight, 
-  ArrowDownRight, 
+import {
+  TrendingUp,
+  Users,
+  Zap,
+  CheckCircle,
+  ArrowUpRight,
+  ArrowDownRight,
   Calendar,
   MoreVertical,
   Download,
@@ -24,15 +25,15 @@ import {
   Ticket,
   LayoutDashboard
 } from 'lucide-react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
-  AreaChart, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  AreaChart,
   Area,
   PieChart,
   Pie,
@@ -40,6 +41,10 @@ import {
   LineChart,
   Line
 } from 'recharts';
+import { tokenStorage } from "@/utils/token";
+import { profile } from '@/services/auth.service';
+
+
 
 
 
@@ -81,7 +86,10 @@ const interactionData = [
 
 
 export default function Dashboard() {
-  const { currentUser, currentCountry, hasFeature } = useAdmin();
+
+
+
+  const { currentUser } = useAdmin();
 
   const countryNames: Record<string, string> = {
     IN: 'India',
@@ -163,20 +171,20 @@ export default function Dashboard() {
       trend: 'up'
     },
   ];
-       
- return (
-   <AdminProvider>
-      <AdminLayout>
+
+  return (
+
+
     <div className="space-y-8 pb-10">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-start gap-4">
-        <LayoutDashboard className="text-primary w-7 h-7 mt-1" />
-        <div>
-          <h1 className="text-xl font-medium text-foreground">Overview Dashboard</h1>
-          <p className="text-muted-foreground text-sm">Welcome back, {currentUser.name}. Here's what's happening today.</p>
+          <LayoutDashboard className="text-primary w-7 h-7 mt-1" />
+          <div>
+            <h1 className="text-xl font-medium text-foreground">Overview Dashboard</h1>
+            <p className="text-muted-foreground text-sm">Welcome back, {currentUser.name}. Here's what's happening today.</p>
+          </div>
         </div>
-         </div>
         <div className="flex items-center gap-2">
           <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-background border border-border rounded-lg hover:bg-accent transition-colors">
             <Calendar size={16} />
@@ -232,26 +240,26 @@ export default function Dashboard() {
                 <BarChart data={revenueData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
-                  <XAxis 
-                    dataKey="name" 
-                    axisLine={false} 
-                    tickLine={false} 
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
                     tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
                     dy={10}
                   />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
                     tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
                   />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--background))', 
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--background))',
                       borderColor: 'hsl(var(--border))',
                       borderRadius: '12px',
                       boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
@@ -259,8 +267,8 @@ export default function Dashboard() {
                     }}
                     itemStyle={{ fontSize: '12px', fontWeight: '600' }}
                   />
-                  <Bar 
-                    dataKey="value" 
+                  <Bar
+                    dataKey="value"
                     fill="#6366f1"
                     radius={[4, 4, 0, 0]}
                     animationDuration={1500}
@@ -297,7 +305,7 @@ export default function Dashboard() {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                     />
                   </PieChart>
@@ -353,10 +361,9 @@ export default function Dashboard() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium text-foreground">{item.time}</p>
-                    <span className={`text-[12px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                      item.status === 'completed' ? 'bg-emerald-50 text-emerald-600' : 
+                    <span className={`text-[12px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full ${item.status === 'completed' ? 'bg-emerald-50 text-emerald-600' :
                       item.status === 'pending' ? 'bg-orange-50 text-orange-600' : 'bg-rose-50 text-rose-600'
-                    }`}>
+                      }`}>
                       {item.status}
                     </span>
                   </div>
@@ -384,9 +391,9 @@ export default function Dashboard() {
                   <span className="font-bold">{item.value}%</span>
                 </div>
                 <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full ${item.color} rounded-full transition-all duration-1000 ease-out`} 
-                    style={{ width: `${item.value}%` }} 
+                  <div
+                    className={`h-full ${item.color} rounded-full transition-all duration-1000 ease-out`}
+                    style={{ width: `${item.value}%` }}
                   />
                 </div>
               </div>
@@ -397,7 +404,7 @@ export default function Dashboard() {
                   <ShieldCheck size={24} />
                 </div>
                 <div>
-                  <p className="text-md font-medium text-foreground">System Protected</p> 
+                  <p className="text-md font-medium text-foreground">System Protected</p>
                   <p className="text-[12px] text-muted-foreground uppercase">Last scan: 5 mins ago</p>
                 </div>
               </div>
@@ -406,7 +413,7 @@ export default function Dashboard() {
         </Card>
       </div>
     </div>
-      </AdminLayout>
-    </AdminProvider>
+
+
   );
 }

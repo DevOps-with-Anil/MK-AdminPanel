@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAdmin } from '@/contexts/AdminContext';
@@ -31,7 +31,7 @@ import {
   AlertCircle,
   AlertTriangle,
   Info,
-  Clock
+  Clock,
 } from 'lucide-react';
 import {
   Breadcrumb,
@@ -42,6 +42,10 @@ import {
   BreadcrumbSeparator
 } from '@/components/ui/breadcrumb';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { tokenStorage } from "@/utils/token";
+import { profile } from '@/services/auth.service';
+
+// const [isLoading, setIsLoading] = useState(false);
 
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -68,9 +72,40 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const currentLanguageData = LANGUAGES[currentLanguage as Language] || LANGUAGES.en;
   const currentCountryData = COUNTRIES[currentCountry as Country] || COUNTRIES.IN;
 
+
+  const [user, setUser] = useState(null);
+
+
+  // const ProfilePage = () => {
+  const [profileData, setProfileData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setIsLoading(true);
+      try {
+        const token = tokenStorage.get(); // get token from cookie
+        if (!token) throw new Error("No token found");
+        const res = await profile(); // your API call
+        setProfileData(res);
+        console.log("Profile Response on AdminLayout ::  " + JSON.stringify(res));
+      } catch (err: any) {
+        console.error(err);
+        setError(err.message || "Failed to load profile");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+
+
   const handleLogout = () => {
     // Determine where to redirect based on current admin type
-    if (currentAdminType.startsWith('root')) {
+    tokenStorage.clear();
+    if (currentAdminType.startsWith('root-admin')) {
       router.push('/auth/root-login');
     } else {
       router.push('/auth/admin-login');
@@ -87,28 +122,56 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   };
 
   // Generate breadcrumbs from pathname
-  const generateBreadcrumbs = () => {
-    const paths = pathname.split('/').filter(Boolean);
-    // Filter out 'admin' and 'dashboard' segments
-    const filteredPaths = paths.filter(path => path !== 'admin' && path !== 'dashboard');
+  // const generateBreadcrumbs = () => {
+  //   const paths = pathname.split('/').filter(Boolean);
+  //   // Filter out 'admin' and 'dashboard' segments
+  //   const filteredPaths = paths.filter(path => path !== 'admin' && path !== 'dashboard');
 
-    return filteredPaths.map((path, index) => {
-      const href = `/${paths.slice(0, paths.indexOf(path) + 1).join('/')}`;
+  //   return filteredPaths.map((path, index) => {
+  //     const href = `/${paths.slice(0, paths.indexOf(path) + 1).join('/')}`;
 
-      // Map common paths to professional labels
-      let label = path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ');
-      if (path === 'notifications') label = 'Notifications';
-      if (path === 'sub-admins') label = 'Sub Administrators';
-      if (path === 'verification') label = 'KYB Verifications';
+  //     // Map common paths to professional labels
+  //     let label = path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ');
+  //     if (path === 'notifications') label = 'Notifications';
+  //     if (path === 'sub-admins') label = 'Sub Administrators';
+  //     if (path === 'verification') label = 'KYB Verifications';
 
-      return {
-        label,
-        href,
-        isLast: index === filteredPaths.length - 1
-      };
-    });
-  };
+  //     return {
+  //       label,
+  //       href,
+  //       isLast: index === filteredPaths.length - 1
+  //     };
+  //   });
+  // };
 
+ const generateBreadcrumbs = () => {
+  const paths = pathname.split('/').filter(Boolean);
+
+  // Filter out admin, dashboard, and 'modules' from clickable breadcrumb
+  const filteredPaths = paths.filter(path => path !== 'admin' && path !== 'dashboard');
+
+  return filteredPaths.map((path, index) => {
+    // Build href from all previous paths INCLUDING 'modules' internally
+    const href = `/${paths.slice(0, index + 1).join('/')}`;
+
+    // Map to nice labels
+    let label = path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ');
+    if (path === 'notifications') label = 'Notifications';
+    if (path === 'sub-admins') label = 'Sub Administrators';
+    if (path === 'verification') label = 'KYB Verifications';
+
+    // Hide modules from breadcrumb (optional: non-clickable)
+    if (path === 'modules') {
+      return { label: '', href: '', isLast: false }; // hide it completely
+    }
+
+    return {
+      label,
+      href,
+      isLast: index === filteredPaths.length - 1
+    };
+  }).filter(crumb => crumb.label); // remove empty hidden crumbs
+};
   const breadcrumbs = generateBreadcrumbs();
 
   const getNotificationIcon = (type: string) => {
@@ -162,12 +225,6 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           href: '/admin/verification',
           module: MODULES.KYB_REQUESTS,
           icon: ShieldCheck,
-          },
-        {
-          label: t('sidebar.analytics_report'),
-          href: '/admin/analytics',
-          module: MODULES.ANALYTICS_REPORT,
-          icon: BarChart3,
         },
         {
           label: t('sidebar.support_tickets'),
@@ -176,16 +233,31 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           icon: Ticket,
         },
         {
-          label: t('sidebar.permission_packages'),
-          href: '/admin/modules',
-          module: MODULES.PERMISSION_PACKAGES,
-          icon: Package,
-        },
-        {
           label: t('sidebar.admin_users'),
           href: '/admin/users',
           module: MODULES.ADMIN_USERS,
           icon: Users,
+          children: [
+            { label: 'System Admins', href: '/admin/users' },
+            { label: 'Roles Management', href: '/admin/roles' }
+          ],
+        },
+        {
+          label: t('sidebar.permission_packages'),
+          href: '/admin/modules',
+          module: MODULES.PERMISSION_PACKAGES,
+          icon: Package,
+          children: [
+            { label: 'Root Modules', href: '/admin/modules/root-modules' },
+            { label: 'Affiliate Modules', href: '/admin/modules/affiliate-modules' }
+          ],
+        },
+
+        {
+          label: t('sidebar.analytics_report'),
+          href: '/admin/analytics',
+          module: MODULES.ANALYTICS_REPORT,
+          icon: BarChart3,
         },
         {
           label: t('sidebar.security_compliance'),
@@ -304,8 +376,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                   <button
                     onClick={() => toggleItem(item.label)}
                     className={`w-full flex items-center justify-between px-3 py-2.5 text-[15px] font-medium rounded-lg transition-all duration-200 group ${isActive
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
                       }`}
                   >
                     <span className="flex items-center gap-3">
@@ -328,8 +400,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                             key={child.href}
                             href={child.href}
                             className={`block px-3 py-2 text-[14px] rounded-md transition-colors ${isChildActive
-                                ? 'text-primary font-medium bg-primary/5'
-                                : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/30'
+                              ? 'text-primary font-medium bg-primary/5'
+                              : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/30'
                               }`}
                           >
                             {child.label}
@@ -343,8 +415,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 <Link
                   href={item.href}
                   className={`flex items-center gap-3 px-3 py-2.5 text-[15px] font-medium rounded-lg transition-all duration-200 group ${isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
                     }`}
                 >
                   <Icon size={18} className={`${isActive ? 'text-primary' : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground'} transition-colors`} />
@@ -542,9 +614,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/20">
                   <div>
                     <h3 className="text-md font-medium font-black text-foreground tracking-wider">Notifications</h3>
-                    <p className="text-[12px] text-muted-foreground font-medium">You have {MOCK_NOTIFICATIONS.filter(n => !n.isRead).length} unread alerts</p>
+                    <p className="text-[13px] text-muted-foreground font-medium">You have {MOCK_NOTIFICATIONS.filter(n => !n.isRead).length} unread alerts</p>
                   </div>
-                  <button className="text-[10px] font-black text-primary hover:underline uppercase tracking-tighter">Mark all read</button>
+                  <button className="text-[14px] font-medium font-black text-primary hover:underline tracking-tighter">Mark all read</button>
                 </div>
 
                 <div className="max-h-[400px] overflow-y-auto custom-scrollbar divide-y divide-border/50">
@@ -566,7 +638,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                           {notification.time}
                         </span>
                       </div>
-                      <p className="text-[11px] text-muted-foreground font-medium leading-relaxed pl-8">
+                      <p className="text-[12px] text-muted-foreground font-medium leading-relaxed pl-8">
                         {notification.description}
                       </p>
                     </DropdownMenuItem>
@@ -589,8 +661,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-3 focus:outline-none group">
                   <div className="text-right hidden sm:block">
-                    <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{currentUser.name}</p>
-                    <p className="text-xs text-muted-foreground">{currentUser.role.name}</p>
+                    <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{profileData?.data?.name}</p>
+                    <p className="text-xs text-muted-foreground">{profileData?.data?.name}</p>
                   </div>
                   {/* <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold group-hover:bg-primary/20 transition-all border border-primary/20">
                     {currentUser.name.charAt(0)}
@@ -606,17 +678,19 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 p-0 overflow-hidden">
                   <div className="px-3 py-3 border-b border-border mb-1 bg-muted/20">
-                    <p className="text-sm font-black text-foreground leading-none mb-1">{currentUser.name}</p>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">{currentUser.role.name}</p>
+                    {/* <p className="text-sm font-black text-foreground leading-none mb-1">{currentUser.name}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">{currentUser.role.name}</p> */}
                     <div className="flex items-center gap-1.5 pt-2 border-t border-border/50">
                       <Clock size={12} className="text-primary" />
                       <div>
-                        <p className="text-[9px] font-black text-muted-foreground uppercase tracking-tighter leading-none">Last Access</p>
-                        <p className="text-[10px] font-bold text-foreground">{currentUser.lastLogin}</p>
+                        <p className="text-[12px] font-medium font-black text-muted-foreground tracking-tighter leading-none">Last Access</p>
+                        <p className="text-[12px] font-medium text-foreground">{currentUser.lastLogin}</p>
                       </div>
                     </div>
                   </div>
-                  <DropdownMenuItem className="cursor-pointer">
+                  <DropdownMenuItem className="cursor-pointer"
+                    onClick={() => router.push('/admin/profile')}
+                  >
                     <User size={16} className="mr-2" />
                     <span>View Profile</span>
                   </DropdownMenuItem>

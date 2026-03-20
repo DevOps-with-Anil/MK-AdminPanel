@@ -1,272 +1,378 @@
 'use client';
 
-import { AdminProvider } from '@/contexts/AdminContext';
-import { AdminLayout } from '@/components/layout/AdminLayout';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Save, User, Shield } from 'lucide-react';
+import { ArrowLeft, Save, Upload, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
+import { createAdminUser, getSystemRoles } from '@/services/auth.service';
 
-interface NewAdminForm {
-  name: string;
-  email: string;
-  role: string;
-  country: string;
-  permissions: string[];
-}
+// ---------------------- Constants ----------------------
 
-const AVAILABLE_PERMISSIONS = [
-  { id: 'dashboard', label: 'Dashboard Access', description: 'View main dashboard' },
-  { id: 'users_view', label: 'View Admin Users', description: 'View all admin users' },
-  { id: 'users_edit', label: 'Edit Admin Users', description: 'Edit admin user details' },
-  { id: 'users_delete', label: 'Delete Admin Users', description: 'Delete admin users' },
-  { id: 'roles_manage', label: 'Manage Roles', description: 'Create and edit roles' },
-  { id: 'plans_view', label: 'View Plans', description: 'View subscription plans' },
-  { id: 'plans_edit', label: 'Edit Plans', description: 'Edit subscription plans' },
-  { id: 'affiliates_view', label: 'View Affiliates', description: 'View affiliate partners' },
-  { id: 'affiliates_edit', label: 'Edit Affiliates', description: 'Edit affiliate details' },
-  { id: 'cms_manage', label: 'Manage CMS', description: 'Create and edit content' },
-  { id: 'reports_view', label: 'View Reports', description: 'View analytics and reports' },
-  { id: 'settings_manage', label: 'Manage Settings', description: 'Configure platform settings' },
+// Country options for multi-select
+const COUNTRIES = [
+  { code: 'IN', label: 'India' },
+  { code: 'US', label: 'United States' },
+  { code: 'AE', label: 'UAE' },
 ];
 
-function NewAdminContent() {
-  const [formData, setFormData] = useState<NewAdminForm>({
-    name: '',
-    email: '',
-    role: 'root-sub-admin',
-    country: 'IN',
-    permissions: ['dashboard', 'users_view', 'plans_view', 'affiliates_view'],
-  });
+// Phone code options for dropdown
+const PHONE_CODES = [
+  { code: '+91', label: 'India (+91)' },
+  { code: '+1', label: 'USA (+1)' },
+  { code: '+971', label: 'UAE (+971)' },
+];
 
-  const handleInputChange = (field: string, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+// ---------------------- Dropdown Component ----------------------
+/**
+ * Generic dropdown component
+ */
+function Dropdown({
+  options,
+  value,
+  onChange,
+  placeholder
+}: {
+  options: { id?: string; code?: string; label: string }[];
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
-  const togglePermission = (permissionId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      permissions: prev.permissions.includes(permissionId)
-        ? prev.permissions.filter((id) => id !== permissionId)
-        : [...prev.permissions, permissionId],
-    }));
-  };
-
-  const handleSave = () => {
-    if (!formData.name || !formData.email) {
-      alert('Please fill in all required fields');
-      return;
-    }
-    alert('Admin user created successfully!');
-  };
-
-  const getRoleBadgeColor = (role: string) => {
-    const colors: Record<string, string> = {
-      'root-admin': 'bg-primary text-primary-foreground',
-      'root-sub-admin': 'bg-secondary text-secondary-foreground',
-      'affiliate-admin': 'bg-accent text-accent-foreground',
-      'affiliate-sub-admin': 'bg-muted text-muted-foreground',
+  // Close dropdown when clicked outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
     };
-    return colors[role] || 'bg-muted text-muted-foreground';
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      {/* Dropdown button */}
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full px-3 py-2 border rounded-md flex justify-between items-center bg-white"
+      >
+        {options.find(o => o.id === value || o.code === value)?.label || placeholder || 'Select'}
+        <ChevronDown className="w-4 h-4" />
+      </button>
+
+      {/* Dropdown options */}
+      {open && (
+        <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
+          {options.map(opt => (
+            <div
+              key={opt.id || opt.code}
+              onClick={() => { onChange(opt.id || opt.code!); setOpen(false); }}
+              className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+            >
+              {opt.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------- Multi-Select Countries Component ----------------------
+/**
+ * Multi-select dropdown for countries
+ */
+function CountryMultiSelect({
+  selected,
+  onChange
+}: {
+  selected: string[];
+  onChange: (val: string[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicked outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Toggle country selection
+  const toggleCountry = (code: string) => {
+    if (selected.includes(code)) onChange(selected.filter(c => c !== code));
+    else onChange([...selected, code]);
   };
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="relative" ref={ref}>
+      {/* Dropdown button */}
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full px-3 py-2 border rounded-md flex justify-between items-center bg-white"
+      >
+        {selected.length > 0 ? selected.map(c => COUNTRIES.find(x => x.code === c)?.label).join(', ') : 'Select countries'}
+        <ChevronDown className="w-4 h-4" />
+      </button>
+
+      {/* Dropdown options */}
+      {open && (
+        <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
+          {COUNTRIES.map(c => (
+            <label key={c.code} className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-gray-100">
+              <Checkbox checked={selected.includes(c.code)} onCheckedChange={() => toggleCountry(c.code)} />
+              <span>{c.label}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------- New Admin Form Component ----------------------
+function NewAdminContent() {
+  // ---------------------- State ----------------------
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    phoneCode: '+91',
+    phoneNumber: '',
+    role: '',
+    allowedCountries: [] as string[],
+    status: 'INACTIVE',
+    image: ''
+  });
+
+  const [roles, setRoles] = useState<{ id: string; label: string }[]>([]);
+  const [loadingRoles, setLoadingRoles] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // ---------------------- Handlers ----------------------
+  // Handle input change for all fields
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setErrors(prev => ({ ...prev, [field]: '' })); // clear field error
+  };
+
+  // Handle image upload
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = () => handleInputChange('image', reader.result as string);
+      reader.readAsDataURL(e.target.files[0]);
+    }
+  };
+
+  // Validate form fields
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
+
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) newErrors.email = 'Enter a valid email address';
+    }
+
+    if (!formData.password.trim()) newErrors.password = 'Password is required';
+    else {
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      if (!passwordRegex.test(formData.password)) newErrors.password = 'Password must be at least 8 characters, include uppercase, lowercase, number, and special character';
+    }
+
+    if (!formData.phoneNumber.trim()) newErrors.phoneNumber = 'Phone number is required';
+    if (!formData.status) newErrors.status = 'Status is required';
+    if (!formData.allowedCountries.length) newErrors.allowedCountries = 'Select at least one country';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Handle save button click
+  const handleSave = async () => {
+    if (!validateForm()) return;
+    setIsLoading(true);
+    setErrors(prev => ({ ...prev, global: '' })); // clear global error
+
+    try {
+      await createAdminUser({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        phoneCode: formData.phoneCode,
+        phoneNumber: formData.phoneNumber,
+        role: formData.role,
+        allowedCountries: formData.allowedCountries,
+        status: formData.status as 'ACTIVE' | 'INACTIVE'
+      });
+
+      alert('Admin user created successfully!');
+
+      // Reset form after success
+      setFormData({
+        name: '',
+        email: '',
+        password: '',
+        phoneCode: '+91',
+        phoneNumber: '',
+        role: roles[0]?.id || '',
+        allowedCountries: [],
+        status: 'INACTIVE',
+        image: ''
+      });
+      setErrors({});
+    } catch (err: any) {
+      setErrors(prev => ({ ...prev, global: err?.message || 'Failed to create admin user' }));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ---------------------- Fetch Roles ----------------------
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const response = await getSystemRoles({});
+        const rolesData = response.data || response;
+
+        if (Array.isArray(rolesData)) {
+          const roleList = rolesData.map((role: any) => ({ id: role._id, label: role.name }));
+          setRoles(roleList);
+
+          if (roleList.length > 0) handleInputChange('role', roleList[0].id);
+        }
+      } catch (err) {
+        console.error('Fetch roles error', err);
+      } finally {
+        setLoadingRoles(false);
+      }
+    };
+    fetchRoles();
+  }, []);
+
+  // ---------------------- Render ----------------------
+  return (
+    <div className="space-y-6 max-w-8xl">
+      {/* Header & Breadcrumb */}
       <div className="flex items-center gap-4">
         <Link href="/admin/users">
-          <Button variant="ghost" size="sm" className="gap-2">
+          <Button variant="ghost" size="sm">
             <ArrowLeft className="w-4 h-4" />
           </Button>
         </Link>
         <div>
-          <h1 className="text-xl font-medium text-foreground">Create New Admin User</h1>
+          <h1 className="text-xl font-medium">Create New Admin User</h1>
           <p className="text-muted-foreground">Add a new administrator and configure permissions</p>
+          {errors.global && <p className="text-red-500 mt-2">{errors.global}</p>}
         </div>
       </div>
 
+      {/* Form Card */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Main Form */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Basic Information */}
           <Card>
             <CardHeader>
               <CardTitle>User Information</CardTitle>
               <CardDescription>Enter basic admin details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+
+              {/* Name */}
               <div>
-                <Label htmlFor="name" className="mb-2 block">
-                  Full Name *
-                </Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  placeholder="e.g., John Smith"
-                  required
-                />
+                <Label className="mb-2 block">Full Name *</Label>
+                <Input value={formData.name} onChange={e => handleInputChange('name', e.target.value)} placeholder="Full Name" />
+                {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
               </div>
 
+              {/* Email */}
               <div>
-                <Label htmlFor="email" className="mb-2 block">
-                  Email Address *
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  placeholder="john@example.com"
-                  required
-                />
+                <Label className="mb-2 block">Email *</Label>
+                <Input type="email" value={formData.email} onChange={e => handleInputChange('email', e.target.value)} placeholder="Email" />
+                {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
               </div>
 
+              {/* Password */}
+              <div>
+                <Label className="mb-2 block">Password *</Label>
+                <div className="relative">
+                  <Input type={showPassword ? 'text' : 'password'} value={formData.password} onChange={e => handleInputChange('password', e.target.value)} placeholder="Password" />
+                  <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2" onClick={() => setShowPassword(!showPassword)}>
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
+              </div>
+
+              {/* Phone */}
+              <div className="grid grid-cols-[120px_1fr] gap-4">
+                <div>
+                  <Label className="mb-2 block">Phone Code *</Label>
+                  <Dropdown options={PHONE_CODES} value={formData.phoneCode} onChange={val => handleInputChange('phoneCode', val)} placeholder="Select code" />
+                </div>
+                <div>
+                  <Label className="mb-2 block">Phone Number *</Label>
+                  <Input type="number" value={formData.phoneNumber} onChange={e => handleInputChange('phoneNumber', e.target.value)} placeholder="Phone Number" />
+                  {errors.phoneNumber && <p className="text-red-500 text-sm">{errors.phoneNumber}</p>}
+                </div>
+              </div>
+
+              {/* Role & Status */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="role" className="mb-2 block">
-                    User Role *
-                  </Label>
-                  <select
-                    id="role"
-                    value={formData.role}
-                    onChange={(e) => handleInputChange('role', e.target.value)}
-                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
-                    required
-                  >
-                    <option value="root-admin">Root Admin</option>
-                    <option value="root-sub-admin">Root Sub-Admin</option>
-                    <option value="affiliate-admin">Affiliate Admin</option>
-                    <option value="affiliate-sub-admin">Affiliate Sub-Admin</option>
-                  </select>
+                  <Label className="mb-2 block">Role *</Label>
+                  {loadingRoles ? <div>Loading roles...</div> :
+                    <Dropdown options={roles} value={formData.role} onChange={val => handleInputChange('role', val)} placeholder="Select role" />
+                  }
+                  {errors.role && <p className="text-red-500 text-sm">{errors.role}</p>}
                 </div>
-
                 <div>
-                  <Label htmlFor="country" className="mb-2 block">
-                    Country *
-                  </Label>
-                  <select
-                    id="country"
-                    value={formData.country}
-                    onChange={(e) => handleInputChange('country', e.target.value)}
-                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
-                    required
-                  >
-                    <option value="IN">India</option>
-                    <option value="AE">United Arab Emirates</option>
-                    <option value="US">United States</option>
-                  </select>
+                  <Label className="mb-2 block">Status *</Label>
+                  <Dropdown options={[{ label: 'Active', id: 'ACTIVE' }, { label: 'Inactive', id: 'INACTIVE' }]} value={formData.status} onChange={val => handleInputChange('status', val)} placeholder="Select status" />
+                  {errors.status && <p className="text-red-500 text-sm">{errors.status}</p>}
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Permissions Assignment */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="w-4 h-4" />
-                Assign Permissions
-              </CardTitle>
-              <CardDescription>Select which features this user can access</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {AVAILABLE_PERMISSIONS.map((perm) => (
-                  <label
-                    key={perm.id}
-                    className="flex items-start gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                  >
-                    <Checkbox
-                      checked={formData.permissions.includes(perm.id)}
-                      onCheckedChange={() => togglePermission(perm.id)}
-                      className="mt-1"
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">{perm.label}</p>
-                      <p className="text-xs text-muted-foreground">{perm.description}</p>
-                    </div>
+              {/* Allowed Countries */}
+              <div>
+                <Label className="mb-2 block">Allowed Countries *</Label>
+                <CountryMultiSelect selected={formData.allowedCountries} onChange={val => handleInputChange('allowedCountries', val)} />
+                {errors.allowedCountries && <p className="text-red-500 text-sm">{errors.allowedCountries}</p>}
+              </div>
+
+              {/* Admin Image */}
+              <div>
+                <Label className="mb-2 block">Admin Image</Label>
+                <div className="flex items-center gap-4">
+                  {formData.image && <img src={formData.image} alt="Admin" className="w-20 h-20 rounded-full object-cover border" />}
+                  <label className="flex items-center gap-2 cursor-pointer px-3 py-2 border rounded-md">
+                    <Upload className="w-4 h-4" /> Upload Image
+                    <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
                   </label>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            <Button onClick={handleSave} className="gap-2 bg-primary hover:bg-primary/90 flex-1">
-              <Save className="w-4 h-4" />
-              Create Admin User
-            </Button>
-            <Link href="/admin/users" className="flex-1">
-              <Button variant="outline" className="w-full bg-transparent">
-                Cancel
-              </Button>
-            </Link>
-          </div>
-        </div>
-
-        {/* Sidebar Preview */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Admin Summary */}
-          <Card className="sticky top-0">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <User className="w-4 h-4" />
-                Admin Preview
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-4 bg-muted/50 rounded-lg border border-border">
-                <p className="text-sm text-muted-foreground mb-2">User Info</p>
-                <div className="space-y-2">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Name</p>
-                    <p className="font-semibold text-foreground">{formData.name || 'Not set'}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Email</p>
-                    <p className="font-mono text-sm text-foreground break-all">{formData.email || 'Not set'}</p>
-                  </div>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <p className="text-sm font-semibold text-foreground">Role & Location</p>
-                <div className="flex gap-2">
-                  <Badge className={getRoleBadgeColor(formData.role)}>
-                    {formData.role.replace('-', ' ')}
-                  </Badge>
-                  <Badge variant="outline">{formData.country}</Badge>
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-border">
-                <p className="text-sm font-semibold text-foreground mb-3">Assigned Permissions</p>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {AVAILABLE_PERMISSIONS.filter((p) => formData.permissions.includes(p.id)).length > 0 ? (
-                    AVAILABLE_PERMISSIONS.filter((p) => formData.permissions.includes(p.id)).map((perm) => (
-                      <div key={perm.id} className="flex items-center justify-between p-2 bg-primary/10 rounded border border-primary/20">
-                        <span className="text-xs font-medium text-foreground">{perm.label}</span>
-                        <Badge className="bg-primary text-primary-foreground text-xs">✓</Badge>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-xs text-muted-foreground text-center py-4">No permissions selected</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-border">
-                <p className="text-sm text-muted-foreground mb-1">Total Permissions</p>
-                <p className="text-2xl font-bold text-primary">{formData.permissions.length}</p>
+              {/* Buttons */}
+              <div className="flex gap-3 mt-4">
+                <Button onClick={handleSave} className="gap-2 bg-primary flex-1" disabled={isLoading}>
+                  <Save className="w-4 h-4" /> {isLoading ? 'Saving...' : 'Save Admin'}
+                </Button>
+                <Link href="/admin/users" className="flex-1">
+                  <Button variant="outline" className="w-full">Cancel</Button>
+                </Link>
               </div>
             </CardContent>
           </Card>
@@ -276,12 +382,4 @@ function NewAdminContent() {
   );
 }
 
-export default function NewAdminPage() {
-  return (
-    <AdminProvider>
-      <AdminLayout>
-        <NewAdminContent />
-      </AdminLayout>
-    </AdminProvider>
-  );
-}
+export default NewAdminContent;

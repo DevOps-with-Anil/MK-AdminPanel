@@ -88,7 +88,7 @@ function TicketsPageContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
         <div className="flex items-start gap-4">
           <Headphones className="text-primary w-7 h-7 mt-1" />
           <div>
@@ -96,11 +96,11 @@ function TicketsPageContent() {
             <p className="text-muted-foreground">Manage customer support requests</p>
           </div>
         </div>
-      </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <div className="relative">
+        {/* <Card>
+        <CardContent className="pt-6"> */}
+        <div className="flex flex-col md:flex-row md:items-center gap-2 w-full md:w-auto">
+          <div className="relative w-full md:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               type="text"
@@ -110,8 +110,13 @@ function TicketsPageContent() {
               className="pl-10"
             />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+        {/* </CardContent>
+      </Card> */}
+
+      </div>
+
+
 
       <Card>
         <CardHeader>
@@ -213,9 +218,7 @@ function TicketsPageContent() {
 export default function TicketsPage() {
   return (
     <AdminProvider>
-      <AdminLayout>
-        <TicketsPageContent />
-      </AdminLayout>
+      <TicketsPageContent />
     </AdminProvider>
   );
 }

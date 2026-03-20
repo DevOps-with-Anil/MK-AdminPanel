@@ -213,9 +213,7 @@ function ChallengesPageContent() {
 export default function ChallengesPage() {
   return (
     <AdminProvider>
-      <AdminLayout>
         <ChallengesPageContent />
-      </AdminLayout>
     </AdminProvider>
   );
 }

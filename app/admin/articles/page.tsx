@@ -188,9 +188,9 @@ function ArticlesPageContent() {
 export default function ArticlesPage() {
   return (
     <AdminProvider>
-      <AdminLayout>
+      
         <ArticlesPageContent />
-      </AdminLayout>
+      
     </AdminProvider>
   );
 }

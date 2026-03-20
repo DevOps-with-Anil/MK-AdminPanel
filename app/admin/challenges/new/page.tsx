@@ -145,9 +145,7 @@ function NewChallengeContent() {
 export default function NewChallengePage() {
   return (
     <AdminProvider>
-      <AdminLayout>
-        <NewChallengeContent />
-      </AdminLayout>
+      <NewChallengeContent />
     </AdminProvider>
   );
 }

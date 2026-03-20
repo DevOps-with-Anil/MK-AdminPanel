@@ -7,34 +7,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Eye, EyeOff, Loader2, Store } from 'lucide-react';
-import { useAdmin } from '@/contexts/AdminContext';
-import Image from "next/image";
+
 
 export default function AffiliateLoginPage() {
   const router = useRouter();
-  const { setAdminType } = useAdmin();
-  const [email, setEmail] = useState('hassan@affiliate.com');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('root@mkproject.com');
+  const [password, setPassword] = useState('Root@12345');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
 
-    try {
-      // For demo purposes, we'll just set the admin type and redirect
-      setAdminType('affiliate-admin');
-      router.push('/admin/dashboard');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const handleLogin = async (e: any) => { }
+
+
 
   return (
     <div className="min-h-screen bg-indigo-50 flex items-center justify-center p-4">

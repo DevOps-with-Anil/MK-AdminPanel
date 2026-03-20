@@ -289,9 +289,7 @@ function EditPlanContent() {
 export default function EditPlanPage() {
   return (
     <AdminProvider>
-      <AdminLayout>
-        <EditPlanContent />
-      </AdminLayout>
+      <EditPlanContent />
     </AdminProvider>
   );
 }

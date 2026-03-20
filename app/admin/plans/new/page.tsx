@@ -1,365 +1,322 @@
 'use client';
 
-import { AdminProvider } from '@/contexts/AdminContext';
-import { AdminLayout } from '@/components/layout/AdminLayout';
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useRef, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Save, Search } from 'lucide-react';
+import { ArrowLeft, Save, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
+import { createPlan } from '@/services/auth.service'
+import { stringify } from 'querystring';
 
-interface PlanForm {
-  name: string;
-  price: number;
-  billing: 'monthly' | 'yearly';
-  description: string;
-  selectedFeatures: string[];
-  maxUsers: number;
-  maxProjects: number;
-  status: 'draft' | 'active';
-}
+// ---------------------- Dropdown Component ----------------------
+function Dropdown({
+  options,
+  value,
+  onChange,
+  placeholder
+}: {
+  options: { id: string; label: string }[];
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
-interface Feature {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-}
-
-const availableFeatures: Feature[] = [
-  { id: 'f1', name: 'Dashboard', description: 'Main dashboard and statistics', category: 'Core' },
-  { id: 'f2', name: 'Analytics', description: 'Advanced analytics and reporting', category: 'Analytics' },
-  { id: 'f3', name: 'CMS', description: 'Content management system', category: 'Content' },
-  { id: 'f4', name: 'User Management', description: 'Manage admin users and roles', category: 'Admin' },
-  { id: 'f5', name: 'API Access', description: 'REST API and webhooks', category: 'Integration' },
-  { id: 'f6', name: 'Custom Branding', description: 'White-label customization', category: 'Design' },
-  { id: 'f7', name: 'Priority Support', description: '24/7 priority support', category: 'Support' },
-  { id: 'f8', name: 'Data Export', description: 'Bulk data export', category: 'Data' },
-  { id: 'f9', name: 'Advanced Security', description: 'Two-factor auth and SSO', category: 'Security' },
-  { id: 'f10', name: 'Custom Reports', description: 'Create custom reports', category: 'Analytics' },
-  { id: 'f11', name: 'Team Collaboration', description: 'Real-time collaboration tools', category: 'Teamwork' },
-  { id: 'f12', name: 'Webhooks', description: 'Incoming and outgoing webhooks', category: 'Integration' },
-];
-
-function CreatePlanContent() {
-  const [formData, setFormData] = useState<PlanForm>({
-    name: '',
-    price: 0,
-    billing: 'monthly',
-    description: '',
-    selectedFeatures: [],
-    maxUsers: 1,
-    maxProjects: 5,
-    status: 'draft',
-  });
-
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const handleInputChange = (field: string, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const handleFeatureToggle = (featureId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      selectedFeatures: prev.selectedFeatures.includes(featureId)
-        ? prev.selectedFeatures.filter((id) => id !== featureId)
-        : [...prev.selectedFeatures, featureId],
-    }));
-  };
-
-  const handleSave = () => {
-    if (!formData.name || formData.price < 0 || formData.selectedFeatures.length === 0) {
-      alert('Please fill in all required fields');
-      return;
-    }
-    alert('Plan created successfully!');
-  };
-
-  const categories = Array.from(new Set(availableFeatures.map((f) => f.category)));
-  const filteredFeatures = availableFeatures.filter(
-    (f) =>
-      f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      f.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const selectedFeaturesList = availableFeatures.filter((f) => formData.selectedFeatures.includes(f.id));
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
-    <div className="space-y-6 max-w-7xl">
-      <div className="flex items-center gap-4">
-        <Link href="/admin/plans">
-          <Button variant="ghost" size="sm" className="gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-xl font-medium text-foreground">Create New Plan</h1>
-          <p className="text-muted-foreground">Design a new subscription plan with features</p>
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full px-3 py-2 border rounded-md flex justify-between items-center bg-white"
+      >
+        {options.find(o => o.id === value)?.label || placeholder || 'Select'}
+        <ChevronDown className="w-4 h-4" />
+      </button>
+      {open && (
+        <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
+          {options.map(opt => (
+            <div
+              key={opt.id}
+              onClick={() => { onChange(opt.id); setOpen(false); }}
+              className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+            >
+              {opt.label}
+            </div>
+          ))}
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Main Form */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Plan Basics */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Plan Details</CardTitle>
-              <CardDescription>Basic plan information</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <Label htmlFor="name" className="mb-2 block">
-                  Plan Name *
-                </Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  placeholder="e.g., Professional Plan"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="price" className="mb-2 block">
-                    Price ($)
-                  </Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formData.price}
-                    onChange={(e) => handleInputChange('price', parseFloat(e.target.value))}
-                    placeholder="99"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="billing" className="mb-2 block">
-                    Billing Cycle
-                  </Label>
-                  <select
-                    id="billing"
-                    value={formData.billing}
-                    onChange={(e) => handleInputChange('billing', e.target.value as any)}
-                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
-                  >
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="description" className="mb-2 block">
-                  Description
-                </Label>
-                <textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  placeholder="Plan description and benefits..."
-                  rows={3}
-                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Limits & Restrictions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Plan Limits</CardTitle>
-              <CardDescription>Set usage limits for this plan</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <Label htmlFor="maxUsers" className="mb-2 block">
-                  Max Admin Users
-                </Label>
-                <Input
-                  id="maxUsers"
-                  type="number"
-                  min="1"
-                  value={formData.maxUsers}
-                  onChange={(e) => handleInputChange('maxUsers', parseInt(e.target.value))}
-                  placeholder="1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="maxProjects" className="mb-2 block">
-                  Max Projects/Affiliates
-                </Label>
-                <Input
-                  id="maxProjects"
-                  type="number"
-                  min="1"
-                  value={formData.maxProjects}
-                  onChange={(e) => handleInputChange('maxProjects', parseInt(e.target.value))}
-                  placeholder="5"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="status" className="mb-2 block">
-                  Status
-                </Label>
-                <select
-                  id="status"
-                  value={formData.status}
-                  onChange={(e) => handleInputChange('status', e.target.value as any)}
-                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
-                >
-                  <option value="draft">Draft</option>
-                  <option value="active">Active</option>
-                </select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            <Button onClick={handleSave} className="gap-2 bg-primary hover:bg-primary/90 flex-1">
-              <Save className="w-4 h-4" />
-              Create Plan
-            </Button>
-            <Link href="/admin/plans" className="flex-1">
-              <Button variant="outline" className="w-full bg-transparent">
-                Cancel
-              </Button>
-            </Link>
-          </div>
-        </div>
-
-        {/* Features Selection */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Search & Filter */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search features..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {categories.map((category) => {
-                  const categoryFeatures = filteredFeatures.filter((f) => f.category === category);
-                  if (categoryFeatures.length === 0) return null;
-
-                  return (
-                    <div key={category}>
-                      <h3 className="text-xs font-semibold uppercase text-muted-foreground mb-2">{category}</h3>
-                      <div className="space-y-2">
-                        {categoryFeatures.map((feature) => (
-                          <label
-                            key={feature.id}
-                            className="flex items-start gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                          >
-                            <Checkbox
-                              checked={formData.selectedFeatures.includes(feature.id)}
-                              onCheckedChange={() => handleFeatureToggle(feature.id)}
-                              className="mt-1"
-                            />
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-foreground">{feature.name}</p>
-                              <p className="text-xs text-muted-foreground">{feature.description}</p>
-                            </div>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Selected Features Summary */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Selected Features ({formData.selectedFeatures.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {selectedFeaturesList.length > 0 ? (
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {selectedFeaturesList.map((feature) => (
-                    <div
-                      key={feature.id}
-                      className="flex items-center justify-between p-2 bg-muted/50 rounded-lg"
-                    >
-                      <span className="text-sm font-medium text-foreground">{feature.name}</span>
-                      <Badge variant="outline" className="text-xs">
-                        {feature.category}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">No features selected</p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Plan Preview */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Plan Preview</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
-                <p className="text-xs text-muted-foreground mb-1">Price</p>
-                <p className="text-2xl font-bold text-primary">
-                  ${formData.price}
-                  <span className="text-sm text-muted-foreground">/{formData.billing.charAt(0)}</span>
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="p-2 bg-muted rounded">
-                  <p className="text-xs text-muted-foreground">Max Users</p>
-                  <p className="font-semibold text-foreground">{formData.maxUsers}</p>
-                </div>
-                <div className="p-2 bg-muted rounded">
-                  <p className="text-xs text-muted-foreground">Max Affiliates</p>
-                  <p className="font-semibold text-foreground">{formData.maxProjects}</p>
-                </div>
-              </div>
-              <Badge className={formData.status === 'active' ? 'bg-primary w-full justify-center' : 'bg-secondary w-full justify-center'}>
-                {formData.status}
-              </Badge>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
 
-export default function CreatePlanPage() {
+// ---------------------- Constants ----------------------
+const LANGUAGES = ['en', 'fr', 'ar', 'hi'] as const;
+const CURRENCIES = ['USD', 'EUR', 'INR', 'GBP'];
+const PLAN_TYPES = [{ id: 'MONTHLY', label: 'Monthly' }, { id: 'YEARLY', label: 'Yearly' }];
+const STATUS_TYPES = [{ id: 'inactive', label: 'Inactive' }, { id: 'active', label: 'Active' }];
+
+// ---------------------- Type Definitions ----------------------
+type Lang = typeof LANGUAGES[number];
+
+interface PlanForm {
+  name: Record<Lang, string>;
+  description: Record<Lang, string>;
+  price: string;
+  currency: string;
+  type: string;
+  status: string;
+}
+
+// ---------------------- Add Plan Component ----------------------
+export default function AddPlanPage() {
+
+  const [formData, setFormData] = useState<PlanForm>({
+    name: { en: '', fr: '', ar: '', hi: '' },
+    description: { en: '', fr: '', ar: '', hi: '' },
+    price: '',
+    currency: 'USD',
+    type: 'MONTHLY',
+    status: 'INACTIVE',
+    // modules: [], // ✅ REQUIRED
+  });
+
+  const [activeLang, setActiveLang] = useState<Lang>('en');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [roles, setRoles] = useState<{ id: string; label: string }[]>([]);
+  const [loadingRoles, setLoadingRoles] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+
+
+  // ---------------------- Handlers ----------------------
+  const handleInputChange = (field: 'name' | 'description' | 'price' | 'currency' | 'type' | 'status', value: string, lang?: Lang) => {
+    if (lang && (field === 'name' || field === 'description')) {
+      setFormData(prev => ({
+        ...prev,
+        [field]: { ...prev[field], [lang]: value }
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    }
+    setErrors(prev => ({ ...prev, [field]: '' }));
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.name.en.trim()) newErrors.name = 'Name (EN) is required';
+    if (!formData.price || Number(formData.price) <= 0) newErrors.price = 'Price must be greater than 0';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  useEffect(() => {
+    if (!successMessage && !errors.global) return;
+
+    const timer = setTimeout(() => {
+      setSuccessMessage('');
+      setErrors(prev => ({ ...prev, global: '' }));
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [successMessage, errors.global]);
+
+  const handleSave = async () => {
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    setErrors(prev => ({ ...prev, global: '' }));
+    setSuccessMessage('');
+
+    try {
+      const res = await createPlan({
+        name: formData.name,
+        description: formData.description,
+        price: Number(formData.price),
+        currency: formData.currency,
+        duration: formData.type as 'MONTHLY' | 'YEARLY',
+        modules: []
+      });
+
+      // ✅ SUCCESS (only runs if API is 200 / 201)
+      setSuccessMessage('Plan created successfully!');
+
+      // Reset form
+      setFormData({
+        name: { en: '', fr: '', ar: '', hi: '' },
+        description: { en: '', fr: '', ar: '', hi: '' },
+        price: '',
+        currency: 'USD',
+        type: 'MONTHLY',
+        status: 'INACTIVE',
+      });
+
+    } catch (err: any) {
+      // ❌ ERROR (runs if API returns 400, 401, 404, 500 OR network fails)
+
+      let message = 'Failed to create plan';
+
+      if (err?.status === 0) {
+        message = 'Network error. Check internet connection.';
+      } else if (err?.status === 401) {
+        message = 'Session expired. Please login again.';
+      } else if (err?.status === 404) {
+        message = 'API not found.';
+      } else if (err?.status >= 500) {
+        message = 'Server error. Try again later.';
+      } else if (err?.message) {
+        message = err.message;
+      }
+
+      setErrors(prev => ({
+        ...prev,
+        global: message
+      }));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ---------------------- Render ----------------------
   return (
-    <AdminProvider>
-      <AdminLayout>
-        <CreatePlanContent />
-      </AdminLayout>
-    </AdminProvider>
+    <div className="space-y-6 max-w-xl">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Link href="/admin/plans">
+          <Button variant="ghost" size="sm">
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+        </Link>
+        <div>
+          <h1 className="text-xl font-medium">Add Plan</h1>
+          <p className="text-muted-foreground">Fill in subscription plan details</p>
+        </div>
+      </div>
+
+      {/* Plan Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Plan Details</CardTitle>
+          <CardDescription>Provide name, description, price, currency, type, and status</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+
+          {/* ✅ Success Message */}
+          {successMessage && (
+            <div className="p-3 rounded-md bg-green-100 text-green-700 border border-green-300">
+              {successMessage}
+            </div>
+          )}
+
+          {/* ❌ Error Message */}
+          {errors.global && (
+            <div className="p-3 rounded-md bg-red-100 text-red-700 border border-red-300">
+              {errors.global}
+            </div>
+          )}
+
+          {/* Language Tabs */}
+          <div className="flex gap-2 mb-4">
+            {LANGUAGES.map(lang => (
+              <Button
+                key={lang}
+                variant={activeLang === lang ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveLang(lang)}
+              >
+                {lang.toUpperCase()}
+              </Button>
+            ))}
+          </div>
+
+          {/* Name */}
+          <div>
+            <Label className="mb-2 block">Plan Name ({activeLang.toUpperCase()}) *</Label>
+            <Input
+              value={formData.name[activeLang]}
+              onChange={e => handleInputChange('name', e.target.value, activeLang)}
+              placeholder="Plan Name"
+            />
+            {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+          </div>
+
+          {/* Description */}
+          <div>
+            <Label className="mb-2 block">Description ({activeLang.toUpperCase()})</Label>
+            <textarea
+              value={formData.description[activeLang]}
+              onChange={e => handleInputChange('description', e.target.value, activeLang)}
+              rows={3}
+              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+            />
+          </div>
+
+          {/* Currency + Price */}
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Label className="mb-2 block">Currency</Label>
+              <Dropdown
+                options={CURRENCIES.map(c => ({ id: c, label: c }))}
+                value={formData.currency}
+                onChange={val => handleInputChange('currency', val)}
+              />
+            </div>
+            <div className="flex-1">
+              <Label className="mb-2 block">Price</Label>
+              <Input
+                type="number"
+                min={0}
+                value={formData.price}
+                onChange={e => handleInputChange('price', e.target.value)}
+                placeholder="0.00"
+              />
+              {errors.price && <p className="text-red-500 text-sm">{errors.price}</p>}
+            </div>
+          </div>
+
+          {/* Plan Type + Status */}
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Label className="mb-2 block">Plan Type</Label>
+              <Dropdown
+                options={PLAN_TYPES}
+                value={formData.type}
+                onChange={val => handleInputChange('type', val)}
+              />
+            </div>
+            <div className="flex-1">
+              <Label className="mb-2 block">Status</Label>
+              <Dropdown
+                options={STATUS_TYPES}
+                value={formData.status}
+                onChange={val => handleInputChange('status', val)}
+              />
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-3 mt-4">
+            <Button onClick={handleSave} className="gap-2 bg-primary flex-1">
+              <Save className="w-4 h-4" /> Save Plan
+            </Button>
+            <Link href="/admin/plans" className="flex-1">
+              <Button variant="outline" className="w-full">Cancel</Button>
+            </Link>
+          </div>
+
+        </CardContent>
+      </Card>
+    </div>
   );
 }

@@ -294,9 +294,7 @@ function EditAffiliateContent() {
 export default function EditAffiliatePage() {
   return (
     <AdminProvider>
-      <AdminLayout>
-        <EditAffiliateContent />
-      </AdminLayout>
+      <EditAffiliateContent />
     </AdminProvider>
   );
 }

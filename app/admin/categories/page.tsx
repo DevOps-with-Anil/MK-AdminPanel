@@ -161,7 +161,7 @@ function CategoriesPageContent() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-xl font-medium text-primary">{categories.length}</p>   
+              <p className="text-xl font-medium text-primary">{categories.length}</p>
               <p className="text-sm text-muted-foreground mt-1">Total Categories</p>
             </div>
           </CardContent>
@@ -169,7 +169,7 @@ function CategoriesPageContent() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-xl font-medium text-secondary">{categories.reduce((sum, c) => sum + c.itemCount, 0)}</p>   
+              <p className="text-xl font-medium text-secondary">{categories.reduce((sum, c) => sum + c.itemCount, 0)}</p>
               <p className="text-sm text-muted-foreground mt-1">Total Items</p>
             </div>
           </CardContent>
@@ -177,7 +177,7 @@ function CategoriesPageContent() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-xl font-medium text-accent">{categories.filter((c) => c.status === 'active').length}</p>   
+              <p className="text-xl font-medium text-accent">{categories.filter((c) => c.status === 'active').length}</p>
               <p className="text-sm text-muted-foreground mt-1">Active</p>
             </div>
           </CardContent>
@@ -190,9 +190,9 @@ function CategoriesPageContent() {
 export default function CategoriesPage() {
   return (
     <AdminProvider>
-      <AdminLayout>
-        <CategoriesPageContent />
-      </AdminLayout>
+
+      <CategoriesPageContent />
+
     </AdminProvider>
   );
 }

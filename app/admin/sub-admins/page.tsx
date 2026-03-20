@@ -9,6 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit2, Trash2, MoreVertical, Search, CheckCircle, Users } from 'lucide-react';
 import Link from 'next/link';
+import { useDeleteEntity } from '@/hooks/useDeleteEntity';
+
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,6 +73,7 @@ function UsersPageContent() {
   const { hasPermission } = useAdmin();
   const [searchQuery, setSearchQuery] = useState('');
   const [users] = useState<AdminUser[]>(mockUsers);
+  const { deleteEntity, loadingId } = useDeleteEntity();
 
   const filteredUsers = users.filter(
     user =>
@@ -77,39 +81,55 @@ function UsersPageContent() {
       user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getRoleBadgeColor = (role: string) => {
-    const colors: Record<string, string> = {
-      'root-admin': 'bg-primary text-primary-foreground',
-      'root-sub-admin': 'bg-secondary text-secondary-foreground',
-      'affiliate-admin': 'bg-accent text-accent-foreground',
-      'affiliate-sub-admin': 'bg-muted text-muted-foreground',
-    };
-    return colors[role] || 'bg-muted text-muted-foreground';
-  };
+  // const getRoleBadgeColor = (role: string) => {
+  //   const colors: Record<string, string> = {
+  //     'root-admin': 'bg-primary text-primary-foreground',
+  //     'root-sub-admin': 'bg-secondary text-secondary-foreground',
+  //     'affiliate-admin': 'bg-accent text-accent-foreground',
+  //     'affiliate-sub-admin': 'bg-muted text-muted-foreground',
+  //   };
+  //   return colors[role] || 'bg-muted text-muted-foreground';
+  // };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-         <div className="flex items-start gap-4">
-                <Users className="text-primary w-7 h-7 mt-1" />
-        <div>
-          <h1 className="text-xl font-medium text-foreground">Admin Users</h1>
-          <p className="text-muted-foreground">Manage system administrators and sub-admins</p>
+        <div className="flex items-start gap-4">
+          <Users className="text-primary w-7 h-7 mt-1" />
+          <div>
+            <h1 className="text-xl font-medium text-foreground">Admin Users</h1>
+            <p className="text-muted-foreground">Manage system administrators and sub-admins</p>
+          </div>
         </div>
-        </div>
-        {hasPermission('admin_users', 'create') && (
+
+        {/* Right side: Add button + Search */}
+        <div className="flex flex-col md:flex-row md:items-center gap-2 w-full md:w-auto">
+          {/* Search Input */}
+          <div className="relative w-full md:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Add New Button */}
           <Link href="/admin/users/new">
-            <Button className="gap-2 bg-primary hover:bg-primary/90">
+            <Button className="gap-2 bg-primary hover:bg-primary/90 w-full md:w-auto">
               <Plus className="w-4 h-4" />
               New Admin
             </Button>
           </Link>
-        )}
+
+        </div>
       </div>
 
       {/* Search */}
-      <Card>
+      {/* <Card>
         <CardContent className="pt-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -122,7 +142,9 @@ function UsersPageContent() {
             />
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
+
+
 
       {/* Users Table */}
       <Card>
@@ -168,9 +190,9 @@ function UsersPageContent() {
                       </td>
                       <td className="py-4 px-4 text-muted-foreground">{user.email}</td>
                       <td className="py-4 px-4">
-                        <Badge className={getRoleBadgeColor(user.role)}>
+                        {/* <Badge className={getRoleBadgeColor(user.role)}> */}
                           {user.role.replace('-', ' ')}
-                        </Badge>
+                        {/* </Badge> */}
                       </td>
                       <td className="py-4 px-4">
                         <Badge
@@ -257,9 +279,7 @@ function UsersPageContent() {
 export default function AdminUsersPage() {
   return (
     <AdminProvider>
-      <AdminLayout>
-        <UsersPageContent />
-      </AdminLayout>
+      <UsersPageContent />
     </AdminProvider>
   );
 }

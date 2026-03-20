@@ -173,9 +173,7 @@ function SettingsPageContent() {
 export default function SettingsPage() {
   return (
     <AdminProvider>
-      <AdminLayout>
-        <SettingsPageContent />
-      </AdminLayout>
+      <SettingsPageContent />
     </AdminProvider>
   );
 }

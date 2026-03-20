@@ -1,6 +1,6 @@
 // Mock Data for Frontend-Only Admin Panel
 
-export type AdminType = 'root-admin' | 'root-sub-admin' | 'affiliate-admin' | 'affiliate-sub-admin';
+export type AdminType = 'root-admin' | 'tenant-admin'
 export type Language = 'en' | 'hi' | 'ar';
 export type Country = 'IN' | 'AE' | 'US';
 
@@ -114,22 +114,7 @@ export const MOCK_ROLES: Record<AdminType, Role> = {
       { id: '23', module: MODULES.SETTINGS, action: ACTIONS.EDIT },
     ],
   },
-  'root-sub-admin': {
-    id: 'root-sub-admin-role',
-    name: 'Root Sub-Admin',
-    permissions: [
-      { id: '1', module: MODULES.DASHBOARD, action: ACTIONS.VIEW },
-      { id: '6', module: MODULES.ROLES_PERMISSIONS, action: ACTIONS.VIEW },
-      { id: '9', module: MODULES.PERMISSION_PACKAGES, action: ACTIONS.VIEW },
-      { id: '12', module: MODULES.AFFILIATES, action: ACTIONS.VIEW },
-      { id: '16', module: MODULES.CMS, action: ACTIONS.VIEW },
-      { id: '16b', module: MODULES.CMS, action: ACTIONS.CREATE },
-      { id: '19', module: MODULES.ADS, action: ACTIONS.VIEW },
-      { id: '20', module: MODULES.SUPPORT_TICKETS, action: ACTIONS.VIEW },
-      { id: '21', module: MODULES.POLICIES_FAQ, action: ACTIONS.VIEW },
-    ],
-  },
-  'affiliate-admin': {
+  'tenant-admin': {
     id: 'affiliate-admin-role',
     name: 'Affiliate Admin',
     permissions: [
@@ -159,21 +144,6 @@ export const MOCK_ROLES: Record<AdminType, Role> = {
       { id: '38', module: MODULES.SETTINGS, action: ACTIONS.VIEW },
       { id: '39', module: MODULES.SUBSCRIPTION_PLANS, action: ACTIONS.VIEW },
       { id: '40', module: MODULES.ADMIN_USERS, action: ACTIONS.VIEW },
-    ],
-  },
-  'affiliate-sub-admin': {
-    id: 'affiliate-sub-admin-role',
-    name: 'Affiliate Sub-Admin',
-    permissions: [
-      { id: '1', module: MODULES.DASHBOARD, action: ACTIONS.VIEW },
-      { id: '16', module: MODULES.CMS, action: ACTIONS.VIEW },
-      { id: '16b', module: MODULES.CMS, action: ACTIONS.CREATE },
-      { id: '29', module: MODULES.CHALLENGES, action: ACTIONS.VIEW },
-      { id: '30', module: MODULES.CHALLENGES, action: ACTIONS.CREATE },
-      { id: '19', module: MODULES.ADS, action: ACTIONS.VIEW },
-      { id: '20', module: MODULES.SUPPORT_TICKETS, action: ACTIONS.VIEW },
-      { id: '21', module: MODULES.POLICIES_FAQ, action: ACTIONS.VIEW },
-      { id: '33', module: MODULES.VERIFICATION, action: ACTIONS.VIEW },
     ],
   },
 };
@@ -347,69 +317,49 @@ export const MOCK_USERS: Record<AdminType, AdminUser> = {
     subscriptionPlan: 'enterprise',
     lastLogin: 'Mar 12, 2026, 02:45 PM',
   },
-  'root-sub-admin': {
-    id: 'user-2',
-    name: 'Fatima Ali',
-    email: 'fatima@admin.com',
-    type: 'root-sub-admin',
-    role: MOCK_ROLES['root-sub-admin'],
-    country: 'IN',
-    subscriptionPlan: 'pro',
-    lastLogin: 'Mar 12, 2026, 11:30 AM',
-  },
-  'affiliate-admin': {
+   'tenant-admin': {
     id: 'user-3',
     name: 'Hassan Malik',
     email: 'hassan@affiliate.com',
-    type: 'affiliate-admin',
-    role: MOCK_ROLES['affiliate-admin'],
+    type: 'tenant-admin',
+    role: MOCK_ROLES['tenant-admin'],
     country: 'IN',
     subscriptionPlan: 'pro',
     lastLogin: 'Mar 12, 2026, 09:15 AM',
   },
-  'affiliate-sub-admin': {
-    id: 'user-4',
-    name: 'Aisha Ahmed',
-    email: 'aisha@affiliate.com',
-    type: 'affiliate-sub-admin',
-    role: MOCK_ROLES['affiliate-sub-admin'],
-    country: 'US',
-    subscriptionPlan: 'free',
-    lastLogin: 'Mar 11, 2026, 04:20 PM',
-  },
 };
 
 // Subscription Plans Feature Matrix
-export const SUBSCRIPTION_PLANS = {
-  free: {
-    name: 'Free',
-    features: ['dashboard', 'cms_basic', 'support_tickets'],
-  },
-  pro: {
-    name: 'Pro',
-    features: ['dashboard', 'cms_full', 'challenges', 'ads_basic', 'support_tickets', 'analytics'],
-  },
-  enterprise: {
-    name: 'Enterprise',
-    features: [
-      'dashboard',
-      'cms_full',
-      'challenges',
-      'ads_full',
-      'support_tickets',
-      'analytics',
-      'api_access',
-      'custom_roles',
-      'bulk_export',
-    ],
-  },
-};
+// export const SUBSCRIPTION_PLANS = {
+//   free: {
+//     name: 'Free',
+//     features: ['dashboard', 'cms_basic', 'support_tickets'],
+//   },
+//   pro: {
+//     name: 'Pro',
+//     features: ['dashboard', 'cms_full', 'challenges', 'ads_basic', 'support_tickets', 'analytics'],
+//   },
+//   enterprise: {
+//     name: 'Enterprise',
+//     features: [
+//       'dashboard',
+//       'cms_full',
+//       'challenges',
+//       'ads_full',
+//       'support_tickets',
+//       'analytics',
+//       'api_access',
+//       'custom_roles',
+//       'bulk_export',
+//     ],
+//   },
+// };
 
 // Translations
 export const TRANSLATIONS: Record<Language, Record<string, string>> = {
   en: {
     'sidebar.dashboard': 'Dashboard',
-    'sidebar.admin_users': 'System Users',
+    'sidebar.admin_users': 'Access Management',
     'sidebar.roles_permissions': 'Roles & Permissions',
     'sidebar.modules_actions': 'Modules & Actions',
     'sidebar.permission_packages': 'Modules Packages',

@@ -214,9 +214,7 @@ function EditUserContent() {
 export default function EditUserPage() {
   return (
     <AdminProvider>
-      <AdminLayout>
-        <EditUserContent />
-      </AdminLayout>
+      <EditUserContent />
     </AdminProvider>
   );
 }
