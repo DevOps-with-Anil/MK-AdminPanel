@@ -6,14 +6,15 @@ import '../globals.css'
 import { Providers } from '@/app/providers/AuthProvider'
 import { AdminProvider } from "@/contexts/AdminContext"
 import { AdminLayout } from "@/components/layout/AdminLayout"
+import { I18nProvider } from '@/i18n/provider';
 
 
-const outfit = Outfit({ 
+const outfit = Outfit({
   subsets: ["latin"],
   variable: '--font-outfit',
 });
 
-const geistMono = Geist_Mono({ 
+const geistMono = Geist_Mono({
   subsets: ["latin"],
   variable: '--font-geist-mono',
 });
@@ -46,11 +47,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
- return (
+  return (
     <Providers>
       <AdminProvider>
         <AdminLayout>
-          {children} {/* <-- page content will render here, layout persists */}
+          <I18nProvider>
+            {children} {/* <-- page content will render here, layout persists */}
+          </I18nProvider>
         </AdminLayout>
       </AdminProvider>
     </Providers>

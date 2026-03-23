@@ -121,16 +121,19 @@ export default function AddPlanPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  useEffect(() => {
-    if (!successMessage && !errors.global) return;
+  useEffect(
+    () => {
+      if (!successMessage && !errors.global) return;
 
-    const timer = setTimeout(() => {
-      setSuccessMessage('');
-      setErrors(prev => ({ ...prev, global: '' }));
-    }, 2000);
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+        setErrors(prev => ({ ...prev, global: '' }));
+      }, 2000);
 
-    return () => clearTimeout(timer);
-  }, [successMessage, errors.global]);
+      return () => clearTimeout(timer);
+    },
+    [successMessage, errors.global]
+  );
 
   const handleSave = async () => {
     if (!validateForm()) return;

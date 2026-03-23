@@ -3,6 +3,7 @@ import { tokenStorage } from "@/utils/token";
 
 // ----------------------------- Login API request -----------------------------
 export const login = async (payload: { email: string; password: string }) => {
+
   return apiClient("auth/root", {
     method: "POST",
     body: JSON.stringify(payload),
@@ -12,14 +13,8 @@ export const login = async (payload: { email: string; password: string }) => {
 // ----------------------------- Fetch current logged-in user -----------------------------
 
 export const profile = async (): Promise<any> => {
-  const res = await apiClient("auth/root/me", {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ` + tokenStorage.get(),
-    },
-  });
-  return res;
-};
+  return await apiClient("auth/root/me", { method: "GET" });
+};  
 
 // -----------------------------
 // Change Password API request
@@ -356,6 +351,31 @@ export const createTenantModules = async (payload: {
 };
 
 
+export const getPlans = async (payload: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  
+}) => {
+
+  const params = new URLSearchParams();
+
+  params.append("page", String(payload.page));
+  params.append("limit", String(payload.limit));
+
+  if (payload.search) params.append("search", payload.search);
+  
+  const res = await apiClient(`plan?${params.toString()}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${tokenStorage.get()}`,
+    },
+  });
+
+  return res;
+};
+
+
 export const createPlan = async (payload: {
   name: {
     en: string;
@@ -387,3 +407,5 @@ export const createPlan = async (payload: {
   console.log("Create Plan Response:", res);
   return res;
 };
+
+

@@ -1,19 +1,18 @@
 // Mock Data for Frontend-Only Admin Panel
 
 export type AdminType = 'root-admin' | 'tenant-admin'
-export type Language = 'en' | 'hi' | 'ar';
-export type Country = 'IN' | 'AE' | 'US';
+export type Language = 'en' | 'fr';
+export type Country = 'IN' | 'FR';
 
 export const COUNTRIES: Record<Country, { label: string; flag: string }> = {
-  'US': { label: 'USA', flag: '🇺🇸' },
-  'IN': { label: 'India', flag: '🇮🇳' },
-  'AE': { label: 'UAE', flag: '🇦🇪' },
+  IN: { label: 'India', flag: '🇮🇳' },
+  FR: { label: 'France', flag: '🇫🇷' }
 };
 
 export const LANGUAGES: Record<Language, { label: string; flag: string }> = {
-  'en': { label: 'English', flag: '🇺🇸' },
-  'hi': { label: 'Hindi', flag: '🇮🇳' },
-  'ar': { label: 'Arabic', flag: '🇦🇪' },
+  en: { label: 'English', flag: '🇺🇸' },
+  // ar: { label: 'Arabic', flag: '🇦🇪' },
+  fr: { label: 'French', flag: '🇫🇷' }
 };
 
 export type SubscriptionPlan = 'free' | 'pro' | 'enterprise';
@@ -313,7 +312,7 @@ export const MOCK_USERS: Record<AdminType, AdminUser> = {
     email: 'ahmed@admin.com',
     type: 'root-admin',
     role: MOCK_ROLES['root-admin'],
-    country: 'AE',
+    country: 'FR',
     subscriptionPlan: 'enterprise',
     lastLogin: 'Mar 12, 2026, 02:45 PM',
   },
@@ -389,56 +388,36 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'unauthorized': 'You do not have permission to access this page.',
     'upgrade_plan': 'Upgrade your plan to access this feature.',
   },
-  hi: {
-    'sidebar.dashboard': 'डैशबोर्ड',
-    'sidebar.admin_users': 'प्रशासक उपयोगकर्ता',
-    'sidebar.roles_permissions': 'भूमिकाएं और अनुमतियां',
-    'sidebar.modules_actions': 'मॉड्यूल और कार्य',
-    'sidebar.permission_packages': 'अनुमति पैकेज',
-    'sidebar.subscription_plans': 'सदस्यता योजनाएं',
-    'sidebar.affiliates': 'सहयोगी',
-    'sidebar.countries': 'देश और क्षेत्र',
-    'sidebar.cms': 'सीएमएस',
-    'sidebar.ads': 'विज्ञापन',
-    'sidebar.support_tickets': 'समर्थन टिकट',
-    'sidebar.policies_faq': 'नीतियां और सामान्य प्रश्न',
-    'sidebar.settings': 'सेटिंग्स',
-    'sidebar.sub_admins': 'सहायक प्रशासक',
-    'sidebar.challenges': 'चुनौतियां',
-    'sidebar.verification': 'सत्यापन स्थिति',
-    'sidebar.profile': 'प्रोफ़ाइल',
-    'header.language': 'भाषा',
-    'header.country': 'देश',
-    'header.plan': 'योजना',
-    'header.role': 'भूमिका',
-    'header.logout': 'लॉगआउट',
-    'unauthorized': 'आपके पास इस पृष्ठ को एक्सेस करने की अनुमति नहीं है।',
-    'upgrade_plan': 'इस सुविधा को एक्सेस करने के लिए अपनी योजना को अपग्रेड करें।',
-  },
-  ar: {
-    'sidebar.dashboard': 'لوحة التحكم',
-    'sidebar.admin_users': 'مستخدمو المسؤول',
-    'sidebar.roles_permissions': 'الأدوار والأذونات',
-    'sidebar.modules_actions': 'الوحدات والإجراءات',
-    'sidebar.permission_packages': 'حزم الأذونات',
-    'sidebar.subscription_plans': 'خطط الاشتراك',
-    'sidebar.affiliates': 'الشركات التابعة',
-    'sidebar.countries': 'الدول والمناطق',
-    'sidebar.cms': 'إدارة المحتوى',
-    'sidebar.ads': 'الإعلانات',
-    'sidebar.support_tickets': 'تذاكر الدعم',
-    'sidebar.policies_faq': 'السياسات والأسئلة الشائعة',
-    'sidebar.settings': 'الإعدادات',
-    'sidebar.sub_admins': 'مسؤولو فرعيون',
-    'sidebar.challenges': 'التحديات',
-    'sidebar.verification': 'حالة التحقق',
-    'sidebar.profile': 'الملف الشخصي',
-    'header.language': 'اللغة',
-    'header.country': 'الدولة',
-    'header.plan': 'الخطة',
-    'header.role': 'الدور',
-    'header.logout': 'تسجيل الخروج',
-    'unauthorized': 'ليس لديك إذن للوصول إلى هذه الصفحة.',
-    'upgrade_plan': 'قم بترقية خطتك للوصول إلى هذه الميزة.',
+  fr: {
+    'sidebar.dashboard': 'Tableau de bord',
+    'sidebar.admin_users': 'Gestion des accès',
+    'sidebar.roles_permissions': 'Rôles & Permissions',
+    'sidebar.modules_actions': 'Modules & Actions',
+    'sidebar.permission_packages': 'Packages de modules',
+    'sidebar.subscription_plans': 'Abonnements',
+    'sidebar.affiliates': 'Affiliés',
+    'sidebar.tenants': 'Locataires',
+    'sidebar.kyb_requests': 'Demandes KYB',
+    'sidebar.business_kyb': 'KYB Business',
+    'sidebar.customers': 'Clients',
+    'sidebar.analytics_report': 'Rapport analytique',
+    'sidebar.security_compliance': 'Sécurité et conformité',
+    'sidebar.countries': 'Pays et régions',
+    'sidebar.cms': 'CMS',
+    'sidebar.ads': 'Publicités',
+    'sidebar.support_tickets': 'Tickets de support',
+    'sidebar.policies_faq': 'Politiques & FAQ',
+    'sidebar.settings': 'Paramètres',
+    'sidebar.sub_admins': 'Sous-admins',
+    'sidebar.challenges': 'Défis',
+    'sidebar.verification': 'Statut de vérification',
+    'sidebar.profile': 'Profil',
+    'header.language': 'Langue',
+    'header.country': 'Pays',
+    'header.plan': 'Forfait',
+    'header.role': 'Rôle',
+    'header.logout': 'Se déconnecter',
+    'unauthorized': "Vous n'avez pas la permission d'accéder à cette page.",
+    'upgrade_plan': "Mettez à jour votre forfait pour accéder à cette fonctionnalité.",
   },
 };

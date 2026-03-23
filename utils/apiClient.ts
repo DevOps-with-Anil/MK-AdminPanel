@@ -1,15 +1,39 @@
+
+import { tokenStorage } from "@/utils/token";
+
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+    
+
+/**
+ * Generic API client
+ * @param endpoint API endpoint
+ * @param options Fetch options
+ * @param language Optional language header (e.g., 'en', 'fr')
+ */
 export async function apiClient(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  language?: string
 ) {
   const headers = new Headers(options.headers);
 
-  // Default JSON header
+  // Default JSON content type
   if (!headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
+
+  // Set Authorization header with Bearer token
+  const token = tokenStorage.get();
+  if (token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  // Set language header if provided
+  // if (language && !headers.has("Accept-Language")) {
+    headers.set("Accept-Language", localStorage.getItem('lang') || 'en');
+  // }
 
   let response: Response;
 
@@ -19,27 +43,21 @@ export async function apiClient(
       headers,
     });
   } catch (error: any) {
-    // 🌐 Network error (no response)
     throw {
       status: 0,
-      message: error.message || "Network error",
+      message: error?.message || "Network error",
     };
   }
 
   let data: any = null;
-
   try {
     data = await response.json();
   } catch {
     data = null; // Non-JSON response
   }
 
-  const message =
-    data?.message ||
-    response.statusText ||
-    "Something went wrong";
+  const message = data?.message || response.statusText || "Something went wrong";
 
-  // ❌ ERROR → throw (goes to catch in UI)
   if (!response.ok) {
     throw {
       status: response.status,
@@ -48,10 +66,9 @@ export async function apiClient(
     };
   }
 
-  // ✅ SUCCESS → return to UI
   return {
-    status: response.status,         // 200 / 201
-    message,                         // API message
-    data: data?.data ?? data,        // actual payload
+    status: response.status,
+    message,
+    data: data?.data ?? data,
   };
 }

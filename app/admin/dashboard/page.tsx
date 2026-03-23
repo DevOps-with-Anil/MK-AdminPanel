@@ -1,9 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-// import { AdminProvider } from '@/contexts/AdminContext';
-import { AdminLayout } from '@/components/layout/AdminLayout';
-import React from 'react';
 import { useAdmin } from '@/contexts/AdminContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -41,32 +38,32 @@ import {
   LineChart,
   Line
 } from 'recharts';
-import { tokenStorage } from "@/utils/token";
-import { profile } from '@/services/auth.service';
-
-
-
-
+import { useTranslation } from '@/hooks/useTranslation';
 
 const revenueData = [
-  { name: 'Jan', value: 4000, active: 2400 },
+  { name: 'Jan', value: 4000, active: 3400 },
   { name: 'Feb', value: 3000, active: 1398 },
   { name: 'Mar', value: 2000, active: 9800 },
   { name: 'Apr', value: 2780, active: 3908 },
-  { name: 'May', value: 1890, active: 4800 },
+  { name: 'May', value: 4890, active: 4800 },
   { name: 'Jun', value: 2390, active: 3800 },
   { name: 'Jul', value: 3490, active: 4300 },
+  { name: 'Aug', value: 3490, active: 4300 },
+  { name: 'Sep', value: 2538, active: 4300 },
+  { name: 'Oct', value: 6456, active: 4300 },
+  { name: 'Nov', value: 6359, active: 4300 },
+  { name: 'Dec', value: 5600, active: 4300 },
 ];
 
-const userData = [
-  { name: 'Mon', active: 400, total: 2400 },
-  { name: 'Tue', active: 300, total: 1398 },
-  { name: 'Wed', active: 200, total: 9800 },
-  { name: 'Thu', active: 278, total: 3908 },
-  { name: 'Fri', active: 189, total: 4800 },
-  { name: 'Sat', active: 239, total: 3800 },
-  { name: 'Sun', active: 349, total: 4300 },
-];
+// const userData = [
+//   { name: 'Mon', active: 400, total: 2400 },
+//   { name: 'Tue', active: 300, total: 1398 },
+//   { name: 'Wed', active: 200, total: 9800 }, 
+//   { name: 'Thu', active: 278, total: 3908 },
+//   { name: 'Fri', active: 189, total: 4800 },
+//   { name: 'Sat', active: 239, total: 3800 },
+//   { name: 'Sun', active: 349, total: 4300 },
+// ];
 
 const planData = [
   { name: 'Free', value: 400, color: '#94a3b8' },
@@ -87,19 +84,13 @@ const interactionData = [
 
 export default function Dashboard() {
 
-
+  const { t } = useTranslation();
 
   const { currentUser } = useAdmin();
 
-  const countryNames: Record<string, string> = {
-    IN: 'India',
-    AE: 'United Arab Emirates',
-    US: 'United States',
-  };
-
   const stats = [
     {
-      title: 'Total Revenue',
+      title: t('translate.stats_total_revenue'),
       value: '$128,450',
       change: '+12.5%',
       icon: CreditCard,
@@ -108,7 +99,7 @@ export default function Dashboard() {
       trend: 'up'
     },
     {
-      title: 'Active Tenants',
+      title: t('translate.stats_active_tenants'),
       value: '1,248',
       change: '+5.2%',
       icon: Building2,
@@ -117,7 +108,7 @@ export default function Dashboard() {
       trend: 'up'
     },
     {
-      title: 'KYB Requests',
+      title: t('translate.stats_kyb_requests'),
       value: '84',
       change: '-2.4%',
       icon: ShieldCheck,
@@ -126,7 +117,7 @@ export default function Dashboard() {
       trend: 'down'
     },
     {
-      title: 'Active Users',
+      title: t('translate.stats_active_users'),
       value: '42,892',
       change: '+8.1%',
       icon: Users,
@@ -135,7 +126,7 @@ export default function Dashboard() {
       trend: 'up'
     },
     {
-      title: 'New Subscriptions',
+      title: t('translate.stats_new_subscriptions'),
       value: '312',
       change: '+15%',
       icon: Plus,
@@ -144,7 +135,7 @@ export default function Dashboard() {
       trend: 'up'
     },
     {
-      title: 'Support Tickets',
+      title: t('translate.stats_support_tickets'),
       value: '27',
       change: '+3%',
       icon: Ticket,
@@ -153,7 +144,7 @@ export default function Dashboard() {
       trend: 'up'
     },
     {
-      title: 'Server Uptime',
+      title: t('translate.stats_server_uptime'),
       value: '99.98%',
       change: '+0.02%',
       icon: Zap,
@@ -162,7 +153,7 @@ export default function Dashboard() {
       trend: 'up'
     },
     {
-      title: 'Compliance Status',
+      title: t('translate.stats_compliance_status'),
       value: '100%',
       change: '0%',
       icon: CheckCircle,
@@ -181,18 +172,22 @@ export default function Dashboard() {
         <div className="flex items-start gap-4">
           <LayoutDashboard className="text-primary w-7 h-7 mt-1" />
           <div>
-            <h1 className="text-xl font-medium text-foreground">Overview Dashboard</h1>
-            <p className="text-muted-foreground text-sm">Welcome back, {currentUser.name}. Here's what's happening today.</p>
+            <h1 className="text-xl font-medium text-foreground">
+              {t('translate.dashboard_overview')}
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              {t('translate.dashboard_welcome_message', { name: currentUser.name })}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-background border border-border rounded-lg hover:bg-accent transition-colors">
             <Calendar size={16} />
-            Jan 12, 2026 - Mar 12, 2026
+            {t('translate.dashboard_date_range')}
           </button>
           <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">
             <Download size={16} />
-            Export Report
+            {t('translate.dashboard_export_report')}
           </button>
         </div>
       </div>
@@ -208,8 +203,8 @@ export default function Dashboard() {
                   <Icon size={24} />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                  <h3 className="text-2xl font-medium text-foreground">{stat.value}</h3>
+                  <p className="text-md font-medium text-muted-foreground">{stat.title}</p>
+                  <h3 className="text-[28px] font-semibold text-foreground">{stat.value}</h3>
                 </div>
               </CardContent>
             </Card>
@@ -223,15 +218,25 @@ export default function Dashboard() {
         <Card className="lg:col-span-8 border-none shadow-sm overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-7">
             <div>
-              <CardTitle className="text-lg font-medium">Performance Analytics</CardTitle>
-              <CardDescription>Visual representation of growth metrics</CardDescription>
+              <CardTitle className="text-lg font-medium">
+                {t('translate.chart_performance_analytics')}
+              </CardTitle>
+              <CardDescription>
+                {t('translate.chart_performance_description')}
+              </CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <div className="flex bg-muted p-1 rounded-lg">
-                <button className="px-3 py-1 text-xs font-medium rounded-md bg-background shadow-sm">Revenue</button>
-                <button className="px-3 py-1 text-xs font-medium rounded-md hover:text-foreground transition-colors text-muted-foreground">Activity</button>
+                <button className="px-3 py-1 text-xs font-medium rounded-md bg-background shadow-sm">
+                  {t('translate.chart_revenue_tab')}
+                </button>
+                <button className="px-3 py-1 text-xs font-medium rounded-md hover:text-foreground transition-colors text-muted-foreground">
+                  {t('translate.chart_activity_tab')}
+                </button>
               </div>
-              <button className="p-2 hover:bg-muted rounded-md transition-colors"><MoreVertical size={16} /></button>
+              <button className="p-2 hover:bg-muted rounded-md transition-colors">
+                <MoreVertical size={16} />
+              </button>
             </div>
           </CardHeader>
           <CardContent>
@@ -281,11 +286,14 @@ export default function Dashboard() {
 
         {/* Right Sidebar Area */}
         <div className="lg:col-span-4 flex flex-col">
-          {/* Pie Chart Card */}
           <Card className="border-none shadow-sm overflow-hidden flex-1 flex flex-col">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-medium">Market Share</CardTitle>
-              <CardDescription>Distribution by plan type</CardDescription>
+              <CardTitle className="text-lg font-medium">
+                {t('translate.pie_market_share')}
+              </CardTitle>
+              <CardDescription>
+                {t('translate.pie_description')}
+              </CardDescription>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col justify-center">
               <div className="h-[240px] w-full">
@@ -305,9 +313,7 @@ export default function Dashboard() {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip
-                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                    />
+                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -316,30 +322,38 @@ export default function Dashboard() {
                   <div key={index} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-default">
                     <div className="flex items-center gap-3">
                       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
-                      <span className="text-sm font-medium text-foreground">{entry.name}</span>
+                      <span className="text-sm font-medium text-foreground">
+                        {t(`translate.pie_plan_${entry.name.toLowerCase()}`)}
+                      </span>
                     </div>
-                    <span className="text-sm font-medium">{Math.round((entry.value / 900) * 100)}%</span>
+                    <span className="text-sm font-medium">
+                      {Math.round((entry.value / 900) * 100)}%
+                    </span>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
-
-
         </div>
       </div>
 
-      {/* Bottom Row - Table and Activity */}
+      {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Recent Transactions Table */}
         <Card className="lg:col-span-8 border-none shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-4">
             <div>
-              <CardTitle className="text-lg font-medium">Recent Activities</CardTitle>
-              <CardDescription>Last 5 system updates</CardDescription>
+              <CardTitle className="text-lg font-medium">
+                {t('translate.recent_activities_title')}
+              </CardTitle>
+              <CardDescription>
+                {t('translate.recent_activities_description')}
+              </CardDescription>
             </div>
-            <button className="text-sm font-medium text-primary hover:underline">View All</button>
+            <button className="text-sm font-medium text-primary hover:underline">
+              {t('translate.recent_activities_view_all')}
+            </button>
           </CardHeader>
+
           <CardContent>
             <div className="space-y-1">
               {[
@@ -361,10 +375,8 @@ export default function Dashboard() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium text-foreground">{item.time}</p>
-                    <span className={`text-[12px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full ${item.status === 'completed' ? 'bg-emerald-50 text-emerald-600' :
-                      item.status === 'pending' ? 'bg-orange-50 text-orange-600' : 'bg-rose-50 text-rose-600'
-                      }`}>
-                      {item.status}
+                    <span className="text-[12px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full">
+                      {t(`translate.recent_activities_status_${item.status}`)}
                     </span>
                   </div>
                 </div>
@@ -373,21 +385,27 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Weekly Progress Card */}
         <Card className="lg:col-span-4 border-none shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg font-medium">Platform Status</CardTitle>
-            <CardDescription>Live system performance</CardDescription>
+            <CardTitle className="text-lg font-medium">
+              {t('translate.platform_status_title')}
+            </CardTitle>
+            <CardDescription>
+              {t('translate.platform_status_description')}
+            </CardDescription>
           </CardHeader>
+
           <CardContent className="space-y-6">
             {[
-              { label: 'API Health', value: 98, color: 'bg-emerald-500' },
-              { label: 'Server Load', value: 42, color: 'bg-indigo-500' },
-              { label: 'Storage Usage', value: 65, color: 'bg-orange-500' },
+              { label: 'api_health', value: 98, color: 'bg-emerald-500' },
+              { label: 'server_load', value: 42, color: 'bg-indigo-500' },
+              { label: 'storage_usage', value: 65, color: 'bg-orange-500' },
             ].map((item, i) => (
               <div key={i} className="space-y-2">
                 <div className="flex justify-between text-md">
-                  <span className="font-medium text-muted-foreground">{item.label}</span>
+                  <span className="font-medium text-muted-foreground">
+                    {t(`translate.platform_status_${item.label}`)}
+                  </span>
                   <span className="font-bold">{item.value}%</span>
                 </div>
                 <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
@@ -398,14 +416,19 @@ export default function Dashboard() {
                 </div>
               </div>
             ))}
+
             <div className="pt-4 border-t border-border mt-4">
               <div className="flex items-center gap-3 p-4 rounded-2xl bg-muted/30">
                 <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
                   <ShieldCheck size={24} />
                 </div>
                 <div>
-                  <p className="text-md font-medium text-foreground">System Protected</p>
-                  <p className="text-[12px] text-muted-foreground uppercase">Last scan: 5 mins ago</p>
+                  <p className="text-md font-medium text-foreground">
+                    {t('translate.platform_status_system_protected')}
+                  </p>
+                  <p className="text-[12px] text-muted-foreground uppercase">
+                    {t('translate.platform_status_last_scan')}
+                  </p>
                 </div>
               </div>
             </div>

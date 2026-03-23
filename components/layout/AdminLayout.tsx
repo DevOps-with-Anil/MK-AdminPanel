@@ -1,10 +1,11 @@
+
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAdmin } from '@/contexts/AdminContext';
-import { MODULES, LANGUAGES, COUNTRIES, Language, Country, MOCK_NOTIFICATIONS } from '@/lib/mock-data';
+import { MODULES, MOCK_NOTIFICATIONS } from '@/lib/mock-data';
 import {
   Menu,
   X,
@@ -44,12 +45,17 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { tokenStorage } from "@/utils/token";
 import { profile } from '@/services/auth.service';
+import { I18nContext } from '@/i18n/provider';
+import { useTranslation } from '@/hooks/useTranslation';
 
-// const [isLoading, setIsLoading] = useState(false);
-
+type Language = 'en' | 'fr';
+type Country = 'IN' | 'FR';
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
+
   const router = useRouter();
+  const { t } = useTranslation();
+  const { changeLanguage } = useContext(I18nContext);
   const {
     currentAdminType,
     currentLanguage,
@@ -58,30 +64,37 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     setAdminType,
     setLanguage,
     setCountry,
-    t,
     hasPermission,
   } = useAdmin();
-
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-
   // Use a media query to determine if the screen is mobile
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  // const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  // const COUNTRIES: Record<Country, { label: string; flag: string }> = {
+  //   IN: { label: 'India', flag: '🇮🇳' },
+  //   FR: { label: 'France', flag: '🇫🇷' }
+  // };
+
+  const LANGUAGES: Record<Language, { label: string; flag: string }> = {
+    en: { label: 'English', flag: '🇺🇸' },
+    fr: { label: 'French', flag: '🇫🇷' }
+  };
 
   const currentLanguageData = LANGUAGES[currentLanguage as Language] || LANGUAGES.en;
-  const currentCountryData = COUNTRIES[currentCountry as Country] || COUNTRIES.IN;
-
-
+  // const currentCountryData = COUNTRIES[currentCountry as Country] || COUNTRIES.IN;
   const [user, setUser] = useState(null);
-
-
   // const ProfilePage = () => {
   const [profileData, setProfileData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+
+  const savedLang = localStorage.getItem('lang') || 'en';
+  setLanguage(savedLang as Language);
+  changeLanguage(savedLang);
+
     const fetchProfile = async () => {
       setIsLoading(true);
       try {
@@ -89,7 +102,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         if (!token) throw new Error("No token found");
         const res = await profile(); // your API call
         setProfileData(res);
-        console.log("Profile Response on AdminLayout ::  " + JSON.stringify(res));
+        // console.log("Profile Response on AdminLayout ::  " + JSON.stringify(res));
       } catch (err: any) {
         console.error(err);
         setError(err.message || "Failed to load profile");
@@ -99,8 +112,6 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     };
     fetchProfile();
   }, []);
-
-
 
   const handleLogout = () => {
     // Determine where to redirect based on current admin type
@@ -121,57 +132,34 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     }));
   };
 
-  // Generate breadcrumbs from pathname
-  // const generateBreadcrumbs = () => {
-  //   const paths = pathname.split('/').filter(Boolean);
-  //   // Filter out 'admin' and 'dashboard' segments
-  //   const filteredPaths = paths.filter(path => path !== 'admin' && path !== 'dashboard');
+  const generateBreadcrumbs = () => {
+    const paths = pathname.split('/').filter(Boolean);
 
-  //   return filteredPaths.map((path, index) => {
-  //     const href = `/${paths.slice(0, paths.indexOf(path) + 1).join('/')}`;
+    // Filter out admin, dashboard, and 'modules' from clickable breadcrumb
+    const filteredPaths = paths.filter(path => path !== 'admin' && path !== 'dashboard');
 
-  //     // Map common paths to professional labels
-  //     let label = path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ');
-  //     if (path === 'notifications') label = 'Notifications';
-  //     if (path === 'sub-admins') label = 'Sub Administrators';
-  //     if (path === 'verification') label = 'KYB Verifications';
+    return filteredPaths.map((path, index) => {
+      // Build href from all previous paths INCLUDING 'modules' internally
+      const href = `/${paths.slice(0, index + 1).join('/')}`;
 
-  //     return {
-  //       label,
-  //       href,
-  //       isLast: index === filteredPaths.length - 1
-  //     };
-  //   });
-  // };
+      // Map to nice labels
+      let label = path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ');
+      if (path === 'notifications') label = 'Notifications';
+      if (path === 'sub-admins') label = 'Sub Administrators';
+      if (path === 'verification') label = 'KYB Verifications';
 
- const generateBreadcrumbs = () => {
-  const paths = pathname.split('/').filter(Boolean);
+      // Hide modules from breadcrumb (optional: non-clickable)
+      if (path === 'modules') {
+        return { label: '', href: '', isLast: false }; // hide it completely
+      }
 
-  // Filter out admin, dashboard, and 'modules' from clickable breadcrumb
-  const filteredPaths = paths.filter(path => path !== 'admin' && path !== 'dashboard');
-
-  return filteredPaths.map((path, index) => {
-    // Build href from all previous paths INCLUDING 'modules' internally
-    const href = `/${paths.slice(0, index + 1).join('/')}`;
-
-    // Map to nice labels
-    let label = path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ');
-    if (path === 'notifications') label = 'Notifications';
-    if (path === 'sub-admins') label = 'Sub Administrators';
-    if (path === 'verification') label = 'KYB Verifications';
-
-    // Hide modules from breadcrumb (optional: non-clickable)
-    if (path === 'modules') {
-      return { label: '', href: '', isLast: false }; // hide it completely
-    }
-
-    return {
-      label,
-      href,
-      isLast: index === filteredPaths.length - 1
-    };
-  }).filter(crumb => crumb.label); // remove empty hidden crumbs
-};
+      return {
+        label,
+        href,
+        isLast: index === filteredPaths.length - 1
+      };
+    }).filter(crumb => crumb.label); // remove empty hidden crumbs
+  };
   const breadcrumbs = generateBreadcrumbs();
 
   const getNotificationIcon = (type: string) => {
@@ -198,75 +186,74 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     if (currentAdminType.startsWith('root')) {
       categoryMenus.main = [
         {
-          label: t('sidebar.dashboard'),
+          label: t('translate.sidebar_dashboard'),
           href: '/admin/dashboard',
           module: MODULES.DASHBOARD,
           icon: LayoutDashboard,
         },
         {
-          label: t('sidebar.tenants'),
+          label: t('translate.sidebar_tenants'),
           href: '/admin/affiliates',
           module: MODULES.AFFILIATES,
           icon: Building2,
         },
         {
-          label: t('sidebar.subscription_plans'),
+          label: t('translate.sidebar_subscription_plans'),
           href: '/admin/plans',
           module: MODULES.SUBSCRIPTION_PLANS,
           icon: CreditCard,
           children: [
-            { label: 'Plans List', href: '/admin/plans' },
-            { label: 'Add Plan', href: '/admin/plans/new' },
-            { label: 'Subscribers', href: '/admin/plans/subscribers' },
+            { label: t('translate.sidebar_plans_list'), href: '/admin/plans' },
+            { label: t('translate.sidebar_add_plan'), href: '/admin/plans/new' },
+            { label: t('translate.sidebar_subscribers'), href: '/admin/plans/subscribers' },
           ],
         },
         {
-          label: t('sidebar.kyb_requests'),
+          label: t('translate.sidebar_kyb_requests'),
           href: '/admin/verification',
           module: MODULES.KYB_REQUESTS,
           icon: ShieldCheck,
         },
         {
-          label: t('sidebar.support_tickets'),
+          label: t('translate.sidebar_support_tickets'),
           href: '/admin/tickets',
           module: MODULES.SUPPORT_TICKETS,
           icon: Ticket,
         },
         {
-          label: t('sidebar.admin_users'),
+          label: t('translate.sidebar_admin_users'),
           href: '/admin/users',
           module: MODULES.ADMIN_USERS,
           icon: Users,
           children: [
-            { label: 'System Admins', href: '/admin/users' },
-            { label: 'Roles Management', href: '/admin/roles' }
+            { label: t('translate.sidebar_system_admins'), href: '/admin/users' },
+            { label: t('translate.sidebar_roles_management'), href: '/admin/roles' },
           ],
         },
         {
-          label: t('sidebar.permission_packages'),
+          label: t('translate.sidebar_permission_packages'),
           href: '/admin/modules',
           module: MODULES.PERMISSION_PACKAGES,
           icon: Package,
           children: [
-            { label: 'Root Modules', href: '/admin/modules/root-modules' },
-            { label: 'Affiliate Modules', href: '/admin/modules/affiliate-modules' }
+            { label: t('translate.sidebar_root_modules'), href: '/admin/modules/root-modules' },
+            { label: t('translate.sidebar_affiliate_modules'), href: '/admin/modules/affiliate-modules' },
           ],
         },
-
         {
-          label: t('sidebar.analytics_report'),
+          label: t('translate.sidebar_analytics_report'),
           href: '/admin/analytics',
           module: MODULES.ANALYTICS_REPORT,
           icon: BarChart3,
         },
         {
-          label: t('sidebar.security_compliance'),
+          label: t('translate.sidebar_security_compliance'),
           href: '/admin/security',
           module: MODULES.SECURITY_COMPLIANCE,
           icon: Lock,
         },
         {
-          label: t('sidebar.settings'),
+          label: t('translate.sidebar_settings'),
           href: '/admin/settings',
           module: MODULES.SETTINGS,
           icon: Settings,
@@ -275,69 +262,69 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     } else {
       categoryMenus.main = [
         {
-          label: t('sidebar.dashboard'),
+          label: t('translate.sidebar_dashboard'),
           href: '/admin/dashboard',
           module: MODULES.DASHBOARD,
           icon: LayoutDashboard,
         },
         {
-          label: t('sidebar.business_kyb'),
+          label: t('translate.sidebar_business_kyb'),
           href: '/admin/verification',
           module: MODULES.BUSINESS_KYB,
           icon: FileCheck,
         },
         {
-          label: t('sidebar.subscription_plans'),
+          label: t('translate.sidebar_subscription_plans'),
           href: '/admin/plans',
           module: MODULES.SUBSCRIPTION_PLANS,
           icon: CreditCard,
         },
         {
-          label: t('sidebar.customers'),
+          label: t('translate.sidebar_customers'),
           href: '/admin/users',
           module: MODULES.CUSTOMERS,
           icon: UserCircle,
         },
         {
-          label: t('sidebar.cms'),
+          label: t('translate.sidebar_cms'),
           href: '/admin/cms',
           module: MODULES.CMS,
           icon: FileText,
           children: [
-            { label: 'Contact', href: '/admin/cms/contact' },
-            { label: 'Video', href: '/admin/videos' },
-            { label: 'News Articles', href: '/admin/articles' },
-            { label: 'Challenges', href: '/admin/challenges' },
-            { label: 'About Us', href: '/admin/about-us' },
-            { label: 'Home Page', href: '/admin/cms/home' },
+            { label: t('translate.sidebar_contact'), href: '/admin/cms/contact' },
+            { label: t('translate.sidebar_video'), href: '/admin/videos' },
+            { label: t('translate.sidebar_news_articles'), href: '/admin/articles' },
+            { label: t('translate.sidebar_challenges'), href: '/admin/challenges' },
+            { label: t('translate.sidebar_about_us'), href: '/admin/about-us' },
+            { label: t('translate.sidebar_home_page'), href: '/admin/cms/home' },
           ],
         },
         {
-          label: t('sidebar.analytics_report'),
+          label: t('translate.sidebar_analytics_report'),
           href: '/admin/analytics',
           module: MODULES.ANALYTICS_REPORT,
           icon: BarChart3,
         },
         {
-          label: t('sidebar.admin_users'),
+          label: t('translate.sidebar_admin_users'),
           href: '/admin/sub-admins',
           module: MODULES.ADMIN_USERS,
           icon: Users,
         },
         {
-          label: t('sidebar.support_tickets'),
+          label: t('translate.sidebar_support_tickets'),
           href: '/admin/tickets',
           module: MODULES.SUPPORT_TICKETS,
           icon: Ticket,
         },
         {
-          label: t('sidebar.security_compliance'),
+          label: t('translate.sidebar_security_compliance'),
           href: '/admin/security',
           module: MODULES.SECURITY_COMPLIANCE,
           icon: Lock,
         },
         {
-          label: t('sidebar.settings'),
+          label: t('translate.sidebar_settings'),
           href: '/admin/settings',
           module: MODULES.SETTINGS,
           icon: Settings,
@@ -350,7 +337,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   const categoryMenus = getMenuByCategory();
 
-  const isRTL = currentLanguage === 'ar';
+  // const isRTL = currentLanguage === 'ar';
+  const isRTL = false;
 
   const renderMenuCategory = (categoryKey: string, items: Array<{
     label: string;
@@ -501,6 +489,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
+
         {/* Top Bar */}
         <header className="bg-card border-b border-border px-6 py-3 flex items-center justify-between sticky top-0 z-40">
           <div className="flex items-center gap-4">
@@ -549,7 +538,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
           <div className="flex items-center gap-2 md:gap-4">
             {/* Country Selection (Only for Root Panel) */}
-            {currentAdminType.startsWith('root') && (
+
+            {/* {currentAdminType.startsWith('root') && (
               <div className="flex items-center gap-2 md:border-r md:border-border md:pr-4">
                 <DropdownMenu>
                   <DropdownMenuTrigger className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent transition-colors focus:outline-none">
@@ -558,7 +548,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                     <ChevronDown size={14} className="text-muted-foreground hidden md:inline-block" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-40">
-                    <DropdownMenuLabel>Select Country</DropdownMenuLabel>
+                    <DropdownMenuLabel>{t('translate.selectCountry')}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     {Object.entries(COUNTRIES).map(([code, data]) => (
                       <DropdownMenuItem
@@ -573,24 +563,27 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-            )}
+            )} */}
 
             {/* Language Selection */}
             <div className="flex items-center gap-2 md:border-r md:border-border md:pr-4">
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent transition-colors focus:outline-none">
+                <DropdownMenuTrigger className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent/50 transition-colors focus:outline-none">
                   <span className="text-lg leading-none">{currentLanguageData.flag}</span>
                   <span className="text-sm font-medium text-foreground hidden md:inline-block">{currentLanguageData.label}</span>
                   <ChevronDown size={14} className="text-muted-foreground hidden md:inline-block" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40">
-                  <DropdownMenuLabel>Select Language</DropdownMenuLabel>
+                  <DropdownMenuLabel>{t('translate.selectLanguage')}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {Object.entries(LANGUAGES).map(([code, data]) => (
                     <DropdownMenuItem
                       key={code}
-                      onClick={() => setLanguage(code as Language)}
-                      className={`flex items-center gap-3 cursor-pointer ${currentLanguage === code ? 'bg-accent text-accent-foreground' : ''}`}
+                      onClick={() => {
+                        setLanguage(code as Language);  // Admin context to set on dropdown
+                        changeLanguage(code as Language);           // i18n sync
+                      }}
+                      className={`flex items-center gap-3 cursor-pointer ${currentLanguage === code ? 'bg-accent/50 text-accent-foreground' : ''}`}
                     >
                       <span className="text-lg leading-none">{data.flag}</span>
                       <span className="text-sm">{data.label}</span>
@@ -603,7 +596,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             {/* Notifications Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="relative p-2 hover:bg-accent rounded-full transition-all border border-transparent hover:border-border group">
+                <button className="relative p-2 hover:bg-accent/50 rounded-full transition-all border border-transparent hover:border-border group">
                   <Bell size={20} className="text-muted-foreground group-hover:text-primary transition-colors" />
                   {MOCK_NOTIFICATIONS.some(n => !n.isRead) && (
                     <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-card animate-pulse shadow-[0_0_10px_rgba(99,102,241,0.5)]"></span>
@@ -662,7 +655,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 <DropdownMenuTrigger className="flex items-center gap-3 focus:outline-none group">
                   <div className="text-right hidden sm:block">
                     <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{profileData?.data?.name}</p>
-                    <p className="text-xs text-muted-foreground">{profileData?.data?.name}</p>
+                    <p className="text-xs text-muted-foreground">{profileData?.data?.role?.name}</p>
                   </div>
                   {/* <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold group-hover:bg-primary/20 transition-all border border-primary/20">
                     {currentUser.name.charAt(0)}
@@ -683,7 +676,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                     <div className="flex items-center gap-1.5 pt-2 border-t border-border/50">
                       <Clock size={12} className="text-primary" />
                       <div>
-                        <p className="text-[12px] font-medium font-black text-muted-foreground tracking-tighter leading-none">Last Access</p>
+                        <p className="text-[12px] font-medium font-black text-muted-foreground tracking-tighter leading-none">{t('translate.lastAccess')}</p>
                         <p className="text-[12px] font-medium text-foreground">{currentUser.lastLogin}</p>
                       </div>
                     </div>
@@ -692,14 +685,14 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                     onClick={() => router.push('/admin/profile')}
                   >
                     <User size={16} className="mr-2" />
-                    <span>View Profile</span>
+                    <span>{t('translate.viewProfile')}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="cursor-pointer"
                     onClick={() => router.push('/admin/change-password')}
                   >
                     <KeyRound size={16} className="mr-2" />
-                    <span>Change Password</span>
+                    <span>{t('translate.changePassword')}</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -707,7 +700,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                     className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
                   >
                     <LogOut size={16} className="mr-2" />
-                    <span>Logout</span>
+                    <span>{t('translate.logout')}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -717,10 +710,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
         {/* Content Area */}
         <main className="flex-1 overflow-auto bg-muted/20 p-4 md:p-6">{children}</main>
+
         {/* <Footer /> */}
         <footer className="py-4 text-center text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} MK Projects. All rights reserved.
+          &copy; {new Date().getFullYear()} MK Projects. {t('translate.footer')}
         </footer>
+
       </div>
     </div>
   );

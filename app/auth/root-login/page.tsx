@@ -1,18 +1,30 @@
+
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react';
+import {
+  Card, CardContent, CardDescription, CardHeader, CardTitle
+} from '@/components/ui/card';
+import {
+  AlertCircle, Eye, EyeOff, Loader2, CheckCircle, Globe
+} from 'lucide-react';
+import { LANGUAGES} from '@/lib/mock-data';
 import { useAdmin } from '@/contexts/AdminContext';
 import Image from 'next/image';
 import { login } from '@/services/auth.service';
 import { AdminType } from '@/types/admin.types';
 import { tokenStorage } from '@/utils/token';
+import { useTranslation } from '@/hooks/useTranslation';
+import { I18nContext } from '@/i18n/provider';
+import { Savate } from 'next/font/google';
 
 export default function RootLoginPage() {
+  const { t } = useTranslation();
+  const { locale, changeLanguage } = useContext(I18nContext);
+
   const router = useRouter();
   const { setAdminType, setCurrentUser } = useAdmin();
 
@@ -24,17 +36,31 @@ export default function RootLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
-  // -----------------------------
-  // Check if user is already logged in (client-side)
-  // -----------------------------
+  // Language dropdown state
+  const [openLang, setOpenLang] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
   useEffect(() => {
+    const handleClickOutside = (e: any) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpenLang(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Check auth
+  useEffect(() => {
+
+   
     const token = document.cookie
       .split('; ')
       .find(row => row.startsWith('mk_token='))
       ?.split('=')[1];
 
     if (token) {
-      // Already logged in, redirect to dashboard
       router.replace('/admin/dashboard');
     } else {
       setCheckingAuth(false);
@@ -48,32 +74,31 @@ export default function RootLoginPage() {
     setSuccessMsg('');
 
     try {
+
       const res = await login({ email, password });
       const { token, user } = res.data;
 
-      // Save token in cookie/localStorage
       tokenStorage.set(token);
 
-      // Determine admin type
       const adminType: AdminType =
-        user.role.name.toLowerCase().includes('root') ? 'root-admin' : 'tenant-admin';
+        user.role.name.toLowerCase().includes('root')
+          ? 'root-admin'
+          : 'tenant-admin';
 
       setAdminType(adminType);
       setCurrentUser(user);
+        console.log("Login Response on page ::  " + JSON.stringify(res));
 
-      // Show success message briefly
-      setSuccessMsg('Login successful! Redirecting to dashboard...');
+      setSuccessMsg(t('translate.success'));
       setTimeout(() => router.push('/admin/dashboard'), 2500);
     } catch (err: any) {
-      console.error(err);
-      setError(err?.message || 'Failed to login. Please check your credentials.');
+      setError(err?.message || t('translate.error'));
     } finally {
       setIsLoading(false);
     }
   };
 
   if (checkingAuth) {
-    // Prevent page flicker while checking session
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950">
         <Loader2 className="animate-spin w-8 h-8 text-white" />
@@ -82,81 +107,126 @@ export default function RootLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+    <div className="relative min-h-screen bg-slate-950 flex items-center justify-center p-4">
+
+      {/* 🌐 Language Dropdown */}
+<div className="absolute top-4 right-4" ref={dropdownRef}>
+  <button
+    onClick={() => setOpenLang(!openLang)}
+    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-800 transition"
+  >
+    <Globe className="w-4 h-4" />
+    <span className="text-xs uppercase">
+      {LANGUAGES[locale as 'en' | 'fr'].flag} {locale.toUpperCase()}
+    </span>
+  </button>
+
+  {openLang && (
+    <div className="mt-2 w-36 bg-slate-900 border border-slate-700 rounded-lg shadow-lg overflow-hidden">
+      {Object.entries(LANGUAGES)
+        .filter(([code]) => code === 'en' || code === 'fr')
+        .map(([code, data]) => (
+          <button
+            key={code}
+            onClick={() => {
+              changeLanguage(code as 'en' | 'fr');
+              setOpenLang(false);
+            }}
+            className={`w-full text-left px-3 py-2 text-sm transition flex items-center gap-2 ${
+              locale === code
+                ? 'bg-slate-800 text-white'
+                : 'text-slate-300 hover:bg-slate-800'
+            }`}
+          >
+            <span>{data.flag}</span>
+            <span>{data.label}</span>
+          </button>
+        ))}
+    </div>
+  )}
+</div>
+
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary/20">
-            <Image src="/apple-icon.png" alt="Logo" width={60} height={60} className="object-contain" priority />
+            <Image
+              src="/apple-icon.png"
+              alt="Logo"
+              width={60}
+              height={60}
+              className="object-contain"
+              priority
+            />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">MK Administration</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">
+            {t('translate.title')}
+          </h1>
         </div>
 
         <Card className="border-slate-800 bg-slate-900 shadow-2xl">
           <CardHeader className="space-y-1 border-b border-slate-800">
-            <CardTitle className="text-white">System Sign In</CardTitle>
+            <CardTitle className="text-white">
+              {t('translate.signIn')}
+            </CardTitle>
             <CardDescription className="text-slate-400">
-              Enter root credentials to manage the platform
+              {t('translate.description')}
             </CardDescription>
           </CardHeader>
+
           <CardContent className="pt-6">
             <form onSubmit={handleLogin} className="space-y-4">
-              {/* Error Message */}
+
               {error && (
-                // <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 flex items-start gap-3">
-                  <div className="bg-red-50 border border-red-500 rounded-lg p-3 flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-destructive">{error}</p>
+                <div className="bg-red-50 border border-red-500 rounded-lg p-3 flex gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-600" />
+                  <p className="text-sm text-red-600">{error}</p>
                 </div>
               )}
 
-              {/* Success Message */}
               {successMsg && (
-                <div className="bg-green-50 border border-green-900 rounded-lg p-3 flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                <div className="bg-green-50 border border-green-900 rounded-lg p-3 flex gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
                   <p className="text-sm text-green-700">{successMsg}</p>
                 </div>
               )}
 
               {/* Email */}
               <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium text-slate-300">
-                  Email Address
+                <label className="text-sm text-slate-300">
+                  {t('translate.emailLabel')}
                 </label>
                 <Input
-                  id="email"
                   type="email"
-                  placeholder="admin@system.com"
+                  placeholder={t('translate.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
                   required
-                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:ring-primary"
+                  className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
                 />
               </div>
 
               {/* Password */}
               <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium text-slate-300">
-                  Password
+                <label className="text-sm text-slate-300">
+                  {t('translate.passwordLabel')}
                 </label>
                 <div className="relative">
                   <Input
-                    id="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={isLoading}
                     required
-                    className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 pr-10 focus:ring-primary"
+                    className="bg-slate-800 border-slate-700 text-white pr-10"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
-                    disabled={isLoading}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
               </div>
@@ -164,21 +234,22 @@ export default function RootLoginPage() {
               <Button
                 type="submit"
                 disabled={isLoading || !email || !password}
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-11"
+                className="w-full bg-primary hover:bg-primary/90 h-11"
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Authenticating...
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {t('translate.authenticating')}
                   </>
                 ) : (
-                  'Login to System'
+                  t('translate.loginBtn')
                 )}
               </Button>
             </form>
 
             <div className="mt-6 pt-6 border-t border-slate-800">
               <p className="text-center text-xs text-slate-500">
-                &copy; {new Date().getFullYear()} MK Projects. All rights reserved.
+                &copy; {new Date().getFullYear()} MK Projects. {t('translate.footer')}
               </p>
             </div>
           </CardContent>
