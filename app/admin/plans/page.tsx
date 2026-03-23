@@ -2,13 +2,14 @@
 'use client';
 import { AdminProvider } from '@/contexts/AdminContext';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit2, Trash2, MoreVertical, CreditCard, Settings } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { getPlans, updateStatus } from '@/services/auth.service';
+import { getPlans, updateStatus, deletePlan } from '@/services/auth.service';
 import { useDeleteEntity } from '@/hooks/useDeleteEntity';
 
 
@@ -26,13 +27,25 @@ interface Plan {
 
 
 function PlansPageContent() {
+  const router = useRouter();
 
   const handleViewModules = (planId: string) => {
-    alert(`Viewing modules & permissions for plan ${planId}`);
+    router.push(`/admin/plans/${planId}/modules-permissions`);
   };
 
   const handleUpdatePermissions = (planId: string) => {
     alert(`Update permissions for plan ${planId}`);
+  };
+
+  const handleDelete = async (planId: string) => {
+    if (confirm('Are you sure you want to delete this plan?')) {
+      try {
+        await deletePlan(planId);
+        fetchPlans();
+      } catch (err) {
+        console.error('Delete plan error', err);
+      }
+    }
   };
 
  const [page, setPage] = useState(1);
@@ -164,10 +177,10 @@ function PlansPageContent() {
                         <Edit2 className="w-4 h-4" /> Edit
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="gap-2" onClick={() => handleUpdatePermissions(plan.id)}>
+                    {/* <DropdownMenuItem className="gap-2" onClick={() => handleUpdatePermissions(plan.id)}>
                       <Settings className="w-4 h-4" /> Update Permissions
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="gap-2 text-destructive">
+                    </DropdownMenuItem> */}
+                    <DropdownMenuItem className="gap-2 text-destructive" onClick={() => handleDelete(plan.id)}>
                       <Trash2 className="w-4 h-4" /> Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
