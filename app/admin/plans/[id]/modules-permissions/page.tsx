@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { getPlanById } from '@/services/auth.service';
+import { useAdmin } from '@/contexts/AdminContext';
 
 interface PlanResponseData {
   _id: string;
@@ -22,6 +23,7 @@ interface PlanResponseData {
 }
 
 export default function PlanModulesPermissionsPage() {
+  const { t } = useAdmin();
   const params = useParams();
   const planIdRaw = params?.id;
   const planId = Array.isArray(planIdRaw) ? planIdRaw[0] : planIdRaw ?? '';
@@ -66,33 +68,33 @@ export default function PlanModulesPermissionsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Modules & Permissions</h1>
+        <h1 className="text-2xl font-bold">{t('plans.modulesPermissionsTitle')}</h1>
         <Link href="/admin/plans">
           <Button variant="secondary" size="sm" className="gap-2">
-            <ArrowLeft className="w-4 h-4" /> Back to Plans
+            <ArrowLeft className="w-4 h-4" /> {t('plans.backToPlans')}
           </Button>
         </Link>
       </div>
 
       {loading ? (
-        <p className="text-muted-foreground">Loading plan data...</p>
+        <p className="text-muted-foreground">{t('plans.loadingData')}</p>
       ) : error ? (
         <p className="text-destructive">{error}</p>
       ) : plan ? (
         <>
           <p className="text-muted-foreground">
-            Viewing modules and permission mapping for plan: <strong>{plan.name}</strong> (ID: {planId})
+            {t('plans.viewingMapping')} <strong>{plan.name}</strong> (ID: {planId})
           </p>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Assigned Modules</CardTitle>
-                <CardDescription>Modules for this plan.</CardDescription>
+                <CardTitle>{t('plans.assignedModules')}</CardTitle>
+                <CardDescription>{t('plans.assignedModulesDesc')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 {modules.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No modules assigned yet.</p>
+                  <p className="text-sm text-muted-foreground">{t('plans.noModulesAssigned')}</p>
                 ) : (
                   modules.map((module) => (
                     <div key={module} className="rounded-md border border-border p-3">
@@ -105,8 +107,8 @@ export default function PlanModulesPermissionsPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Assigned Permissions</CardTitle>
-                <CardDescription>Permissions derived from plan role model.</CardDescription>
+                <CardTitle>{t('plans.assignedPermissions')}</CardTitle>
+                <CardDescription>{t('plans.assignedPermissionsDesc')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 {permissions.map((permission) => (
@@ -119,12 +121,12 @@ export default function PlanModulesPermissionsPage() {
           </div>
         </>
       ) : (
-        <p className="text-muted-foreground">Plan not found.</p>
+        <p className="text-muted-foreground">{t('plans.planNotFound')}</p>
       )}
 
       <div className="flex gap-3">
         <Button className="flex-1" disabled>
-          Sync with backend (coming soon)
+          {t('plans.syncBackend')}
         </Button>
       </div>
     </div>

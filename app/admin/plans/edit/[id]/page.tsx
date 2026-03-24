@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { ArrowLeft, Save, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { getPlanById, updatePlan } from '@/services/auth.service';
-import { AdminProvider } from '@/contexts/AdminContext';
+import { useAdmin } from '@/contexts/AdminContext';
 
 // ---------------------- Dropdown Component ----------------------
 function Dropdown({
@@ -38,18 +38,18 @@ function Dropdown({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full px-3 py-2 border rounded-md flex justify-between items-center bg-white"
+        className="w-full px-3 py-2 border rounded-md flex justify-between items-center bg-background text-foreground"
       >
         {options.find(o => o.id === value)?.label || placeholder || 'Select'}
         <ChevronDown className="w-4 h-4" />
       </button>
       {open && (
-        <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto">
+        <div className="absolute z-10 mt-1 w-full bg-background border rounded-md shadow-lg max-h-48 overflow-y-auto">
           {options.map(opt => (
             <div
               key={opt.id}
               onClick={() => { onChange(opt.id); setOpen(false); }}
-              className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+              className="px-3 py-2 hover:bg-accent hover:text-accent-foreground cursor-pointer"
             >
               {opt.label}
             </div>
@@ -63,8 +63,6 @@ function Dropdown({
 // ---------------------- Constants ----------------------
 const LANGUAGES = ['en', 'fr', 'ar', 'hi'] as const;
 const CURRENCIES = ['USD', 'EUR', 'INR', 'GBP'];
-const PLAN_TYPES = [{ id: 'MONTHLY', label: 'Monthly' }, { id: 'YEARLY', label: 'Yearly' }];
-const STATUS_TYPES = [{ id: 'ACTIVE', label: 'Active' }, { id: 'INACTIVE', label: 'Inactive' }];
 
 // ---------------------- Type Definitions ----------------------
 type Lang = typeof LANGUAGES[number];
@@ -81,6 +79,7 @@ interface PlanForm {
 // ---------------------- Edit Plan Content ----------------------
 function EditPlanContent({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const { t } = useAdmin();
   
   const [formData, setFormData] = useState<PlanForm>({
     name: { en: '', fr: '', ar: '', hi: '' },
@@ -195,15 +194,15 @@ function EditPlanContent({ params }: { params: Promise<{ id: string }> }) {
           </Button>
         </Link>
         <div>
-          <h1 className="text-xl font-medium">Edit Plan</h1>
-          <p className="text-muted-foreground">Update subscription plan details</p>
+          <h1 className="text-xl font-medium">{t('plans.editTitle')}</h1>
+          <p className="text-muted-foreground">{t('plans.editSubtitle')}</p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Plan Details</CardTitle>
-          <CardDescription>Update name, description, price, currency, type, and status</CardDescription>
+          <CardTitle>{t('plans.detailsTitle')}</CardTitle>
+          <CardDescription>{t('plans.editSubtitle')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
 
@@ -233,7 +232,7 @@ function EditPlanContent({ params }: { params: Promise<{ id: string }> }) {
           </div>
 
           <div>
-            <Label className="mb-2 block">Plan Name ({activeLang.toUpperCase()}) *</Label>
+            <Label className="mb-2 block">{t('plans.nameLabel')} ({activeLang.toUpperCase()}) *</Label>
             <Input
               value={formData.name[activeLang]}
               onChange={e => handleInputChange('name', e.target.value, activeLang)}
@@ -243,7 +242,7 @@ function EditPlanContent({ params }: { params: Promise<{ id: string }> }) {
           </div>
 
           <div>
-            <Label className="mb-2 block">Description ({activeLang.toUpperCase()})</Label>
+            <Label className="mb-2 block">{t('plans.descLabel')} ({activeLang.toUpperCase()})</Label>
             <textarea
               value={formData.description[activeLang]}
               onChange={e => handleInputChange('description', e.target.value, activeLang)}
@@ -254,7 +253,7 @@ function EditPlanContent({ params }: { params: Promise<{ id: string }> }) {
 
           <div className="flex gap-2">
             <div className="flex-1">
-              <Label className="mb-2 block">Currency</Label>
+              <Label className="mb-2 block">{t('plans.currencyLabel')}</Label>
               <Dropdown
                 options={CURRENCIES.map(c => ({ id: c, label: c }))}
                 value={formData.currency}
@@ -262,7 +261,7 @@ function EditPlanContent({ params }: { params: Promise<{ id: string }> }) {
               />
             </div>
             <div className="flex-1">
-              <Label className="mb-2 block">Price</Label>
+              <Label className="mb-2 block">{t('plans.priceLabel')}</Label>
               <Input
                 type="number"
                 min={0}
@@ -276,17 +275,23 @@ function EditPlanContent({ params }: { params: Promise<{ id: string }> }) {
 
           <div className="flex gap-2">
             <div className="flex-1">
-              <Label className="mb-2 block">Plan Type</Label>
+              <Label className="mb-2 block">{t('plans.durationLabel')}</Label>
               <Dropdown
-                options={PLAN_TYPES}
+                options={[
+                  { id: 'MONTHLY', label: t('plans.interval_monthly').replace('/ ', '') },
+                  { id: 'YEARLY', label: t('plans.interval_yearly').replace('/ ', '') }
+                ]}
                 value={formData.type}
                 onChange={val => handleInputChange('type', val)}
               />
             </div>
             <div className="flex-1">
-              <Label className="mb-2 block">Status</Label>
+              <Label className="mb-2 block">{t('plans.statusLabel')}</Label>
               <Dropdown
-                options={STATUS_TYPES}
+                options={[
+                  { id: 'ACTIVE', label: t('plans.active') },
+                  { id: 'INACTIVE', label: t('plans.inactive') }
+                ]}
                 value={formData.status}
                 onChange={val => handleInputChange('status', val)}
               />
@@ -294,11 +299,11 @@ function EditPlanContent({ params }: { params: Promise<{ id: string }> }) {
           </div>
 
           <div className="flex gap-3 mt-4">
-            <Button onClick={handleSave} disabled={isSaving} className="gap-2 bg-primary flex-1">
-              <Save className="w-4 h-4" /> {isSaving ? 'Saving...' : 'Update Plan'}
+            <Button onClick={handleSave} disabled={isSaving} className="gap-2 bg-primary flex-1 hover:bg-primary/90">
+              <Save className="w-4 h-4" /> {isSaving ? t('roles.creating') : t('plans.updateBtn')}
             </Button>
             <Link href="/admin/plans" className="flex-1">
-              <Button variant="outline" className="w-full">Cancel</Button>
+              <Button variant="outline" className="w-full">{t('plans.cancel')}</Button>
             </Link>
           </div>
 
@@ -308,10 +313,6 @@ function EditPlanContent({ params }: { params: Promise<{ id: string }> }) {
   );
 }
 
-export default function EditPlanPage({ params }: { params: Promise<{ id: string }> }) {
-  return (
-    <AdminProvider>
-      <EditPlanContent params={params} />
-    </AdminProvider>
-  );
+export default function EditPlanPage({ params }: { params: Promise<{ id: string }> }) { 
+  return <EditPlanContent params={params} />;
 }
