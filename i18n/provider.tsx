@@ -1,38 +1,3 @@
-// 'use client';
-
-// import { createContext, useEffect, useState } from 'react';
-// import { loadLocale } from './index';
-
-// export const I18nContext = createContext<any>(null);
-
-// export const I18nProvider = ({
-//   children
-// }: {
-//   children: React.ReactNode;
-// }) => {
-//   const [locale, setLocale] = useState('en');
-//   const [messages, setMessages] = useState<any>({});
-
-//   useEffect(() => {
-//     const savedLang = localStorage.getItem('lang') || 'en';
-//     setLocale(savedLang);
-
-//     loadLocale(savedLang).then(setMessages);
-//   }, []);
-
-//   const changeLanguage = async (lang: string) => {
-//     localStorage.setItem('lang', lang);
-//     setLocale(lang);
-//     const msgs = await loadLocale(lang);
-//     setMessages(msgs);
-//   };
-
-//   return (
-//     <I18nContext.Provider value={{ locale, changeLanguage, messages }}>
-//       {children}
-//     </I18nContext.Provider>
-//   );
-// };
 
 'use client';
 

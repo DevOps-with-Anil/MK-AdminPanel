@@ -5,7 +5,7 @@ import { tokenStorage } from "@/utils/token";
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
     
-
+console.log(BASE_URL + "   Base url. ")
 /**
  * Generic API client
  * @param endpoint API endpoint
