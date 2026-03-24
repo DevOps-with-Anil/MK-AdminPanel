@@ -1,6 +1,6 @@
 'use client';
 
-import { AdminProvider } from '@/contexts/AdminContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -136,8 +136,9 @@ function CountryMultiSelect({ selected, onChange }: { selected: string[]; onChan
   );
 }
 
-function EditUserContent() {
+export default function EditUserPage() {
   const params = useParams();
+  const { t } = useAdmin();
   const userId = params.id as string;
 
   const [formData, setFormData] = useState<FormData>({
@@ -173,10 +174,10 @@ function EditUserContent() {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.name.trim()) newErrors.name = t('users.name') + ' is required';
+    if (!formData.email.trim()) newErrors.email = t('users.email') + ' is required';
     // if (!formData.password.trim()) newErrors.password = 'Password is required';
-    if (!formData.phoneNumber.trim()) newErrors.phoneNumber = 'Phone number is required';
+    if (!formData.phoneNumber.trim()) newErrors.phoneNumber = t('users.phoneNumber') + ' is required';
     // if (!formData.role) newErrors.role = 'Role is required';
     if (!formData.status) newErrors.status = 'Status is required';
     if (!formData.allowedCountries.length) newErrors.allowedCountries = 'Select at least one country';
@@ -292,8 +293,8 @@ function EditUserContent() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-xl font-medium">Edit Admin User</h1>
-          <p className="text-muted-foreground">Modify user details and permissions</p>
+          <h1 className="text-xl font-medium">{t('users.editTitle')}</h1>
+          <p className="text-muted-foreground">{t('users.editSubtitle')}</p>
         </div>
       </div>
 
@@ -301,12 +302,12 @@ function EditUserContent() {
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>User Information</CardTitle>
-              <CardDescription>Update admin details</CardDescription>
+              <CardTitle>{t('users.detailsTitle')}</CardTitle>
+              <CardDescription>{t('users.detailsDesc')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <Label>Full Name</Label>
+                <Label>{t('users.name')}</Label>
                 <Input
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
@@ -316,7 +317,7 @@ function EditUserContent() {
               </div>
 
               <div>
-                <Label>Email</Label>
+                <Label>{t('users.email')}</Label>
                 <Input
                   type="email"
                   value={formData.email}
@@ -328,11 +329,11 @@ function EditUserContent() {
 
               <div className="grid grid-cols-[120px_1fr] gap-4">
                 <div>
-                  <Label>Phone Code</Label>
+                  <Label>{t('users.phoneCode')}</Label>
                   <Dropdown options={PHONE_CODES} value={formData.phoneCode} onChange={(val) => handleInputChange('phoneCode', val)} />
                 </div>
                 <div>
-                  <Label>Phone Number</Label>
+                  <Label>{t('users.phoneNumber')}</Label>
                   <Input
                     type="number"
                     value={formData.phoneNumber}
@@ -344,7 +345,7 @@ function EditUserContent() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Role</Label>
+                  <Label>{t('users.role')}</Label>
                   {loadingRoles ? (
                     <div>Loading roles...</div>
                   ) : (
@@ -352,20 +353,20 @@ function EditUserContent() {
                       options={roles}
                       value={formData.role}
                       onChange={(val) => handleInputChange('role', val)}
-                      placeholder="Select role"
+                      placeholder={t('users.selectRole')}
                     />
                   )}
                   {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
                 </div>
 
                 <div>
-                  <Label>Status</Label>
+                  <Label>{t('users.status')}</Label>
                   <Dropdown
                     options={[
-                      { id: 'ACTIVE', label: 'Active' },
-                      { id: 'INACTIVE', label: 'Inactive' },
+                      { id: 'ACTIVE', label: t('users.active') },
+                      { id: 'INACTIVE', label: t('users.inactive') },
                     ]}
-                    value={{ id: formData.status, label: formData.status === 'ACTIVE' ? 'Active' : 'Inactive' }}
+                    value={{ id: formData.status, label: formData.status === 'ACTIVE' ? t('users.active') : t('users.inactive') }}
                     onChange={(val) => handleInputChange('status', val.id as StatusType)}
                   />
                   {errors.status && <p className="text-red-500 text-sm mt-1">{errors.status}</p>}
@@ -373,7 +374,7 @@ function EditUserContent() {
               </div>
 
               <div>
-                <Label>Allowed Countries</Label>
+                <Label>{t('users.allowedCountries')}</Label>
                 <CountryMultiSelect
                   selected={formData.allowedCountries}
                   onChange={(val) => handleInputChange('allowedCountries', val)}
@@ -382,11 +383,11 @@ function EditUserContent() {
               </div>
 
               <div>
-                <Label>Admin Image</Label>
+                <Label>{t('users.adminImage')}</Label>
                 <div className="flex items-center gap-4">
                   {formData.image && <img src={formData.image} className="w-20 h-20 rounded-full object-cover border" />}
                   <label className="flex items-center gap-2 cursor-pointer px-3 py-2 border rounded-md">
-                    <Upload className="w-4 h-4" /> Upload Image
+                    <Upload className="w-4 h-4" /> {t('users.uploadImage')}
                     <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
                   </label>
                 </div>
@@ -394,10 +395,10 @@ function EditUserContent() {
 
               <div className="flex gap-3 mt-4">
                 <Button onClick={handleSave} className="gap-2 bg-primary flex-1" disabled={isLoading}>
-                  <Save className="w-4 h-4" /> {isLoading ? 'Saving...' : 'Save Changes'}
+                  <Save className="w-4 h-4" /> {isLoading ? t('roles.creating') : t('users.saveChanges')}
                 </Button>
                 <Button onClick={() => setIsEditing(!isEditing)} variant="outline" className="flex-1">
-                  {isEditing ? 'Cancel' : 'Edit'}
+                  {isEditing ? t('plans.cancel') : t('users.edit')}
                 </Button>
               </div>
             </CardContent>
@@ -405,13 +406,5 @@ function EditUserContent() {
         </div>
       </div>
     </div>
-  );
-}
-
-export default function EditUserPage() {
-  return (
-    <AdminProvider>
-      <EditUserContent />
-    </AdminProvider>
   );
 }

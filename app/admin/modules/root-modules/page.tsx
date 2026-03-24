@@ -1,6 +1,6 @@
 'use client';
 
-import { AdminProvider } from '@/contexts/AdminContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
@@ -51,7 +51,8 @@ interface Module {
 
 /* ================= COMPONENT ================= */
 
-function ModulesPageContent() {
+export default function ModulesPage() {
+  const { t } = useAdmin();
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -219,10 +220,8 @@ function ModulesPageContent() {
         <div className="flex items-start gap-4">
           <Layers className="text-primary w-7 h-7 mt-1" />
           <div>
-            <h1 className="text-xl font-medium">Modules & Features</h1>
-            <p className="text-muted-foreground">
-              Manage platform modules and permissions
-            </p>
+            <h1 className="text-xl font-medium">{t('modules.title')}</h1>
+            <p className="text-muted-foreground">{t('modules.subtitle')}</p>
           </div>
         </div>
 
@@ -230,7 +229,7 @@ function ModulesPageContent() {
           <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" />
             <Input
-              placeholder="Search Modules..."
+              placeholder={t('modules.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -240,7 +239,7 @@ function ModulesPageContent() {
           <Link href="/admin/modules/root-modules/new">
             <Button className="gap-2">
               <Plus className="w-4 h-4" />
-              New Module
+              {t('modules.newModule')}
             </Button>
           </Link>
         </div>
@@ -254,16 +253,16 @@ function ModulesPageContent() {
             {/* ✅ UPDATED HEADER WITH THEME SELECT */}
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Available Modules</CardTitle>
+                <CardTitle>{t('modules.available')}</CardTitle>
                 <CardDescription>
-                  Page {page} of {totalPages}
+                  {t('users.show')}: {page} / {totalPages}
                 </CardDescription>
               </div>
               {/* Page Row Limit */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
-                    Show: {limit}
+                    {t('users.show')}: {limit}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -320,7 +319,7 @@ function ModulesPageContent() {
                         // }}
                         >
                           <Edit2 className="w-4 h-4 mr-2" />
-                          Edit
+                          {t('plans.edit')}
                         </DropdownMenuItem>
 
                         {/* ✅ DELETE */}
@@ -332,7 +331,7 @@ function ModulesPageContent() {
                           }}
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
-                          Delete
+                          {t('plans.delete')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -350,7 +349,7 @@ function ModulesPageContent() {
                         }}
                         className="cursor-pointer"
                       >
-                        {mod.status}
+                        {mod.status === 'active' ? t('plans.active') : t('plans.inactive')}
                       </Badge>
 
                     </div>
@@ -398,7 +397,7 @@ function ModulesPageContent() {
         <div>
           <Card className="sticky top-0">
             <CardHeader>
-              <CardTitle>Module Actions</CardTitle>
+              <CardTitle>{t('modules.actions')}</CardTitle>
             </CardHeader>
 
             <CardContent>
@@ -446,10 +445,7 @@ function ModulesPageContent() {
                     </div>
                   ))
               ) : (
-                <p className="text-center text-muted-foreground">
-                  Please select a module to view its actions
-
-                </p>
+                <p className="text-center text-muted-foreground">{t('modules.emptyActions')}</p>
               )}
             </CardContent>
           </Card>
@@ -461,7 +457,7 @@ function ModulesPageContent() {
         <Card>
           <CardContent className="text-center pt-6">
             <p className="text-2xl font-bold">{modules.length}</p>
-            <p>Total Modules</p>
+            <p>{t('modules.totalModules')}</p>
           </CardContent>
         </Card>
 
@@ -470,7 +466,7 @@ function ModulesPageContent() {
             <p className="text-2xl font-bold">
               {modules.reduce((s, m) => s + m.actionsCount, 0)}
             </p>
-            <p>Total Permissions</p>
+            <p>{t('modules.totalPermissions')}</p>
           </CardContent>
         </Card>
 
@@ -479,20 +475,10 @@ function ModulesPageContent() {
             <p className="text-2xl font-bold">
               {modules.filter((m) => m.status === 'active').length}
             </p>
-            <p>Active Modules</p>
+            <p>{t('modules.activeModules')}</p>
           </CardContent>
         </Card>
       </div>
     </div>
-  );
-}
-
-/* ================= EXPORT ================= */
-
-export default function ModulesPage() {
-  return (
-    <AdminProvider>
-      <ModulesPageContent />
-    </AdminProvider>
   );
 }

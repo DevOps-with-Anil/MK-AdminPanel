@@ -1,7 +1,7 @@
 
 'use client';
 
-import { AdminProvider } from '@/contexts/AdminContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { useState } from 'react';
 import {
   Card,
@@ -67,7 +67,8 @@ const STATUS_OPTIONS: { label: string; value: Status }[] = [
 
 /* ================= COMPONENT ================= */
 
-function NewRoleContent() {
+export default function NewRolePage() {
+  const { t } = useAdmin();
   const [formData, setFormData] = useState<NewRoleForm>({
     name: { en: '', fr: '', ar: '', ch: '' },
     description: { en: '', fr: '', ar: '', ch: '' },
@@ -170,9 +171,9 @@ function NewRoleContent() {
         </Link>
 
         <div>
-          <h1 className="text-xl font-medium">Create Role</h1>
+          <h1 className="text-xl font-medium">{t('roles.createTitle')}</h1>
           <p className="text-muted-foreground">
-            Add a new role with multilingual support
+            {t('roles.createSubtitle')}
           </p>
         </div>
       </div>
@@ -182,9 +183,9 @@ function NewRoleContent() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Role Details</CardTitle>
+              <CardTitle>{t('roles.details')}</CardTitle>
               <CardDescription>
-                Fill role information in multiple languages
+                {t('roles.detailsSubtitle')}
               </CardDescription>
             </CardHeader>
 
@@ -217,7 +218,7 @@ function NewRoleContent() {
               {/* Name */}
               <div>
                 <Label className="mb-2 block">
-                  Role Name ({currentLang.toUpperCase()})
+                  {t('roles.roleName')} ({currentLang.toUpperCase()})
                 </Label>
                 <Input
                   value={formData.name[currentLang]}
@@ -239,7 +240,7 @@ function NewRoleContent() {
               {/* Description */}
               <div>
                 <Label className="mb-2 block">
-                  Description ({currentLang.toUpperCase()})
+                  {t('roles.description')} ({currentLang.toUpperCase()})
                 </Label>
                 <Input
                   value={formData.description[currentLang]}
@@ -257,7 +258,7 @@ function NewRoleContent() {
               {/* Status (same grid style as admin form) */}
               {/* Status */}
               <div>
-                <Label className="mb-2 block">Status</Label>
+                <Label className="mb-2 block">{t('roles.status')}</Label>
                 <Select
                   value={formData.status}
                   onValueChange={(val: Status) =>
@@ -268,7 +269,7 @@ function NewRoleContent() {
                   }
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder={t('roles.selectStatus')} />
                   </SelectTrigger>
 
                   <SelectContent>
@@ -292,12 +293,12 @@ function NewRoleContent() {
                   className="gap-2 flex-1"
                 >
                   <Save className="w-4 h-4" />
-                  {isLoading ? 'Creating...' : 'Create Role'}
+                  {isLoading ? t('roles.creating') : t('roles.createBtn')}
                 </Button>
 
                 <Link href="/admin/roles" className="flex-1">
                   <Button variant="outline" className="w-full">
-                    Cancel
+                    {t('roles.cancel')}
                   </Button>
                 </Link>
               </div>
@@ -305,7 +306,7 @@ function NewRoleContent() {
               {/* Success */}
               {success && (
                 <p className="text-green-600 text-sm">
-                  Role created successfully!
+                  {t('roles.success')}
                 </p>
               )}
             </CardContent>
@@ -313,13 +314,5 @@ function NewRoleContent() {
         </div>
       </div>
     </div>
-  );
-}
-
-export default function NewRolePage() {
-  return (
-    <AdminProvider>
-      <NewRoleContent />
-    </AdminProvider>
   );
 }

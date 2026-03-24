@@ -1,6 +1,6 @@
 'use client';
 
-import { AdminProvider } from '@/contexts/AdminContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { useState, useEffect } from 'react';
 import {
   Card,
@@ -72,6 +72,7 @@ const STATUS_OPTIONS: { label: string; value: Status }[] = [
 /* ================= COMPONENT ================= */
 
 function EditRoleContent() {
+  const { t } = useAdmin();
   const { id } = useParams();
   const router = useRouter();
 
@@ -208,9 +209,9 @@ function EditRoleContent() {
         </Link>
 
         <div>
-          <h1 className="text-xl font-medium">Edit Role</h1>
+          <h1 className="text-xl font-medium">{t('roles.editTitle')}</h1>
           <p className="text-muted-foreground">
-            Update role details
+            {t('roles.editSubtitle')}
           </p>
         </div>
       </div>
@@ -220,9 +221,9 @@ function EditRoleContent() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Role Details</CardTitle>
+              <CardTitle>{t('roles.details')}</CardTitle>
               <CardDescription>
-                Modify role in multiple languages
+                {t('roles.detailsSubtitle')}
               </CardDescription>
             </CardHeader>
 
@@ -254,7 +255,7 @@ function EditRoleContent() {
               {/* Name */}
               <div>
                 <Label className="mb-2 block">
-                  Role Name ({currentLang.toUpperCase()})
+                  {t('roles.roleName')} ({currentLang.toUpperCase()})
                 </Label>
                 <Input
                   value={formData.name[currentLang]}
@@ -276,7 +277,7 @@ function EditRoleContent() {
               {/* Description */}
               <div>
                 <Label className="mb-2 block">
-                  Description ({currentLang.toUpperCase()})
+                  {t('roles.description')} ({currentLang.toUpperCase()})
                 </Label>
                 <Input
                   value={formData.description[currentLang]}
@@ -292,7 +293,7 @@ function EditRoleContent() {
 
               {/* Status */}
               <div>
-                <Label className="mb-2 block">Status</Label>
+                <Label className="mb-2 block">{t('roles.status')}</Label>
                 <Select
                   value={formData.status}
                   onValueChange={(val: Status) =>
@@ -303,7 +304,7 @@ function EditRoleContent() {
                   }
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder={t('roles.selectStatus')} />
                   </SelectTrigger>
 
                   <SelectContent>
@@ -312,7 +313,7 @@ function EditRoleContent() {
                         key={option.value}
                         value={option.value}
                       >
-                        {option.label}
+                        {option.value === 'ACTIVE' ? t('plans.active') : t('plans.inactive')}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -327,19 +328,19 @@ function EditRoleContent() {
                   className="gap-2 flex-1"
                 >
                   <Save className="w-4 h-4" />
-                  {isLoading ? 'Updating...' : 'Update Role'}
+                  {isLoading ? t('roles.creating') : t('roles.updateBtn')}
                 </Button>
 
                 <Link href="/admin/roles" className="flex-1">
                   <Button variant="outline" className="w-full">
-                    Cancel
+                    {t('roles.cancel')}
                   </Button>
                 </Link>
               </div>
 
               {success && (
                 <p className="text-green-600 text-sm">
-                  Role updated successfully!
+                  {t('roles.success')}
                 </p>
               )}
             </CardContent>
@@ -352,10 +353,4 @@ function EditRoleContent() {
 
 /* ================= EXPORT ================= */
 
-export default function EditRolePage() {
-  return (
-    <AdminProvider>
-      <EditRoleContent />
-    </AdminProvider>
-  );
-}
+export default EditRoleContent;

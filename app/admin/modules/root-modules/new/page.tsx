@@ -1,7 +1,7 @@
 'use client';
 
-import { AdminProvider } from '@/contexts/AdminContext';
 import { useState } from 'react';
+import { useAdmin } from '@/contexts/AdminContext';
 import {
   Card,
   CardContent,
@@ -68,6 +68,7 @@ const LANGUAGES: { key: LangKey; label: string }[] = [
 
 /* ================= COMPONENT ================= */
 function ModulePage() {
+  const { t } = useAdmin();
   const [formData, setFormData] = useState<ModuleForm>({
     key: '',
     name: { en: '', fr: '', ar: '', ch: '' },
@@ -212,25 +213,23 @@ function ModulePage() {
         </Link>
 
         <div>
-          <h1 className="text-xl font-medium">Create Module & Actions</h1>
-          <p className="text-muted-foreground">Add a new Module with multilingual support</p>
+          <h1 className="text-xl font-medium">{t('modules.createTitle')}</h1>
+          <p className="text-muted-foreground">{t('modules.createSubtitle')}</p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Module Details</CardTitle>
-          <CardDescription>Fill module information in multiple languages</CardDescription>
+          <CardTitle>{t('modules.detailsTitle')}</CardTitle>
+          <CardDescription>{t('modules.detailsDesc')}</CardDescription>
         </CardHeader>
-
         <CardContent className="space-y-6">
-
           {/* Success / Global Error */}
-          {success && <p className="text-green-800">Module created successfully!</p>}
+          {success && <p className="text-green-800">{t('modules.success')}</p>}
           {errors.global && <p className="text-red-500">{errors.global}</p>}
 
           {/* 🌐 GLOBAL LANGUAGE TABS */}
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap mb-4">
             {LANGUAGES.map(lang => (
               <Button
                 key={lang.key}
@@ -245,17 +244,16 @@ function ModulePage() {
 
           {/* Module Key */}
           <div className="space-y-2">
-            <Label>Module Key *</Label>
+            <Label>{t('modules.keyLabel')} *</Label>
             <Input
               value={formData.key}
               onChange={e => setFormData({ ...formData, key: e.target.value })}
             />
             {errors.moduleKey && <p className="text-xs text-red-500">{errors.moduleKey}</p>}
           </div>
-
           {/* Module Name */}
           <div className="space-y-2">
-            <Label>Module Name ({currentLang.toUpperCase()}) *</Label>
+            <Label>{t('modules.nameLabel')} ({currentLang.toUpperCase()}) *</Label>
             <Input
               value={formData.name[currentLang]}
               onChange={e =>
@@ -269,34 +267,33 @@ function ModulePage() {
 
           {/* Status */}
           <div className="space-y-2">
-            <Label>Status</Label>
+            <Label>{t('plans.statusLabel')}</Label>
             <Select value={formData.status} onValueChange={handleModuleStatusChange}>
               <SelectTrigger className="w-full min-w-[220px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="INACTIVE">Inactive</SelectItem>
+                <SelectItem value="ACTIVE">{t('plans.active')}</SelectItem>
+                <SelectItem value="INACTIVE">{t('plans.inactive')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Actions */}
-          <div className="space-y-2">
-            <CardTitle>Actions Details</CardTitle>
-            <CardDescription>Fill actions information in multiple languages</CardDescription>
+          <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <Button size="lg" variant="outline" className="bg-white hover:bg-gray-50" onClick={handleAddAction}>
+              <div>
+                <CardTitle className="text-base">{t('modules.actionsTitle')}</CardTitle>
+                <CardDescription>{t('modules.actionsDesc')}</CardDescription>
+              </div>
+              <Button size="sm" variant="outline" className="bg-white hover:bg-gray-50" onClick={handleAddAction}>
                 <Plus className="w-4 h-4 mr-1" />
-                Add Action
+                {t('modules.addActionBtn')}
               </Button>
             </div>
 
             {formData.actions.map((action, index) => (
-              <div
-                key={index}
-                className="bg-white border border-gray-200 p-4 rounded-lg space-y-4 relative shadow-sm"
-              >
+              <div key={index} className="relative p-4 border rounded-lg shadow-sm">
                 <button
                   onClick={() => handleDeleteAction(index)}
                   className="absolute right-3 top-3 text-red-500 hover:text-red-600"
@@ -306,7 +303,7 @@ function ModulePage() {
 
                 {/* ACTION KEY */}
                 <div className="space-y-2">
-                  <Label>Action Key *</Label>
+                  <Label>{t('modules.actionKeyLabel')} *</Label>
                   <Input
                     value={action.key}
                     onChange={e => handleActionChange(index, 'key', e.target.value)}
@@ -318,7 +315,7 @@ function ModulePage() {
 
                 {/* ACTION NAME */}
                 <div className="space-y-2">
-                  <Label>Action Name ({currentLang.toUpperCase()}) *</Label>
+                  <Label>{t('modules.actionNameLabel')} ({currentLang.toUpperCase()}) *</Label>
                   <Input
                     value={action.actionName[currentLang]}
                     onChange={e => handleActionNameChange(index, currentLang, e.target.value)}
@@ -330,18 +327,17 @@ function ModulePage() {
 
                 {/* STATUS */}
                 <div className="space-y-2">
-                  <Label>Status</Label>
+                  <Label>{t('plans.statusLabel')}</Label>
                   <Select
                     value={action.status}
-                    disabled={formData.status === 'INACTIVE'}
                     onValueChange={val => handleActionChange(index, 'status', val)}
                   >
                     <SelectTrigger className="w-full min-w-[220px] bg-white">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ACTIVE">Active</SelectItem>
-                      <SelectItem value="INACTIVE">Inactive</SelectItem>
+                      <SelectItem value="ACTIVE">{t('plans.active')}</SelectItem>
+                      <SelectItem value="INACTIVE">{t('plans.inactive')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -353,11 +349,11 @@ function ModulePage() {
           <div className="flex gap-3">
             <Button onClick={handleSubmit} disabled={isLoading}>
               <Save className="w-4 h-4 mr-2" />
-              Create Module
+              {t('modules.createBtn')}
             </Button>
 
             <Link href="/admin/modules/root-modules">
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline">{t('plans.cancel')}</Button>
             </Link>
           </div>
         </CardContent>
@@ -366,10 +362,6 @@ function ModulePage() {
   );
 }
 
-export default function Page() {
-  return (
-    <AdminProvider>
-      <ModulePage />
-    </AdminProvider>
-  );
+export default function Page() { 
+  return <ModulePage />;
 }

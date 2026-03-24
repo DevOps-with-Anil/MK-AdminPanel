@@ -1,295 +1,318 @@
 'use client';
 
-import { AdminProvider } from '@/contexts/AdminContext';
-import { AdminLayout } from '@/components/layout/AdminLayout';
-import { useState } from 'react';
-import { useParams } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useRef, useEffect, use } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Save, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
+import { getPlanById, updatePlan } from '@/services/auth.service';
+import { useAdmin } from '@/contexts/AdminContext';
 
-interface PlanForm {
-  name: string;
-  price: number;
-  billing: 'monthly' | 'yearly';
-  description: string;
-  features: string[];
-  status: 'active' | 'inactive';
-}
+// ---------------------- Dropdown Component ----------------------
+function Dropdown({
+  options,
+  value,
+  onChange,
+  placeholder
+}: {
+  options: { id: string; label: string }[];
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
-function EditPlanContent() {
-  const params = useParams();
-  const planId = params.id as string;
-  const [isEditing, setIsEditing] = useState(true);
-  const [newFeature, setNewFeature] = useState('');
-  const [formData, setFormData] = useState<PlanForm>({
-    name: 'Pro Plan',
-    price: 99,
-    billing: 'monthly',
-    description: 'Best for growing teams with advanced features',
-    features: ['Dashboard', 'Full CMS', 'Analytics', 'Support Tickets', 'Ad Management'],
-    status: 'active',
-  });
-
-  const handleInputChange = (field: string, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const addFeature = () => {
-    if (newFeature.trim()) {
-      setFormData((prev) => ({
-        ...prev,
-        features: [...prev.features, newFeature],
-      }));
-      setNewFeature('');
-    }
-  };
-
-  const removeFeature = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      features: prev.features.filter((_, i) => i !== index),
-    }));
-  };
-
-  const handleSave = () => {
-    setIsEditing(false);
-    alert('Plan updated successfully!');
-  };
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/admin/plans">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Edit Subscription Plan</h1>
-            <p className="text-muted-foreground">Configure plan details and features</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          {/* Basic Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Plan Details</CardTitle>
-              <CardDescription>Basic plan information</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <Label htmlFor="name" className="mb-2 block">
-                  Plan Name
-                </Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  placeholder="e.g., Pro Plan"
-                  disabled={!isEditing}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="price" className="mb-2 block">
-                    Price
-                  </Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) => handleInputChange('price', parseFloat(e.target.value))}
-                    placeholder="99"
-                    disabled={!isEditing}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="billing" className="mb-2 block">
-                    Billing Cycle
-                  </Label>
-                  <select
-                    id="billing"
-                    value={formData.billing}
-                    onChange={(e) => handleInputChange('billing', e.target.value)}
-                    disabled={!isEditing}
-                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground disabled:opacity-50"
-                  >
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="description" className="mb-2 block">
-                  Description
-                </Label>
-                <textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  placeholder="Plan description"
-                  disabled={!isEditing}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground disabled:opacity-50"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Features */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Included Features</CardTitle>
-              <CardDescription>Features available in this plan</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {formData.features.map((feature, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border border-border rounded-lg">
-                  <span className="text-foreground">{feature}</span>
-                  {isEditing && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFeature(index)}
-                      className="text-destructive hover:text-destructive/90"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-
-              {isEditing && (
-                <div className="flex gap-2">
-                  <Input
-                    type="text"
-                    value={newFeature}
-                    onChange={(e) => setNewFeature(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addFeature()}
-                    placeholder="Add new feature..."
-                  />
-                  <Button onClick={addFeature} className="gap-2">
-                    <Plus className="w-4 h-4" />
-                    Add
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Status */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Plan Status</CardTitle>
-              <CardDescription>Control plan availability</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-4">
-                <select
-                  value={formData.status}
-                  onChange={(e) => handleInputChange('status', e.target.value as any)}
-                  disabled={!isEditing}
-                  className="flex-1 px-3 py-2 border border-border rounded-md bg-background text-foreground disabled:opacity-50"
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-                <Badge className={formData.status === 'active' ? 'bg-primary' : 'bg-muted'}>
-                  {formData.status}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            <Button
-              onClick={handleSave}
-              disabled={!isEditing}
-              className="gap-2 bg-primary hover:bg-primary/90 flex-1"
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full px-3 py-2 border rounded-md flex justify-between items-center bg-background text-foreground"
+      >
+        {options.find(o => o.id === value)?.label || placeholder || 'Select'}
+        <ChevronDown className="w-4 h-4" />
+      </button>
+      {open && (
+        <div className="absolute z-10 mt-1 w-full bg-background border rounded-md shadow-lg max-h-48 overflow-y-auto">
+          {options.map(opt => (
+            <div
+              key={opt.id}
+              onClick={() => { onChange(opt.id); setOpen(false); }}
+              className="px-3 py-2 hover:bg-accent hover:text-accent-foreground cursor-pointer"
             >
-              <Save className="w-4 h-4" />
-              Save Changes
-            </Button>
-            <Button
-              onClick={() => setIsEditing(!isEditing)}
-              variant="outline"
-              className="flex-1"
-            >
-              {isEditing ? 'Cancel' : 'Edit'}
-            </Button>
-          </div>
+              {opt.label}
+            </div>
+          ))}
         </div>
-
-        {/* Pricing Preview */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Pricing Preview</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-center p-4 border border-border rounded-lg">
-                <p className="text-sm text-muted-foreground mb-1">Price</p>
-                <p className="text-3xl font-bold text-primary">
-                  ${formData.price}
-                  <span className="text-lg text-muted-foreground">/{formData.billing.charAt(0)}</span>
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">Features Count</p>
-                <Badge className="bg-primary text-primary-foreground">
-                  {formData.features.length} features
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Quick Info</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm">
-              <div>
-                <p className="text-muted-foreground mb-1">Plan ID</p>
-                <p className="font-mono text-foreground">{planId}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground mb-1">Subscribers</p>
-                <p className="text-2xl font-bold text-foreground">450</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground mb-1">Monthly Revenue</p>
-                <p className="text-2xl font-bold text-accent">${(formData.price * 450).toLocaleString()}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
 
-export default function EditPlanPage() {
+// ---------------------- Constants ----------------------
+const LANGUAGES = ['en', 'fr', 'ar', 'hi'] as const;
+const CURRENCIES = ['USD', 'EUR', 'INR', 'GBP'];
+
+// ---------------------- Type Definitions ----------------------
+type Lang = typeof LANGUAGES[number];
+
+interface PlanForm {
+  name: Record<Lang, string>;
+  description: Record<Lang, string>;
+  price: string;
+  currency: string;
+  type: string;
+  status: string;
+}
+
+// ---------------------- Edit Plan Content ----------------------
+function EditPlanContent({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
+  const { t } = useAdmin();
+  
+  const [formData, setFormData] = useState<PlanForm>({
+    name: { en: '', fr: '', ar: '', hi: '' },
+    description: { en: '', fr: '', ar: '', hi: '' },
+    price: '',
+    currency: 'USD',
+    type: 'MONTHLY',
+    status: 'ACTIVE',
+  });
+
+  const [existingModules, setExistingModules] = useState<any[]>([]);
+  const [activeLang, setActiveLang] = useState<Lang>('en');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+
+  // Load Plan Data
+  useEffect(() => {
+    const fetchPlan = async () => {
+      try {
+        const res = await getPlanById(resolvedParams.id);
+        const data = res?.data || res;
+
+        if (data) {
+          // Normalize name/description which might be strings or objects
+          const normalizeMultiLang = (val: any) => {
+            if (typeof val === 'string') return { en: val, fr: '', ar: '', hi: '' };
+            return { en: '', fr: '', ar: '', hi: '', ...val };
+          };
+
+          setFormData({
+            name: normalizeMultiLang(data.name),
+            description: normalizeMultiLang(data.description),
+            price: data.price ? String(data.price) : '',
+            currency: data.currency || 'USD',
+            type: data.duration || 'MONTHLY',
+            status: data.status || 'ACTIVE',
+          });
+          setExistingModules(data.modules || []);
+        }
+      } catch (err: any) {
+         setErrors({ global: 'Failed to fetch plan details.' });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (resolvedParams.id) {
+        fetchPlan();
+    }
+  }, [resolvedParams.id]);
+
+
+  // Handlers
+  const handleInputChange = (field: 'name' | 'description' | 'price' | 'currency' | 'type' | 'status', value: string, lang?: Lang) => {
+    if (lang && (field === 'name' || field === 'description')) {
+      setFormData(prev => ({
+        ...prev,
+        [field]: { ...prev[field], [lang]: value }
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    }
+    setErrors(prev => ({ ...prev, [field]: '' }));
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.name.en.trim()) newErrors.name = 'Name (EN) is required';
+    if (!formData.price || Number(formData.price) <= 0) newErrors.price = 'Price must be greater than 0';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSave = async () => {
+    if (!validateForm()) return;
+
+    setIsSaving(true);
+    setErrors(prev => ({ ...prev, global: '' }));
+    setSuccessMessage('');
+
+    try {
+      await updatePlan(resolvedParams.id, {
+        name: formData.name,
+        description: formData.description,
+        price: Number(formData.price),
+        currency: formData.currency,
+        duration: formData.type,
+        status: formData.status,
+        modules: existingModules
+      });
+
+      setSuccessMessage('Plan updated successfully!');
+    } catch (err: any) {
+      let message = 'Failed to update plan';
+       if (err?.message) message = err.message;
+      setErrors(prev => ({ ...prev, global: message }));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) return <div className="p-8">Loading plan details...</div>;
+
   return (
-    <AdminProvider>
-      <EditPlanContent />
-    </AdminProvider>
+    <div className="space-y-6 max-w-xl">
+      <div className="flex items-center gap-4">
+        <Link href="/admin/plans">
+          <Button variant="ghost" size="sm">
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+        </Link>
+        <div>
+          <h1 className="text-xl font-medium">{t('plans.editTitle')}</h1>
+          <p className="text-muted-foreground">{t('plans.editSubtitle')}</p>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('plans.detailsTitle')}</CardTitle>
+          <CardDescription>{t('plans.editSubtitle')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+
+          {successMessage && (
+            <div className="p-3 rounded-md bg-green-100 text-green-700 border border-green-300">
+              {successMessage}
+            </div>
+          )}
+
+          {errors.global && (
+            <div className="p-3 rounded-md bg-red-100 text-red-700 border border-red-300">
+              {errors.global}
+            </div>
+          )}
+
+          <div className="flex gap-2 mb-4">
+            {LANGUAGES.map(lang => (
+              <Button
+                key={lang}
+                variant={activeLang === lang ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveLang(lang)}
+              >
+                {lang.toUpperCase()}
+              </Button>
+            ))}
+          </div>
+
+          <div>
+            <Label className="mb-2 block">{t('plans.nameLabel')} ({activeLang.toUpperCase()}) *</Label>
+            <Input
+              value={formData.name[activeLang]}
+              onChange={e => handleInputChange('name', e.target.value, activeLang)}
+              placeholder="Plan Name"
+            />
+            {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+          </div>
+
+          <div>
+            <Label className="mb-2 block">{t('plans.descLabel')} ({activeLang.toUpperCase()})</Label>
+            <textarea
+              value={formData.description[activeLang]}
+              onChange={e => handleInputChange('description', e.target.value, activeLang)}
+              rows={3}
+              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Label className="mb-2 block">{t('plans.currencyLabel')}</Label>
+              <Dropdown
+                options={CURRENCIES.map(c => ({ id: c, label: c }))}
+                value={formData.currency}
+                onChange={val => handleInputChange('currency', val)}
+              />
+            </div>
+            <div className="flex-1">
+              <Label className="mb-2 block">{t('plans.priceLabel')}</Label>
+              <Input
+                type="number"
+                min={0}
+                value={formData.price}
+                onChange={e => handleInputChange('price', e.target.value)}
+                placeholder="0.00"
+              />
+              {errors.price && <p className="text-red-500 text-sm">{errors.price}</p>}
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Label className="mb-2 block">{t('plans.durationLabel')}</Label>
+              <Dropdown
+                options={[
+                  { id: 'MONTHLY', label: t('plans.interval_monthly').replace('/ ', '') },
+                  { id: 'YEARLY', label: t('plans.interval_yearly').replace('/ ', '') }
+                ]}
+                value={formData.type}
+                onChange={val => handleInputChange('type', val)}
+              />
+            </div>
+            <div className="flex-1">
+              <Label className="mb-2 block">{t('plans.statusLabel')}</Label>
+              <Dropdown
+                options={[
+                  { id: 'ACTIVE', label: t('plans.active') },
+                  { id: 'INACTIVE', label: t('plans.inactive') }
+                ]}
+                value={formData.status}
+                onChange={val => handleInputChange('status', val)}
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 mt-4">
+            <Button onClick={handleSave} disabled={isSaving} className="gap-2 bg-primary flex-1 hover:bg-primary/90">
+              <Save className="w-4 h-4" /> {isSaving ? t('roles.creating') : t('plans.updateBtn')}
+            </Button>
+            <Link href="/admin/plans" className="flex-1">
+              <Button variant="outline" className="w-full">{t('plans.cancel')}</Button>
+            </Link>
+          </div>
+
+        </CardContent>
+      </Card>
+    </div>
   );
+}
+
+export default function EditPlanPage({ params }: { params: Promise<{ id: string }> }) { 
+  return <EditPlanContent params={params} />;
 }

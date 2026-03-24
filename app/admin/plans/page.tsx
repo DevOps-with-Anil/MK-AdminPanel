@@ -1,21 +1,22 @@
 
 'use client';
-import { AdminProvider } from '@/contexts/AdminContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit2, Trash2, MoreVertical, CreditCard, Settings } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { getPlans, updateStatus } from '@/services/auth.service';
+import { getPlans, updateStatus, deletePlan } from '@/services/auth.service';
 import { useDeleteEntity } from '@/hooks/useDeleteEntity';
 
 
 interface Plan {
   id: string;
-  name: string ;
-  description: string ;
+  name: string;
+  description: string;
   price: number;
   currency: string;
   type: 'MONTHLY' | 'YEARLY';
@@ -25,14 +26,27 @@ interface Plan {
 }
 
 
-function PlansPageContent() {
+export default function PlansPage() {
+  const { t } = useAdmin();
+  const router = useRouter();
 
   const handleViewModules = (planId: string) => {
-    alert(`Viewing modules & permissions for plan ${planId}`);
+    router.push(`/admin/plans/${planId}/modules-permissions`);
   };
 
   const handleUpdatePermissions = (planId: string) => {
     alert(`Update permissions for plan ${planId}`);
+  };
+
+  const handleDelete = async (planId: string) => {
+    if (confirm(t('plans.deleteConfirm'))) {
+      try {
+        await deletePlan(planId);
+        fetchPlans();
+      } catch (err) {
+        console.error('Delete plan error', err);
+      }
+    }
   };
 
  const [page, setPage] = useState(1);
@@ -60,11 +74,8 @@ function PlansPageContent() {
 
     const formatted: Plan[] = res.data.map((r: any) => ({
       id: r._id,
-
-      // ✅ map correctly to UI structure
-      name: r.name || { en: '' },
-      description: r.description || { en: '' },
-
+      name: r.name || '',
+      description: r.description || '',
       price: r.price || 0,
       currency: r.currency || 'USD',
       type: r.type || 'MONTHLY',
@@ -75,10 +86,7 @@ function PlansPageContent() {
 
       status: r.status === 'ACTIVE' ? 'active' : 'inactive',
     }));
-
-    console.log("Test : ", formatted);
-
-    // ✅ THIS WAS MISSING
+    
     setPlans(formatted);
 
     // optional pagination
@@ -96,16 +104,16 @@ function PlansPageContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-start gap-4">
-          <CreditCard className="text-primary w-7 h-7 mt-1" />
+            <CreditCard className="text-primary w-7 h-7 mt-1" />
           <div>
-            <h1 className="text-xl font-medium text-foreground">Subscription Plans</h1>
-            <p className="text-muted-foreground">Manage subscription tiers and features</p>
+            <h1 className="text-xl font-medium text-foreground">{t('plans.title')}</h1>
+            <p className="text-muted-foreground">{t('plans.subtitle')}</p>
           </div>
         </div>
         <Link href="/admin/plans/new">
           <Button className="gap-2 bg-primary hover:bg-primary/90">
-            <Plus className="w-4 h-4" />
-            New Plan
+            <Plus className="w-4 h-4" /> 
+            {t('plans.newPlan')}
           </Button>
         </Link>
       </div>
@@ -115,7 +123,7 @@ function PlansPageContent() {
         <Card>
           <CardContent className="pt-6 text-center">
             <p className="text-3xl font-bold text-primary">{plans.length}</p>
-            <p className="text-sm text-muted-foreground mt-1">Total Plans</p>
+            <p className="text-sm text-muted-foreground mt-1">{t('plans.totalPlans')}</p>
           </CardContent>
         </Card>
         <Card>
@@ -123,7 +131,7 @@ function PlansPageContent() {
             <p className="text-3xl font-bold text-secondary">
               ${plans.reduce((sum, p) => sum + p.price * p.subscribers, 0).toLocaleString()}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">Total Revenue</p>
+            <p className="text-sm text-muted-foreground mt-1">{t('plans.totalRevenue')}</p>
           </CardContent>
         </Card>
         <Card>
@@ -131,7 +139,7 @@ function PlansPageContent() {
             <p className="text-3xl font-bold text-accent">
               {plans.reduce((sum, p) => sum + p.subscribers, 0).toLocaleString()}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">Total Subscribers</p>
+            <p className="text-sm text-muted-foreground mt-1">{t('plans.totalSubscribers')}</p>
           </CardContent>
         </Card>
       </div>
@@ -144,11 +152,11 @@ function PlansPageContent() {
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div>
-                  <CardTitle className="text-2xl">{plan?.name}</CardTitle>
-                  <CardDescription className="mt-1 text-sm text-muted-foreground ">{plan?.description+""}</CardDescription>
+                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                  <CardDescription className="mt-1 text-sm text-muted-foreground ">{plan.description}</CardDescription>
                   <div className="mt-2 flex items-center gap-2 text-foreground">
-                    <span className="font-bold">{plan.currency} {plan.price}</span>
-                    <span className="text-sm text-muted-foreground">/ {plan.type.toLowerCase()}</span>
+                    <span className="font-bold">{plan.currency} {plan.price}</span> 
+                    <span className="text-sm text-muted-foreground">{t(`plans.interval_${plan.type.toLowerCase()}`)}</span>
                   </div>
                 </div>
 
@@ -160,15 +168,15 @@ function PlansPageContent() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
-                      <Link href={`/admin/plans/edit/${plan.id}`} className="gap-2 flex items-center">
-                        <Edit2 className="w-4 h-4" /> Edit
+                      <Link href={`/admin/plans/edit/${plan.id}`} className="gap-2 flex items-center"> 
+                        <Edit2 className="w-4 h-4" /> {t('plans.edit')}
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="gap-2" onClick={() => handleUpdatePermissions(plan.id)}>
+                    {/* <DropdownMenuItem className="gap-2" onClick={() => handleUpdatePermissions(plan.id)}>
                       <Settings className="w-4 h-4" /> Update Permissions
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="gap-2 text-destructive">
-                      <Trash2 className="w-4 h-4" /> Delete
+                    </DropdownMenuItem> */}
+                    <DropdownMenuItem className="gap-2 text-destructive" onClick={() => handleDelete(plan.id)}> 
+                      <Trash2 className="w-4 h-4" /> {t('plans.delete')}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -177,16 +185,16 @@ function PlansPageContent() {
 
             <CardContent className="flex-1 flex flex-col gap-4">
               <div className="text-sm text-muted-foreground">
-                <p><strong>Modules / Features:</strong> {plan.features.length}</p>
+                <p><strong>{t('plans.modulesFeatures')}:</strong> {plan.features.length}</p>
                 {/* <p><strong>Total Subscribers:</strong> {plan.subscribers}</p> */}
               </div>
 
               <div className="flex items-center justify-between pt-4 border-t border-border">
-                <Badge className={plan.status === 'active' ? 'bg-primary' : 'bg-secondary'}>
-                  {plan.status.toUpperCase()}
+                <Badge className={plan.status === 'active' ? 'bg-primary' : 'bg-secondary'}> 
+                  {t(`plans.${plan.status}`)}
                 </Badge>
                 <Button size="sm" onClick={() => handleViewModules(plan.id)}>
-                  View Modules & Permissions
+                  {t('plans.viewModules')}
                 </Button>
               </div>
             </CardContent>
@@ -197,13 +205,5 @@ function PlansPageContent() {
       
     </div>
     
-  );
-}
-
-export default function PlansPage() {
-  return (
-    <AdminProvider>
-      <PlansPageContent />
-    </AdminProvider>
   );
 }
