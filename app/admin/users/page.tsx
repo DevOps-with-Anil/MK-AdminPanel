@@ -1,7 +1,6 @@
-'use client';
+﻿'use client';
 
-import { useAdmin } from '@/contexts/AdminContext';
-import { useState, useEffect } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { getSystemUsers, updateStatus } from '@/services/auth.service';
+import { I18nContext } from '@/i18n/provider';
 
 const PAGE_LIMIT_OPTIONS = [10, 25, 50, 'All'] as const;
 
@@ -31,7 +31,20 @@ interface AdminUser {
 }
 
 export default function AdminUsersPage() {
-  const { hasPermission, t } = useAdmin();
+  const { messages } = useContext(I18nContext);
+  const t = (key: string, placeholders?: Record<string, string | number>) => {
+    const normalizedKey = key.replace(/^translate\./, '');
+    let value = messages.translate?.[normalizedKey] || key;
+
+    if (placeholders) {
+      for (const [ph, phValue] of Object.entries(placeholders)) {
+        value = value.replace(`{{${ph}}}`, String(phValue));
+        value = value.replace(`{${ph}}`, String(phValue));
+      }
+    }
+
+    return value;
+  };
 
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,7 +127,7 @@ export default function AdminUsersPage() {
 
   /* ================= DELETE USER ================= */
   const handleDelete = async (userId: string, adminName: string) => {
-    if (!confirm(t('users.deleteConfirm').replace('{name}', adminName))) return;
+    if (!confirm(t('translate.users.deleteConfirm').replace('{name}', adminName))) return;
 
     try {
       await deleteEntity('rootadmin', userId);
@@ -134,8 +147,8 @@ export default function AdminUsersPage() {
         <div className="flex items-start gap-4">
           <Users className="text-primary w-7 h-7 mt-1" />
           <div>
-            <h1 className="text-xl font-medium">{t('users.title')}</h1>
-            <p className="text-muted-foreground">{t('users.subtitle')}</p>
+            <h1 className="text-xl font-medium">{t('translate.users.title')}</h1>
+            <p className="text-muted-foreground">{t('translate.users.subtitle')}</p>
           </div>
         </div>
 
@@ -144,7 +157,7 @@ export default function AdminUsersPage() {
           <div className="relative w-full md:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder={t('users.searchPlaceholder')}
+              placeholder={t('translate.users.searchPlaceholder')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -155,7 +168,7 @@ export default function AdminUsersPage() {
           <Link href="/admin/users/new">
             <Button className="gap-2">
               <Plus className="w-4 h-4" /> 
-              {t('users.newUser')}
+              {t('translate.users.newUser')}
             </Button>
           </Link>
         </div>
@@ -165,13 +178,13 @@ export default function AdminUsersPage() {
       <Card>
         <CardHeader className="flex items-center justify-between">
           <div className="flex flex-col">
-            <CardTitle>{t('users.directory')}</CardTitle>
-            <CardDescription>{users.length} {t('users.directory').split(' ')[0].toLowerCase()}(s)</CardDescription>
+            <CardTitle>{t('translate.users.directory')}</CardTitle>
+            <CardDescription>{users.length} {t('translate.users.directory').split(' ')[0].toLowerCase()}(s)</CardDescription>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
-                {t('users.show')}: {limit}
+                {t('translate.users.show')}: {limit}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -197,12 +210,12 @@ export default function AdminUsersPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-3 px-4">{t('users.name')}</th>
-                  <th className="text-left py-3 px-4">{t('users.email')}</th>
-                  <th className="text-left py-3 px-4">{t('users.role')}</th>
-                  <th className="text-left py-3 px-4">{t('users.status')}</th>
-                  <th className="text-left py-3 px-4">{t('users.created')}</th>
-                  <th className="text-right py-3 px-4">{t('users.actions')}</th>
+                  <th className="text-left py-3 px-4">{t('translate.users.name')}</th>
+                  <th className="text-left py-3 px-4">{t('translate.users.email')}</th>
+                  <th className="text-left py-3 px-4">{t('translate.users.role')}</th>
+                  <th className="text-left py-3 px-4">{t('translate.users.status')}</th>
+                  <th className="text-left py-3 px-4">{t('translate.users.created')}</th>
+                  <th className="text-right py-3 px-4">{t('translate.users.actions')}</th>
                 </tr>
               </thead>
 
@@ -232,7 +245,7 @@ export default function AdminUsersPage() {
                             disabled={user.updating}
                             onCheckedChange={() => handleToggleStatus(user.id, user.status)}
                           />
-                          <span className="text-sm">{user.status === 'active' ? t('users.active') : t('users.inactive')}</span>
+                          <span className="text-sm">{user.status === 'active' ? t('translate.users.active') : t('translate.users.inactive')}</span>
                         </div>
                       </td>
                       <td className="py-4 px-4 text-sm text-muted-foreground">{formatDateTime(user.createdAt)}</td>
@@ -247,7 +260,7 @@ export default function AdminUsersPage() {
                             <DropdownMenuItem asChild>
                               <Link href={`/admin/users/edit/${user.id}`} className="flex items-center gap-2">
                                 <Edit2 className="w-4 h-4" /> 
-                                {t('users.edit')}
+                                {t('translate.users.edit')}
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem
@@ -255,7 +268,7 @@ export default function AdminUsersPage() {
                               onClick={() => handleDelete(user.id, user.name)}
                             >
                               <Trash2 className="w-4 h-4" /> 
-                              {t('users.delete')}
+                              {t('translate.users.delete')}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -303,3 +316,4 @@ export default function AdminUsersPage() {
     </div>
   );
 }
+

@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import { useState, useRef, useEffect, use } from 'react';
+import { useContext, useState, useRef, useEffect, use } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { ArrowLeft, Save, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { getPlanById, updatePlan } from '@/services/auth.service';
-import { useAdmin } from '@/contexts/AdminContext';
+import { I18nContext } from '@/i18n/provider';
 
 // ---------------------- Dropdown Component ----------------------
 function Dropdown({
@@ -79,7 +79,20 @@ interface PlanForm {
 // ---------------------- Edit Plan Content ----------------------
 function EditPlanContent({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
-  const { t } = useAdmin();
+  const { messages } = useContext(I18nContext);
+  const t = (key: string, placeholders?: Record<string, string | number>) => {
+    const normalizedKey = key.replace(/^translate\./, '');
+    let value = messages.translate?.[normalizedKey] || key;
+
+    if (placeholders) {
+      for (const [ph, phValue] of Object.entries(placeholders)) {
+        value = value.replace(`{{${ph}}}`, String(phValue));
+        value = value.replace(`{${ph}}`, String(phValue));
+      }
+    }
+
+    return value;
+  };
   
   const [formData, setFormData] = useState<PlanForm>({
     name: { en: '', fr: '', ar: '', hi: '' },
@@ -194,15 +207,15 @@ function EditPlanContent({ params }: { params: Promise<{ id: string }> }) {
           </Button>
         </Link>
         <div>
-          <h1 className="text-xl font-medium">{t('plans.editTitle')}</h1>
-          <p className="text-muted-foreground">{t('plans.editSubtitle')}</p>
+          <h1 className="text-xl font-medium">{t('translate.plans.editTitle')}</h1>
+          <p className="text-muted-foreground">{t('translate.plans.editSubtitle')}</p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('plans.detailsTitle')}</CardTitle>
-          <CardDescription>{t('plans.editSubtitle')}</CardDescription>
+          <CardTitle>{t('translate.plans.detailsTitle')}</CardTitle>
+          <CardDescription>{t('translate.plans.editSubtitle')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
 
@@ -232,7 +245,7 @@ function EditPlanContent({ params }: { params: Promise<{ id: string }> }) {
           </div>
 
           <div>
-            <Label className="mb-2 block">{t('plans.nameLabel')} ({activeLang.toUpperCase()}) *</Label>
+            <Label className="mb-2 block">{t('translate.plans.nameLabel')} ({activeLang.toUpperCase()}) *</Label>
             <Input
               value={formData.name[activeLang]}
               onChange={e => handleInputChange('name', e.target.value, activeLang)}
@@ -242,7 +255,7 @@ function EditPlanContent({ params }: { params: Promise<{ id: string }> }) {
           </div>
 
           <div>
-            <Label className="mb-2 block">{t('plans.descLabel')} ({activeLang.toUpperCase()})</Label>
+            <Label className="mb-2 block">{t('translate.plans.descLabel')} ({activeLang.toUpperCase()})</Label>
             <textarea
               value={formData.description[activeLang]}
               onChange={e => handleInputChange('description', e.target.value, activeLang)}
@@ -253,7 +266,7 @@ function EditPlanContent({ params }: { params: Promise<{ id: string }> }) {
 
           <div className="flex gap-2">
             <div className="flex-1">
-              <Label className="mb-2 block">{t('plans.currencyLabel')}</Label>
+              <Label className="mb-2 block">{t('translate.plans.currencyLabel')}</Label>
               <Dropdown
                 options={CURRENCIES.map(c => ({ id: c, label: c }))}
                 value={formData.currency}
@@ -261,7 +274,7 @@ function EditPlanContent({ params }: { params: Promise<{ id: string }> }) {
               />
             </div>
             <div className="flex-1">
-              <Label className="mb-2 block">{t('plans.priceLabel')}</Label>
+              <Label className="mb-2 block">{t('translate.plans.priceLabel')}</Label>
               <Input
                 type="number"
                 min={0}
@@ -275,22 +288,22 @@ function EditPlanContent({ params }: { params: Promise<{ id: string }> }) {
 
           <div className="flex gap-2">
             <div className="flex-1">
-              <Label className="mb-2 block">{t('plans.durationLabel')}</Label>
+              <Label className="mb-2 block">{t('translate.plans.durationLabel')}</Label>
               <Dropdown
                 options={[
-                  { id: 'MONTHLY', label: t('plans.interval_monthly').replace('/ ', '') },
-                  { id: 'YEARLY', label: t('plans.interval_yearly').replace('/ ', '') }
+                  { id: 'MONTHLY', label: t('translate.plans.interval_monthly').replace('/ ', '') },
+                  { id: 'YEARLY', label: t('translate.plans.interval_yearly').replace('/ ', '') }
                 ]}
                 value={formData.type}
                 onChange={val => handleInputChange('type', val)}
               />
             </div>
             <div className="flex-1">
-              <Label className="mb-2 block">{t('plans.statusLabel')}</Label>
+              <Label className="mb-2 block">{t('translate.plans.statusLabel')}</Label>
               <Dropdown
                 options={[
-                  { id: 'ACTIVE', label: t('plans.active') },
-                  { id: 'INACTIVE', label: t('plans.inactive') }
+                  { id: 'ACTIVE', label: t('translate.plans.active') },
+                  { id: 'INACTIVE', label: t('translate.plans.inactive') }
                 ]}
                 value={formData.status}
                 onChange={val => handleInputChange('status', val)}
@@ -300,10 +313,10 @@ function EditPlanContent({ params }: { params: Promise<{ id: string }> }) {
 
           <div className="flex gap-3 mt-4">
             <Button onClick={handleSave} disabled={isSaving} className="gap-2 bg-primary flex-1 hover:bg-primary/90">
-              <Save className="w-4 h-4" /> {isSaving ? t('roles.creating') : t('plans.updateBtn')}
+              <Save className="w-4 h-4" /> {isSaving ? t('translate.roles.creating') : t('translate.plans.updateBtn')}
             </Button>
             <Link href="/admin/plans" className="flex-1">
-              <Button variant="outline" className="w-full">{t('plans.cancel')}</Button>
+              <Button variant="outline" className="w-full">{t('translate.plans.cancel')}</Button>
             </Link>
           </div>
 
@@ -316,3 +329,4 @@ function EditPlanContent({ params }: { params: Promise<{ id: string }> }) {
 export default function EditPlanPage({ params }: { params: Promise<{ id: string }> }) { 
   return <EditPlanContent params={params} />;
 }
+

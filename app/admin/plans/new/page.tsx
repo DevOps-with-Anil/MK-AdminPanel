@@ -1,18 +1,31 @@
-'use client';
+﻿'use client';
 
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAdmin } from '@/contexts/AdminContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ArrowLeft, Loader2, Save } from 'lucide-react';
 import { createPlan } from '@/services/auth.service';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { I18nContext } from '@/i18n/provider';
 
 export default function NewPlanPage() {
   const router = useRouter();
-  const { t } = useAdmin();
+  const { messages } = useContext(I18nContext);
+  const t = (key: string, placeholders?: Record<string, string | number>) => {
+    const normalizedKey = key.replace(/^translate\./, '');
+    let value = messages.translate?.[normalizedKey] || key;
+
+    if (placeholders) {
+      for (const [ph, phValue] of Object.entries(placeholders)) {
+        value = value.replace(`{{${ph}}}`, String(phValue));
+        value = value.replace(`{${ph}}`, String(phValue));
+      }
+    }
+
+    return value;
+  };
   const [isLoading, setIsLoading] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -55,16 +68,16 @@ export default function NewPlanPage() {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
-          <h1 className="text-xl font-medium text-foreground">{t('plans.createTitle')}</h1>
-          <p className="text-sm text-muted-foreground">{t('plans.createSubtitle')}</p>
+          <h1 className="text-xl font-medium text-foreground">{t('translate.plans.createTitle')}</h1>
+          <p className="text-sm text-muted-foreground">{t('translate.plans.createSubtitle')}</p>
         </div>
       </div>
 
       {/* Form Card */}
       <Card>
         <CardHeader>
-          <CardTitle>{t('plans.createTitle')}</CardTitle>
-          <CardDescription>{t('plans.createSubtitle')}</CardDescription>
+          <CardTitle>{t('translate.plans.createTitle')}</CardTitle>
+          <CardDescription>{t('translate.plans.createSubtitle')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -72,7 +85,7 @@ export default function NewPlanPage() {
               
               {/* Name */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">{t('plans.nameLabel')}</label>
+                <label className="text-sm font-medium">{t('translate.plans.nameLabel')}</label>
                 <Input 
                   required
                   placeholder="e.g. Enterprise Plan"
@@ -83,7 +96,7 @@ export default function NewPlanPage() {
 
               {/* Price */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">{t('plans.priceLabel')}</label>
+                <label className="text-sm font-medium">{t('translate.plans.priceLabel')}</label>
                 <Input 
                   required
                   type="number"
@@ -96,50 +109,50 @@ export default function NewPlanPage() {
 
               {/* Currency */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">{t('plans.currencyLabel')}</label>
+                <label className="text-sm font-medium">{t('translate.plans.currencyLabel')}</label>
                 <Select value={formData.currency} onValueChange={(v) => setFormData({...formData, currency: v})}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="USD">USD ($)</SelectItem>
-                    <SelectItem value="EUR">EUR (€)</SelectItem>
-                    <SelectItem value="INR">INR (₹)</SelectItem>
+                    <SelectItem value="EUR">EUR (â‚¬)</SelectItem>
+                    <SelectItem value="INR">INR (â‚¹)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Duration */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">{t('plans.durationLabel')}</label>
+                <label className="text-sm font-medium">{t('translate.plans.durationLabel')}</label>
                 <Select value={formData.duration} onValueChange={(v) => setFormData({...formData, duration: v})}>
                   <SelectTrigger>
-                    <SelectValue placeholder={t('plans.selectDuration')} />
+                    <SelectValue placeholder={t('translate.plans.selectDuration')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="MONTHLY">{t('plans.interval_monthly').replace('/ ', '')}</SelectItem>
-                    <SelectItem value="YEARLY">{t('plans.interval_yearly').replace('/ ', '')}</SelectItem>
+                    <SelectItem value="MONTHLY">{t('translate.plans.interval_monthly').replace('/ ', '')}</SelectItem>
+                    <SelectItem value="YEARLY">{t('translate.plans.interval_yearly').replace('/ ', '')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Status */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">{t('plans.statusLabel')}</label>
+                <label className="text-sm font-medium">{t('translate.plans.statusLabel')}</label>
                 <Select value={formData.status} onValueChange={(v) => setFormData({...formData, status: v})}>
                   <SelectTrigger>
-                    <SelectValue placeholder={t('plans.selectStatus')} />
+                    <SelectValue placeholder={t('translate.plans.selectStatus')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ACTIVE">{t('plans.active')}</SelectItem>
-                    <SelectItem value="INACTIVE">{t('plans.inactive')}</SelectItem>
+                    <SelectItem value="ACTIVE">{t('translate.plans.active')}</SelectItem>
+                    <SelectItem value="INACTIVE">{t('translate.plans.inactive')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Description (Full Width) */}
               <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium">{t('plans.descLabel')}</label>
+                <label className="text-sm font-medium">{t('translate.plans.descLabel')}</label>
                 <Input 
                   placeholder="Plan description..."
                   value={formData.description}
@@ -150,11 +163,11 @@ export default function NewPlanPage() {
 
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button type="button" variant="outline" onClick={() => router.back()}>
-                {t('plans.cancel')}
+                {t('translate.plans.cancel')}
               </Button>
               <Button type="submit" disabled={isLoading} className="bg-primary hover:bg-primary/90">
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                {t('plans.createBtn')}
+                {t('translate.plans.createBtn')}
               </Button>
             </div>
           </form>
@@ -163,3 +176,4 @@ export default function NewPlanPage() {
     </div>
   );
 }
+

@@ -1,7 +1,6 @@
-'use client';
+﻿'use client';
 
-import { useAdmin } from '@/contexts/AdminContext';
-import { useState, useEffect, useRef } from 'react';
+import { useContext, useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Save, Upload, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { getSystemRoles, editAdminUser, getAdminUserById } from '@/services/auth.service';
+import { I18nContext } from '@/i18n/provider';
 
 const COUNTRIES = [
   { code: 'IN', label: 'India' },
@@ -138,7 +138,20 @@ function CountryMultiSelect({ selected, onChange }: { selected: string[]; onChan
 
 export default function EditUserPage() {
   const params = useParams();
-  const { t } = useAdmin();
+  const { messages } = useContext(I18nContext);
+  const t = (key: string, placeholders?: Record<string, string | number>) => {
+    const normalizedKey = key.replace(/^translate\./, '');
+    let value = messages.translate?.[normalizedKey] || key;
+
+    if (placeholders) {
+      for (const [ph, phValue] of Object.entries(placeholders)) {
+        value = value.replace(`{{${ph}}}`, String(phValue));
+        value = value.replace(`{${ph}}`, String(phValue));
+      }
+    }
+
+    return value;
+  };
   const userId = params.id as string;
 
   const [formData, setFormData] = useState<FormData>({
@@ -174,10 +187,10 @@ export default function EditUserPage() {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.name.trim()) newErrors.name = t('users.name') + ' is required';
-    if (!formData.email.trim()) newErrors.email = t('users.email') + ' is required';
+    if (!formData.name.trim()) newErrors.name = t('translate.users.name') + ' is required';
+    if (!formData.email.trim()) newErrors.email = t('translate.users.email') + ' is required';
     // if (!formData.password.trim()) newErrors.password = 'Password is required';
-    if (!formData.phoneNumber.trim()) newErrors.phoneNumber = t('users.phoneNumber') + ' is required';
+    if (!formData.phoneNumber.trim()) newErrors.phoneNumber = t('translate.users.phoneNumber') + ' is required';
     // if (!formData.role) newErrors.role = 'Role is required';
     if (!formData.status) newErrors.status = 'Status is required';
     if (!formData.allowedCountries.length) newErrors.allowedCountries = 'Select at least one country';
@@ -271,7 +284,7 @@ export default function EditUserPage() {
           email: user.email || '',
           phoneCode: PHONE_CODES.find((p) => p.code === user.phoneCode) || PHONE_CODES[0],
           phoneNumber: user.phoneNumber || '',
-          role: matchedRole, // ✅ exact object from roles
+          role: matchedRole, // âœ… exact object from roles
           allowedCountries: user.allowedCountries || [],
           status: user.status || 'INACTIVE',
           image: user.image || '',
@@ -293,8 +306,8 @@ export default function EditUserPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-xl font-medium">{t('users.editTitle')}</h1>
-          <p className="text-muted-foreground">{t('users.editSubtitle')}</p>
+          <h1 className="text-xl font-medium">{t('translate.users.editTitle')}</h1>
+          <p className="text-muted-foreground">{t('translate.users.editSubtitle')}</p>
         </div>
       </div>
 
@@ -302,12 +315,12 @@ export default function EditUserPage() {
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>{t('users.detailsTitle')}</CardTitle>
-              <CardDescription>{t('users.detailsDesc')}</CardDescription>
+              <CardTitle>{t('translate.users.detailsTitle')}</CardTitle>
+              <CardDescription>{t('translate.users.detailsDesc')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <Label>{t('users.name')}</Label>
+                <Label>{t('translate.users.name')}</Label>
                 <Input
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
@@ -317,7 +330,7 @@ export default function EditUserPage() {
               </div>
 
               <div>
-                <Label>{t('users.email')}</Label>
+                <Label>{t('translate.users.email')}</Label>
                 <Input
                   type="email"
                   value={formData.email}
@@ -329,11 +342,11 @@ export default function EditUserPage() {
 
               <div className="grid grid-cols-[120px_1fr] gap-4">
                 <div>
-                  <Label>{t('users.phoneCode')}</Label>
+                  <Label>{t('translate.users.phoneCode')}</Label>
                   <Dropdown options={PHONE_CODES} value={formData.phoneCode} onChange={(val) => handleInputChange('phoneCode', val)} />
                 </div>
                 <div>
-                  <Label>{t('users.phoneNumber')}</Label>
+                  <Label>{t('translate.users.phoneNumber')}</Label>
                   <Input
                     type="number"
                     value={formData.phoneNumber}
@@ -345,7 +358,7 @@ export default function EditUserPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>{t('users.role')}</Label>
+                  <Label>{t('translate.users.role')}</Label>
                   {loadingRoles ? (
                     <div>Loading roles...</div>
                   ) : (
@@ -353,20 +366,20 @@ export default function EditUserPage() {
                       options={roles}
                       value={formData.role}
                       onChange={(val) => handleInputChange('role', val)}
-                      placeholder={t('users.selectRole')}
+                      placeholder={t('translate.users.selectRole')}
                     />
                   )}
                   {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
                 </div>
 
                 <div>
-                  <Label>{t('users.status')}</Label>
+                  <Label>{t('translate.users.status')}</Label>
                   <Dropdown
                     options={[
-                      { id: 'ACTIVE', label: t('users.active') },
-                      { id: 'INACTIVE', label: t('users.inactive') },
+                      { id: 'ACTIVE', label: t('translate.users.active') },
+                      { id: 'INACTIVE', label: t('translate.users.inactive') },
                     ]}
-                    value={{ id: formData.status, label: formData.status === 'ACTIVE' ? t('users.active') : t('users.inactive') }}
+                    value={{ id: formData.status, label: formData.status === 'ACTIVE' ? t('translate.users.active') : t('translate.users.inactive') }}
                     onChange={(val) => handleInputChange('status', val.id as StatusType)}
                   />
                   {errors.status && <p className="text-red-500 text-sm mt-1">{errors.status}</p>}
@@ -374,7 +387,7 @@ export default function EditUserPage() {
               </div>
 
               <div>
-                <Label>{t('users.allowedCountries')}</Label>
+                <Label>{t('translate.users.allowedCountries')}</Label>
                 <CountryMultiSelect
                   selected={formData.allowedCountries}
                   onChange={(val) => handleInputChange('allowedCountries', val)}
@@ -383,11 +396,11 @@ export default function EditUserPage() {
               </div>
 
               <div>
-                <Label>{t('users.adminImage')}</Label>
+                <Label>{t('translate.users.adminImage')}</Label>
                 <div className="flex items-center gap-4">
                   {formData.image && <img src={formData.image} className="w-20 h-20 rounded-full object-cover border" />}
                   <label className="flex items-center gap-2 cursor-pointer px-3 py-2 border rounded-md">
-                    <Upload className="w-4 h-4" /> {t('users.uploadImage')}
+                    <Upload className="w-4 h-4" /> {t('translate.users.uploadImage')}
                     <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
                   </label>
                 </div>
@@ -395,10 +408,10 @@ export default function EditUserPage() {
 
               <div className="flex gap-3 mt-4">
                 <Button onClick={handleSave} className="gap-2 bg-primary flex-1" disabled={isLoading}>
-                  <Save className="w-4 h-4" /> {isLoading ? t('roles.creating') : t('users.saveChanges')}
+                  <Save className="w-4 h-4" /> {isLoading ? t('translate.roles.creating') : t('translate.users.saveChanges')}
                 </Button>
                 <Button onClick={() => setIsEditing(!isEditing)} variant="outline" className="flex-1">
-                  {isEditing ? t('plans.cancel') : t('users.edit')}
+                  {isEditing ? t('translate.plans.cancel') : t('translate.users.edit')}
                 </Button>
               </div>
             </CardContent>
@@ -408,3 +421,4 @@ export default function EditUserPage() {
     </div>
   );
 }
+

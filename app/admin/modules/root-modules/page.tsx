@@ -1,7 +1,6 @@
-'use client';
+﻿'use client';
 
-import { useAdmin } from '@/contexts/AdminContext';
-import { useState, useEffect } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Card,
@@ -29,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { getModulePackages, updateStatus, deleteEntity } from '@/services/auth.service';
+import { I18nContext } from '@/i18n/provider';
 
 
 /* ================= TYPES ================= */
@@ -52,7 +52,20 @@ interface Module {
 /* ================= COMPONENT ================= */
 
 export default function ModulesPage() {
-  const { t } = useAdmin();
+  const { messages } = useContext(I18nContext);
+  const t = (key: string, placeholders?: Record<string, string | number>) => {
+    const normalizedKey = key.replace(/^translate\./, '');
+    let value = messages.translate?.[normalizedKey] || key;
+
+    if (placeholders) {
+      for (const [ph, phValue] of Object.entries(placeholders)) {
+        value = value.replace(`{{${ph}}}`, String(phValue));
+        value = value.replace(`{${ph}}`, String(phValue));
+      }
+    }
+
+    return value;
+  };
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -196,7 +209,7 @@ export default function ModulesPage() {
     try {
       await deleteEntity('systemmodule', moduleId);
 
-      // ✅ instant UI update
+      // âœ… instant UI update
       setModules(prev => prev.filter(r => r.id !== moduleId));
     } catch (err) {
       console.error(err);
@@ -220,8 +233,8 @@ export default function ModulesPage() {
         <div className="flex items-start gap-4">
           <Layers className="text-primary w-7 h-7 mt-1" />
           <div>
-            <h1 className="text-xl font-medium">{t('modules.title')}</h1>
-            <p className="text-muted-foreground">{t('modules.subtitle')}</p>
+            <h1 className="text-xl font-medium">{t('translate.modules.title')}</h1>
+            <p className="text-muted-foreground">{t('translate.modules.subtitle')}</p>
           </div>
         </div>
 
@@ -229,7 +242,7 @@ export default function ModulesPage() {
           <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" />
             <Input
-              placeholder={t('modules.searchPlaceholder')}
+              placeholder={t('translate.modules.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -239,7 +252,7 @@ export default function ModulesPage() {
           <Link href="/admin/modules/root-modules/new">
             <Button className="gap-2">
               <Plus className="w-4 h-4" />
-              {t('modules.newModule')}
+              {t('translate.modules.newModule')}
             </Button>
           </Link>
         </div>
@@ -250,19 +263,19 @@ export default function ModulesPage() {
         {/* LEFT */}
         <div className="lg:col-span-2">
           <Card>
-            {/* ✅ UPDATED HEADER WITH THEME SELECT */}
+            {/* âœ… UPDATED HEADER WITH THEME SELECT */}
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>{t('modules.available')}</CardTitle>
+                <CardTitle>{t('translate.modules.available')}</CardTitle>
                 <CardDescription>
-                  {t('users.show')}: {page} / {totalPages}
+                  {t('translate.users.show')}: {page} / {totalPages}
                 </CardDescription>
               </div>
               {/* Page Row Limit */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
-                    {t('users.show')}: {limit}
+                    {t('translate.users.show')}: {limit}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -311,7 +324,7 @@ export default function ModulesPage() {
                       </DropdownMenuTrigger>
 
                       <DropdownMenuContent>
-                        {/* ✅ EDIT */}
+                        {/* âœ… EDIT */}
                         <DropdownMenuItem
                         // onClick={(e) => {
                         //   e.stopPropagation();
@@ -319,10 +332,10 @@ export default function ModulesPage() {
                         // }}
                         >
                           <Edit2 className="w-4 h-4 mr-2" />
-                          {t('plans.edit')}
+                          {t('translate.plans.edit')}
                         </DropdownMenuItem>
 
-                        {/* ✅ DELETE */}
+                        {/* âœ… DELETE */}
                         <DropdownMenuItem
                           className="text-red-500"
                           onClick={(e) => {
@@ -331,7 +344,7 @@ export default function ModulesPage() {
                           }}
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
-                          {t('plans.delete')}
+                          {t('translate.plans.delete')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -349,7 +362,7 @@ export default function ModulesPage() {
                         }}
                         className="cursor-pointer"
                       >
-                        {mod.status === 'active' ? t('plans.active') : t('plans.inactive')}
+                        {mod.status === 'active' ? t('translate.plans.active') : t('translate.plans.inactive')}
                       </Badge>
 
                     </div>
@@ -397,7 +410,7 @@ export default function ModulesPage() {
         <div>
           <Card className="sticky top-0">
             <CardHeader>
-              <CardTitle>{t('modules.actions')}</CardTitle>
+              <CardTitle>{t('translate.modules.actions')}</CardTitle>
             </CardHeader>
 
             <CardContent>
@@ -445,7 +458,7 @@ export default function ModulesPage() {
                     </div>
                   ))
               ) : (
-                <p className="text-center text-muted-foreground">{t('modules.emptyActions')}</p>
+                <p className="text-center text-muted-foreground">{t('translate.modules.emptyActions')}</p>
               )}
             </CardContent>
           </Card>
@@ -457,7 +470,7 @@ export default function ModulesPage() {
         <Card>
           <CardContent className="text-center pt-6">
             <p className="text-2xl font-bold">{modules.length}</p>
-            <p>{t('modules.totalModules')}</p>
+            <p>{t('translate.modules.totalModules')}</p>
           </CardContent>
         </Card>
 
@@ -466,7 +479,7 @@ export default function ModulesPage() {
             <p className="text-2xl font-bold">
               {modules.reduce((s, m) => s + m.actionsCount, 0)}
             </p>
-            <p>{t('modules.totalPermissions')}</p>
+            <p>{t('translate.modules.totalPermissions')}</p>
           </CardContent>
         </Card>
 
@@ -475,10 +488,11 @@ export default function ModulesPage() {
             <p className="text-2xl font-bold">
               {modules.filter((m) => m.status === 'active').length}
             </p>
-            <p>{t('modules.activeModules')}</p>
+            <p>{t('translate.modules.activeModules')}</p>
           </CardContent>
         </Card>
       </div>
     </div>
   );
 }
+

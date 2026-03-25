@@ -1,18 +1,35 @@
-'use client';
+﻿'use client';
 
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAdmin } from '@/contexts/AdminContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ArrowLeft, Loader2, Save } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MOCK_ROLES } from '@/lib/mock-data';
+import { I18nContext } from '@/i18n/provider';
+
+const ROLE_OPTIONS = [
+  { id: 'root-admin-role', nameKey: 'roles.rootAdmin' },
+  { id: 'affiliate-admin-role', nameKey: 'roles.affiliateAdmin' },
+];
 
 export default function NewUserPage() {
   const router = useRouter();
-  const { t } = useAdmin();
+  const { messages } = useContext(I18nContext);
+  const t = (key: string, placeholders?: Record<string, string | number>) => {
+    const normalizedKey = key.replace(/^translate\./, '');
+    let value = messages.translate?.[normalizedKey] || key;
+
+    if (placeholders) {
+      for (const [ph, phValue] of Object.entries(placeholders)) {
+        value = value.replace(`{{${ph}}}`, String(phValue));
+        value = value.replace(`{${ph}}`, String(phValue));
+      }
+    }
+
+    return value;
+  };
   const [isLoading, setIsLoading] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -43,23 +60,23 @@ export default function NewUserPage() {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
-          <h1 className="text-xl font-medium text-foreground">{t('users.createTitle')}</h1>
-          <p className="text-sm text-muted-foreground">{t('users.createSubtitle')}</p>
+          <h1 className="text-xl font-medium text-foreground">{t('translate.users.createTitle')}</h1>
+          <p className="text-sm text-muted-foreground">{t('translate.users.createSubtitle')}</p>
         </div>
       </div>
 
       {/* Form Card */}
       <Card>
         <CardHeader>
-          <CardTitle>{t('users.createTitle')}</CardTitle>
-          <CardDescription>{t('users.createSubtitle')}</CardDescription>
+          <CardTitle>{t('translate.users.createTitle')}</CardTitle>
+          <CardDescription>{t('translate.users.createSubtitle')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             
             {/* Name */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t('users.name')}</label>
+              <label className="text-sm font-medium">{t('translate.users.name')}</label>
               <Input 
                 required
                 placeholder="e.g. John Doe"
@@ -70,7 +87,7 @@ export default function NewUserPage() {
 
             {/* Email */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t('users.email')}</label>
+              <label className="text-sm font-medium">{t('translate.users.email')}</label>
               <Input 
                 required
                 type="email"
@@ -82,11 +99,11 @@ export default function NewUserPage() {
 
             {/* Password */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t('users.password')}</label>
+              <label className="text-sm font-medium">{t('translate.users.password')}</label>
               <Input 
                 required
                 type="password"
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 value={formData.password}
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
               />
@@ -94,15 +111,15 @@ export default function NewUserPage() {
 
             {/* Role */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t('users.role')}</label>
+              <label className="text-sm font-medium">{t('translate.users.role')}</label>
               <Select value={formData.role} onValueChange={(v) => setFormData({...formData, role: v})}>
                 <SelectTrigger>
-                  <SelectValue placeholder={t('users.selectRole')} />
+                  <SelectValue placeholder={t('translate.users.selectRole')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.values(MOCK_ROLES).map((role) => (
+                  {ROLE_OPTIONS.map((role) => (
                     <SelectItem key={role.id} value={role.id}>
-                      {role.name}
+                      {t(role.nameKey)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -111,25 +128,25 @@ export default function NewUserPage() {
 
             {/* Status */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t('users.status')}</label>
+              <label className="text-sm font-medium">{t('translate.users.status')}</label>
               <Select value={formData.status} onValueChange={(v) => setFormData({...formData, status: v})}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">{t('users.active')}</SelectItem>
-                  <SelectItem value="inactive">{t('users.inactive')}</SelectItem>
+                  <SelectItem value="active">{t('translate.users.active')}</SelectItem>
+                  <SelectItem value="inactive">{t('translate.users.inactive')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button type="button" variant="outline" onClick={() => router.back()}>
-                {t('plans.cancel')}
+                {t('translate.plans.cancel')}
               </Button>
               <Button type="submit" disabled={isLoading} className="bg-primary hover:bg-primary/90">
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                {t('users.createBtn')}
+                {t('translate.users.createBtn')}
               </Button>
             </div>
           </form>
@@ -138,3 +155,4 @@ export default function NewUserPage() {
     </div>
   );
 }
+

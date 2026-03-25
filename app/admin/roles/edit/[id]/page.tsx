@@ -1,7 +1,6 @@
-'use client';
+﻿'use client';
 
-import { useAdmin } from '@/contexts/AdminContext';
-import { useState, useEffect } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -28,12 +27,13 @@ import {
   getRoleById,
   updateRole,
 } from '@/services/auth.service';
+import { I18nContext } from '@/i18n/provider';
 
 /* ================= TYPES ================= */
 
 type Status = 'ACTIVE' | 'INACTIVE';
 
-/* ✅ FIX: derive LangKey from constant */
+/* âœ… FIX: derive LangKey from constant */
 const LANGUAGES = [
   { key: 'en', label: 'English' },
   { key: 'fr', label: 'French' },
@@ -72,7 +72,20 @@ const STATUS_OPTIONS: { label: string; value: Status }[] = [
 /* ================= COMPONENT ================= */
 
 function EditRoleContent() {
-  const { t } = useAdmin();
+  const { messages } = useContext(I18nContext);
+  const t = (key: string, placeholders?: Record<string, string | number>) => {
+    const normalizedKey = key.replace(/^translate\./, '');
+    let value = messages.translate?.[normalizedKey] || key;
+
+    if (placeholders) {
+      for (const [ph, phValue] of Object.entries(placeholders)) {
+        value = value.replace(`{{${ph}}}`, String(phValue));
+        value = value.replace(`{${ph}}`, String(phValue));
+      }
+    }
+
+    return value;
+  };
   const { id } = useParams();
   const router = useRouter();
 
@@ -102,7 +115,7 @@ function EditRoleContent() {
 
       console.log("Role data by ID : " + JSON.stringify(res?.data));
 
-      /* ✅ FIX: support both API formats */
+      /* âœ… FIX: support both API formats */
       const role = res?.data || res;
 
       setFormData({
@@ -209,9 +222,9 @@ function EditRoleContent() {
         </Link>
 
         <div>
-          <h1 className="text-xl font-medium">{t('roles.editTitle')}</h1>
+          <h1 className="text-xl font-medium">{t('translate.roles.editTitle')}</h1>
           <p className="text-muted-foreground">
-            {t('roles.editSubtitle')}
+            {t('translate.roles.editSubtitle')}
           </p>
         </div>
       </div>
@@ -221,9 +234,9 @@ function EditRoleContent() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>{t('roles.details')}</CardTitle>
+              <CardTitle>{t('translate.roles.details')}</CardTitle>
               <CardDescription>
-                {t('roles.detailsSubtitle')}
+                {t('translate.roles.detailsSubtitle')}
               </CardDescription>
             </CardHeader>
 
@@ -255,7 +268,7 @@ function EditRoleContent() {
               {/* Name */}
               <div>
                 <Label className="mb-2 block">
-                  {t('roles.roleName')} ({currentLang.toUpperCase()})
+                  {t('translate.roles.roleName')} ({currentLang.toUpperCase()})
                 </Label>
                 <Input
                   value={formData.name[currentLang]}
@@ -277,7 +290,7 @@ function EditRoleContent() {
               {/* Description */}
               <div>
                 <Label className="mb-2 block">
-                  {t('roles.description')} ({currentLang.toUpperCase()})
+                  {t('translate.roles.description')} ({currentLang.toUpperCase()})
                 </Label>
                 <Input
                   value={formData.description[currentLang]}
@@ -293,7 +306,7 @@ function EditRoleContent() {
 
               {/* Status */}
               <div>
-                <Label className="mb-2 block">{t('roles.status')}</Label>
+                <Label className="mb-2 block">{t('translate.roles.status')}</Label>
                 <Select
                   value={formData.status}
                   onValueChange={(val: Status) =>
@@ -304,7 +317,7 @@ function EditRoleContent() {
                   }
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder={t('roles.selectStatus')} />
+                    <SelectValue placeholder={t('translate.roles.selectStatus')} />
                   </SelectTrigger>
 
                   <SelectContent>
@@ -313,7 +326,7 @@ function EditRoleContent() {
                         key={option.value}
                         value={option.value}
                       >
-                        {option.value === 'ACTIVE' ? t('plans.active') : t('plans.inactive')}
+                        {option.value === 'ACTIVE' ? t('translate.plans.active') : t('translate.plans.inactive')}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -328,19 +341,19 @@ function EditRoleContent() {
                   className="gap-2 flex-1"
                 >
                   <Save className="w-4 h-4" />
-                  {isLoading ? t('roles.creating') : t('roles.updateBtn')}
+                  {isLoading ? t('translate.roles.creating') : t('translate.roles.updateBtn')}
                 </Button>
 
                 <Link href="/admin/roles" className="flex-1">
                   <Button variant="outline" className="w-full">
-                    {t('roles.cancel')}
+                    {t('translate.roles.cancel')}
                   </Button>
                 </Link>
               </div>
 
               {success && (
                 <p className="text-green-600 text-sm">
-                  {t('roles.success')}
+                  {t('translate.roles.success')}
                 </p>
               )}
             </CardContent>
@@ -354,3 +367,4 @@ function EditRoleContent() {
 /* ================= EXPORT ================= */
 
 export default EditRoleContent;
+

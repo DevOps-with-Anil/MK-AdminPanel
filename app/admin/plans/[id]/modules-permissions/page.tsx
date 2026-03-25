@@ -1,13 +1,13 @@
-'use client';
+﻿'use client';
 
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { getPlanById } from '@/services/auth.service';
-import { useAdmin } from '@/contexts/AdminContext';
+import { I18nContext } from '@/i18n/provider';
 
 interface PlanResponseData {
   _id: string;
@@ -23,7 +23,20 @@ interface PlanResponseData {
 }
 
 export default function PlanModulesPermissionsPage() {
-  const { t } = useAdmin();
+  const { messages } = useContext(I18nContext);
+  const t = (key: string, placeholders?: Record<string, string | number>) => {
+    const normalizedKey = key.replace(/^translate\./, '');
+    let value = messages.translate?.[normalizedKey] || key;
+
+    if (placeholders) {
+      for (const [ph, phValue] of Object.entries(placeholders)) {
+        value = value.replace(`{{${ph}}}`, String(phValue));
+        value = value.replace(`{${ph}}`, String(phValue));
+      }
+    }
+
+    return value;
+  };
   const params = useParams();
   const planIdRaw = params?.id;
   const planId = Array.isArray(planIdRaw) ? planIdRaw[0] : planIdRaw ?? '';
@@ -68,33 +81,33 @@ export default function PlanModulesPermissionsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{t('plans.modulesPermissionsTitle')}</h1>
+        <h1 className="text-2xl font-bold">{t('translate.plans.modulesPermissionsTitle')}</h1>
         <Link href="/admin/plans">
           <Button variant="secondary" size="sm" className="gap-2">
-            <ArrowLeft className="w-4 h-4" /> {t('plans.backToPlans')}
+            <ArrowLeft className="w-4 h-4" /> {t('translate.plans.backToPlans')}
           </Button>
         </Link>
       </div>
 
       {loading ? (
-        <p className="text-muted-foreground">{t('plans.loadingData')}</p>
+        <p className="text-muted-foreground">{t('translate.plans.loadingData')}</p>
       ) : error ? (
         <p className="text-destructive">{error}</p>
       ) : plan ? (
         <>
           <p className="text-muted-foreground">
-            {t('plans.viewingMapping')} <strong>{plan.name}</strong> (ID: {planId})
+            {t('translate.plans.viewingMapping')} <strong>{plan.name}</strong> (ID: {planId})
           </p>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>{t('plans.assignedModules')}</CardTitle>
-                <CardDescription>{t('plans.assignedModulesDesc')}</CardDescription>
+                <CardTitle>{t('translate.plans.assignedModules')}</CardTitle>
+                <CardDescription>{t('translate.plans.assignedModulesDesc')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 {modules.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">{t('plans.noModulesAssigned')}</p>
+                  <p className="text-sm text-muted-foreground">{t('translate.plans.noModulesAssigned')}</p>
                 ) : (
                   modules.map((module) => (
                     <div key={module} className="rounded-md border border-border p-3">
@@ -107,8 +120,8 @@ export default function PlanModulesPermissionsPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>{t('plans.assignedPermissions')}</CardTitle>
-                <CardDescription>{t('plans.assignedPermissionsDesc')}</CardDescription>
+                <CardTitle>{t('translate.plans.assignedPermissions')}</CardTitle>
+                <CardDescription>{t('translate.plans.assignedPermissionsDesc')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 {permissions.map((permission) => (
@@ -121,14 +134,15 @@ export default function PlanModulesPermissionsPage() {
           </div>
         </>
       ) : (
-        <p className="text-muted-foreground">{t('plans.planNotFound')}</p>
+        <p className="text-muted-foreground">{t('translate.plans.planNotFound')}</p>
       )}
 
       <div className="flex gap-3">
         <Button className="flex-1" disabled>
-          {t('plans.syncBackend')}
+          {t('translate.plans.syncBackend')}
         </Button>
       </div>
     </div>
   );
 }
+

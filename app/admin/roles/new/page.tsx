@@ -1,8 +1,7 @@
-
+﻿
 'use client';
 
-import { useAdmin } from '@/contexts/AdminContext';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -24,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { I18nContext } from '@/i18n/provider';
 
 /* ================= TYPES ================= */
 
@@ -44,7 +44,7 @@ interface NewRoleForm {
   status: Status;
 }
 
-/* ✅ ERROR STRUCTURE */
+/* âœ… ERROR STRUCTURE */
 type FieldErrors = {
   name?: Partial<Record<LangKey, string>>;
   description?: Partial<Record<LangKey, string>>;
@@ -68,7 +68,20 @@ const STATUS_OPTIONS: { label: string; value: Status }[] = [
 /* ================= COMPONENT ================= */
 
 export default function NewRolePage() {
-  const { t } = useAdmin();
+  const { messages } = useContext(I18nContext);
+  const t = (key: string, placeholders?: Record<string, string | number>) => {
+    const normalizedKey = key.replace(/^translate\./, '');
+    let value = messages.translate?.[normalizedKey] || key;
+
+    if (placeholders) {
+      for (const [ph, phValue] of Object.entries(placeholders)) {
+        value = value.replace(`{{${ph}}}`, String(phValue));
+        value = value.replace(`{${ph}}`, String(phValue));
+      }
+    }
+
+    return value;
+  };
   const [formData, setFormData] = useState<NewRoleForm>({
     name: { en: '', fr: '', ar: '', ch: '' },
     description: { en: '', fr: '', ar: '', ch: '' },
@@ -105,7 +118,7 @@ export default function NewRolePage() {
     }));
   };
 
-  /* ✅ VALIDATION FUNCTION */
+  /* âœ… VALIDATION FUNCTION */
   const validate = (): FieldErrors => {
     const newErrors: FieldErrors = {};
     // Required: English name
@@ -171,9 +184,9 @@ export default function NewRolePage() {
         </Link>
 
         <div>
-          <h1 className="text-xl font-medium">{t('roles.createTitle')}</h1>
+          <h1 className="text-xl font-medium">{t('translate.roles.createTitle')}</h1>
           <p className="text-muted-foreground">
-            {t('roles.createSubtitle')}
+            {t('translate.roles.createSubtitle')}
           </p>
         </div>
       </div>
@@ -183,9 +196,9 @@ export default function NewRolePage() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>{t('roles.details')}</CardTitle>
+              <CardTitle>{t('translate.roles.details')}</CardTitle>
               <CardDescription>
-                {t('roles.detailsSubtitle')}
+                {t('translate.roles.detailsSubtitle')}
               </CardDescription>
             </CardHeader>
 
@@ -218,7 +231,7 @@ export default function NewRolePage() {
               {/* Name */}
               <div>
                 <Label className="mb-2 block">
-                  {t('roles.roleName')} ({currentLang.toUpperCase()})
+                  {t('translate.roles.roleName')} ({currentLang.toUpperCase()})
                 </Label>
                 <Input
                   value={formData.name[currentLang]}
@@ -240,7 +253,7 @@ export default function NewRolePage() {
               {/* Description */}
               <div>
                 <Label className="mb-2 block">
-                  {t('roles.description')} ({currentLang.toUpperCase()})
+                  {t('translate.roles.description')} ({currentLang.toUpperCase()})
                 </Label>
                 <Input
                   value={formData.description[currentLang]}
@@ -258,7 +271,7 @@ export default function NewRolePage() {
               {/* Status (same grid style as admin form) */}
               {/* Status */}
               <div>
-                <Label className="mb-2 block">{t('roles.status')}</Label>
+                <Label className="mb-2 block">{t('translate.roles.status')}</Label>
                 <Select
                   value={formData.status}
                   onValueChange={(val: Status) =>
@@ -269,7 +282,7 @@ export default function NewRolePage() {
                   }
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder={t('roles.selectStatus')} />
+                    <SelectValue placeholder={t('translate.roles.selectStatus')} />
                   </SelectTrigger>
 
                   <SelectContent>
@@ -293,12 +306,12 @@ export default function NewRolePage() {
                   className="gap-2 flex-1"
                 >
                   <Save className="w-4 h-4" />
-                  {isLoading ? t('roles.creating') : t('roles.createBtn')}
+                  {isLoading ? t('translate.roles.creating') : t('translate.roles.createBtn')}
                 </Button>
 
                 <Link href="/admin/roles" className="flex-1">
                   <Button variant="outline" className="w-full">
-                    {t('roles.cancel')}
+                    {t('translate.roles.cancel')}
                   </Button>
                 </Link>
               </div>
@@ -306,7 +319,7 @@ export default function NewRolePage() {
               {/* Success */}
               {success && (
                 <p className="text-green-600 text-sm">
-                  {t('roles.success')}
+                  {t('translate.roles.success')}
                 </p>
               )}
             </CardContent>
@@ -316,3 +329,4 @@ export default function NewRolePage() {
     </div>
   );
 }
+

@@ -1,7 +1,6 @@
-'use client';
+﻿'use client';
 
-import { useState } from 'react';
-import { useAdmin } from '@/contexts/AdminContext';
+import { useContext, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -22,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { I18nContext } from '@/i18n/provider';
 
 /* ================= TYPES ================= */
 type Status = 'ACTIVE' | 'INACTIVE';
@@ -68,7 +68,20 @@ const LANGUAGES: { key: LangKey; label: string }[] = [
 
 /* ================= COMPONENT ================= */
 function ModulePage() {
-  const { t } = useAdmin();
+  const { messages } = useContext(I18nContext);
+  const t = (key: string, placeholders?: Record<string, string | number>) => {
+    const normalizedKey = key.replace(/^translate\./, '');
+    let value = messages.translate?.[normalizedKey] || key;
+
+    if (placeholders) {
+      for (const [ph, phValue] of Object.entries(placeholders)) {
+        value = value.replace(`{{${ph}}}`, String(phValue));
+        value = value.replace(`{${ph}}`, String(phValue));
+      }
+    }
+
+    return value;
+  };
   const [formData, setFormData] = useState<ModuleForm>({
     key: '',
     name: { en: '', fr: '', ar: '', ch: '' },
@@ -213,22 +226,22 @@ function ModulePage() {
         </Link>
 
         <div>
-          <h1 className="text-xl font-medium">{t('modules.createTitle')}</h1>
-          <p className="text-muted-foreground">{t('modules.createSubtitle')}</p>
+          <h1 className="text-xl font-medium">{t('translate.modules.createTitle')}</h1>
+          <p className="text-muted-foreground">{t('translate.modules.createSubtitle')}</p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('modules.detailsTitle')}</CardTitle>
-          <CardDescription>{t('modules.detailsDesc')}</CardDescription>
+          <CardTitle>{t('translate.modules.detailsTitle')}</CardTitle>
+          <CardDescription>{t('translate.modules.detailsDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Success / Global Error */}
-          {success && <p className="text-green-800">{t('modules.success')}</p>}
+          {success && <p className="text-green-800">{t('translate.modules.success')}</p>}
           {errors.global && <p className="text-red-500">{errors.global}</p>}
 
-          {/* 🌐 GLOBAL LANGUAGE TABS */}
+          {/* ðŸŒ GLOBAL LANGUAGE TABS */}
           <div className="flex gap-2 flex-wrap mb-4">
             {LANGUAGES.map(lang => (
               <Button
@@ -244,7 +257,7 @@ function ModulePage() {
 
           {/* Module Key */}
           <div className="space-y-2">
-            <Label>{t('modules.keyLabel')} *</Label>
+            <Label>{t('translate.modules.keyLabel')} *</Label>
             <Input
               value={formData.key}
               onChange={e => setFormData({ ...formData, key: e.target.value })}
@@ -253,7 +266,7 @@ function ModulePage() {
           </div>
           {/* Module Name */}
           <div className="space-y-2">
-            <Label>{t('modules.nameLabel')} ({currentLang.toUpperCase()}) *</Label>
+            <Label>{t('translate.modules.nameLabel')} ({currentLang.toUpperCase()}) *</Label>
             <Input
               value={formData.name[currentLang]}
               onChange={e =>
@@ -267,14 +280,14 @@ function ModulePage() {
 
           {/* Status */}
           <div className="space-y-2">
-            <Label>{t('plans.statusLabel')}</Label>
+            <Label>{t('translate.plans.statusLabel')}</Label>
             <Select value={formData.status} onValueChange={handleModuleStatusChange}>
               <SelectTrigger className="w-full min-w-[220px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ACTIVE">{t('plans.active')}</SelectItem>
-                <SelectItem value="INACTIVE">{t('plans.inactive')}</SelectItem>
+                <SelectItem value="ACTIVE">{t('translate.plans.active')}</SelectItem>
+                <SelectItem value="INACTIVE">{t('translate.plans.inactive')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -283,12 +296,12 @@ function ModulePage() {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <div>
-                <CardTitle className="text-base">{t('modules.actionsTitle')}</CardTitle>
-                <CardDescription>{t('modules.actionsDesc')}</CardDescription>
+                <CardTitle className="text-base">{t('translate.modules.actionsTitle')}</CardTitle>
+                <CardDescription>{t('translate.modules.actionsDesc')}</CardDescription>
               </div>
               <Button size="sm" variant="outline" className="bg-white hover:bg-gray-50" onClick={handleAddAction}>
                 <Plus className="w-4 h-4 mr-1" />
-                {t('modules.addActionBtn')}
+                {t('translate.modules.addActionBtn')}
               </Button>
             </div>
 
@@ -303,7 +316,7 @@ function ModulePage() {
 
                 {/* ACTION KEY */}
                 <div className="space-y-2">
-                  <Label>{t('modules.actionKeyLabel')} *</Label>
+                  <Label>{t('translate.modules.actionKeyLabel')} *</Label>
                   <Input
                     value={action.key}
                     onChange={e => handleActionChange(index, 'key', e.target.value)}
@@ -315,7 +328,7 @@ function ModulePage() {
 
                 {/* ACTION NAME */}
                 <div className="space-y-2">
-                  <Label>{t('modules.actionNameLabel')} ({currentLang.toUpperCase()}) *</Label>
+                  <Label>{t('translate.modules.actionNameLabel')} ({currentLang.toUpperCase()}) *</Label>
                   <Input
                     value={action.actionName[currentLang]}
                     onChange={e => handleActionNameChange(index, currentLang, e.target.value)}
@@ -327,7 +340,7 @@ function ModulePage() {
 
                 {/* STATUS */}
                 <div className="space-y-2">
-                  <Label>{t('plans.statusLabel')}</Label>
+                  <Label>{t('translate.plans.statusLabel')}</Label>
                   <Select
                     value={action.status}
                     onValueChange={val => handleActionChange(index, 'status', val)}
@@ -336,8 +349,8 @@ function ModulePage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ACTIVE">{t('plans.active')}</SelectItem>
-                      <SelectItem value="INACTIVE">{t('plans.inactive')}</SelectItem>
+                      <SelectItem value="ACTIVE">{t('translate.plans.active')}</SelectItem>
+                      <SelectItem value="INACTIVE">{t('translate.plans.inactive')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -349,11 +362,11 @@ function ModulePage() {
           <div className="flex gap-3">
             <Button onClick={handleSubmit} disabled={isLoading}>
               <Save className="w-4 h-4 mr-2" />
-              {t('modules.createBtn')}
+              {t('translate.modules.createBtn')}
             </Button>
 
             <Link href="/admin/modules/root-modules">
-              <Button variant="outline">{t('plans.cancel')}</Button>
+              <Button variant="outline">{t('translate.plans.cancel')}</Button>
             </Link>
           </div>
         </CardContent>
@@ -365,3 +378,4 @@ function ModulePage() {
 export default function Page() { 
   return <ModulePage />;
 }
+
