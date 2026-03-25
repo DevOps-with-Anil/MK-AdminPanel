@@ -55,15 +55,15 @@ export default function NewPlanPage() {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
-          <h1 className="text-xl font-medium text-foreground">{t('plans.createTitle')}</h1>
-          <p className="text-sm text-muted-foreground">{t('plans.createSubtitle')}</p>
+          <h1 className="text-xl font-medium text-foreground">{t('translate.plans_create_title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('translate.plans_create_subtitle')}</p>
         </div>
       </div>
 
       {/* Form Card */}
       <Card>
         <CardHeader>
-          <CardTitle>{t('plans.createTitle')}</CardTitle>
+          <CardTitle> </CardTitle>
           <CardDescription>{t('plans.createSubtitle')}</CardDescription>
         </CardHeader>
         <CardContent>

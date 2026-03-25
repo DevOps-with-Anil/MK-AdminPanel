@@ -502,7 +502,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'modules.emptyActions': 'Please select a module to view its actions',
     'modules.createTitle': 'Create Module & Actions',
     'modules.createSubtitle': 'Add a new Module with multilingual support',
-    'modules.detailsTitle': 'Module Details',
+    // 'modules.detailsTitle': 'Module Details',
     'modules.detailsDesc': 'Fill module information in multiple languages',
     'modules.keyLabel': 'Module Key',
     'modules.nameLabel': 'Module Name',

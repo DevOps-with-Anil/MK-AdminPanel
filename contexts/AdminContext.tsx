@@ -1,20 +1,17 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useContext as useReactContext, useEffect } from 'react';
 import {
   AdminType,
   Language,
   Country,
-  SubscriptionPlan,
   AdminUser,
   MOCK_USERS,
-  TRANSLATIONS,
-  MODULES,
-  ACTIONS,
 } from '@/lib/mock-data';
+import { I18nContext } from '@/i18n/provider';
 
 interface AdminContextType {
-  // Current State
+  // State
   currentAdminType: AdminType;
   currentLanguage: Language;
   currentCountry: Country;
@@ -24,9 +21,9 @@ interface AdminContextType {
   setAdminType: (type: AdminType) => void;
   setLanguage: (lang: Language) => void;
   setCountry: (country: Country) => void;
-  setCurrentUser: (user: AdminUser) => void; // ✅ Added setter
+  setCurrentUser: (user: AdminUser) => void;
 
-  // Helper Functions
+  // Helpers
   t: (key: string) => string;
   hasPermission: (module: string, action: string) => boolean;
   hasFeature: (feature: string) => boolean;
@@ -35,28 +32,47 @@ interface AdminContextType {
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export function AdminProvider({ children }: { children: ReactNode }) {
+  const { t, changeLanguage } = useReactContext(I18nContext); // ✅ use i18n here
+
   const [currentAdminType, setAdminType] = useState<AdminType>('root-admin');
   const [currentLanguage, setLanguage] = useState<Language>('en');
   const [currentCountry, setCountry] = useState<Country>('IN');
-
-  // ✅ Add state for currentUser so it can be manually updated
   const [currentUser, setCurrentUser] = useState<AdminUser>(
-    MOCK_USERS[currentAdminType]
+    MOCK_USERS['root-admin']
   );
 
-  // Translation helper
-  const t = (key: string): string => {
-    return TRANSLATIONS[currentLanguage][key] || key;
+  // ✅ Load saved language on mount
+  useEffect(() => {
+    const savedLang = (localStorage.getItem('lang') as Language) || 'en';
+    setLanguage(savedLang);
+    changeLanguage(savedLang);
+  }, []);
+
+  // ✅ Sync language everywhere
+  const handleSetLanguage = (lang: Language) => {
+    setLanguage(lang);
+    changeLanguage(lang);
+    localStorage.setItem('lang', lang);
   };
 
-  // Permission checker
+  // ✅ Admin type change
+  const handleSetAdminType = (type: AdminType) => {
+    setAdminType(type);
+    setCurrentUser(MOCK_USERS[type]);
+  };
+
+  const handleSetCountry = (country: Country) => {
+    setCountry(country);
+  };
+
+  // ✅ Permission checker
   const hasPermission = (module: string, action: string): boolean => {
     return currentUser.role.permissions.some(
       (p) => p.module === module && p.action === action
     );
   };
 
-  // Feature checker based on subscription plan
+  // ✅ Feature checker
   const hasFeature = (feature: string): boolean => {
     const planFeatures =
       {
@@ -85,20 +101,6 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     return planFeatures.includes(feature);
   };
 
-  const handleSetAdminType = (type: AdminType) => {
-    setAdminType(type);
-    // Update currentUser automatically when admin type changes
-    setCurrentUser(MOCK_USERS[type]);
-  };
-
-  const handleSetLanguage = (lang: Language) => {
-    setLanguage(lang);
-  };
-
-  const handleSetCountry = (country: Country) => {
-    setCountry(country);
-  };
-
   return (
     <AdminContext.Provider
       value={{
@@ -109,8 +111,8 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         setAdminType: handleSetAdminType,
         setLanguage: handleSetLanguage,
         setCountry: handleSetCountry,
-        setCurrentUser, // ✅ Provide setter
-        t,
+        setCurrentUser,
+        t, // ✅ from I18nProvider
         hasPermission,
         hasFeature,
       }}

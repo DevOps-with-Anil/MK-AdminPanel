@@ -46,7 +46,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { tokenStorage } from "@/utils/token";
 import { profile } from '@/services/auth.service';
 import { I18nContext } from '@/i18n/provider';
-import { useTranslation } from '@/hooks/useTranslation';
 
 type Language = 'en' | 'fr';
 type Country = 'IN' | 'FR';
@@ -54,7 +53,8 @@ type Country = 'IN' | 'FR';
 export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   const router = useRouter();
-  const { t } = useTranslation();
+  // const { t } = useTranslation();
+   const { t } = useAdmin();
   const { changeLanguage } = useContext(I18nContext);
   const {
     currentAdminType,

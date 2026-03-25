@@ -38,7 +38,7 @@ import {
   LineChart,
   Line
 } from 'recharts';
-import { useTranslation } from '@/hooks/useTranslation';
+// import { useTranslation } from '@/hooks/useTranslation';
 
 const revenueData = [
   { name: 'Jan', value: 4000, active: 3400 },
@@ -84,9 +84,12 @@ const interactionData = [
 
 export default function Dashboard() {
 
-  const { t } = useTranslation();
+  const { t } = useAdmin();
 
   const { currentUser } = useAdmin();
+
+  console.log("Current User : " + JSON.stringify(currentUser.name));
+  const name = currentUser.name;
 
   const stats = [
     {
@@ -176,7 +179,8 @@ export default function Dashboard() {
               {t('translate.dashboard_overview')}
             </h1>
             <p className="text-muted-foreground text-sm">
-              {t('translate.dashboard_welcome_message', { name: currentUser.name })}
+              
+              {t('translate.dashboard_welcome_message').replace('{name}', currentUser.name)}
             </p>
           </div>
         </div>
