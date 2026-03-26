@@ -420,7 +420,6 @@ export default function Dashboard() {
                 </div>
               </div>
             ))}
-
             <div className="pt-4 border-t border-border mt-4">
               <div className="flex items-center gap-3 p-4 rounded-2xl bg-muted/30">
                 <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">

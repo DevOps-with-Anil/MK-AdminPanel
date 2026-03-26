@@ -1,6 +1,10 @@
 'use client';
 
 import { AdminProvider } from '@/contexts/AdminContext';
+<<<<<<< HEAD
+=======
+import { AdminLayout } from '@/components/layout/AdminLayout';
+>>>>>>> 359f3ec (Complete structure UI updated)
 import { useState } from 'react';
 import {
     Card, CardContent, CardHeader, CardTitle, CardDescription

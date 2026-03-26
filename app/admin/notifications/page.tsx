@@ -112,18 +112,30 @@ function NotificationPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+<<<<<<< HEAD
           <Button
             variant="outline"
             size="sm"
+=======
+          <Button 
+            variant="outline" 
+            size="sm" 
+>>>>>>> 359f3ec (Complete structure UI updated)
             className="text-[11px] font-black uppercase tracking-wider h-9 border-dashed"
             onClick={handleMarkAllRead}
           >
             <Check className="mr-2 h-3.5 w-3.5" />
             Mark all read
           </Button>
+<<<<<<< HEAD
           <Button
             variant="destructive"
             size="sm"
+=======
+          <Button 
+            variant="destructive" 
+            size="sm" 
+>>>>>>> 359f3ec (Complete structure UI updated)
             className="text-[11px] font-black uppercase tracking-wider h-9"
             onClick={handleClearAll}
           >
@@ -138,8 +150,13 @@ function NotificationPage() {
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             <div className="relative w-full md:w-96">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+<<<<<<< HEAD
               <Input
                 placeholder="Search notifications..."
+=======
+              <Input 
+                placeholder="Search notifications..." 
+>>>>>>> 359f3ec (Complete structure UI updated)
                 className="pl-9 h-10 bg-background border-border text-sm font-medium"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -164,8 +181,13 @@ function NotificationPage() {
           <div className="divide-y divide-border/50">
             {filteredNotifications.length > 0 ? (
               filteredNotifications.map((notification) => (
+<<<<<<< HEAD
                 <div
                   key={notification.id}
+=======
+                <div 
+                  key={notification.id} 
+>>>>>>> 359f3ec (Complete structure UI updated)
                   className={`p-4 flex items-start gap-4 transition-all hover:bg-muted/30 group ${!notification.isRead ? 'bg-primary/5' : ''}`}
                 >
                   <div className={`p-2.5 rounded-xl border shadow-sm flex-shrink-0 ${getNotificationColor(notification.type)}`}>
@@ -190,14 +212,22 @@ function NotificationPage() {
                     </p>
                     <div className="mt-3 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                       {!notification.isRead && (
+<<<<<<< HEAD
                         <button
+=======
+                        <button 
+>>>>>>> 359f3ec (Complete structure UI updated)
                           onClick={() => handleMarkAsRead(notification.id)}
                           className="text-[10px] font-black text-primary hover:underline uppercase tracking-widest"
                         >
                           Mark as read
                         </button>
                       )}
+<<<<<<< HEAD
                       <button
+=======
+                      <button 
+>>>>>>> 359f3ec (Complete structure UI updated)
                         onClick={() => handleDelete(notification.id)}
                         className="text-[10px] font-black text-rose-500 hover:underline uppercase tracking-widest"
                       >

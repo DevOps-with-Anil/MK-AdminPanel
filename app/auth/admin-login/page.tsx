@@ -7,7 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Eye, EyeOff, Loader2, Store } from 'lucide-react';
+<<<<<<< HEAD
 
+=======
+import { useAdmin } from '@/contexts/AdminContext';
+import Image from "next/image";
+>>>>>>> 359f3ec (Complete structure UI updated)
 
 export default function AffiliateLoginPage() {
   const router = useRouter();
@@ -16,6 +21,7 @@ export default function AffiliateLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
 
 
   const handleLogin = async (e: any) => { }

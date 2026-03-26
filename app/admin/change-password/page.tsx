@@ -1,8 +1,12 @@
 'use client';
 
 import { AdminProvider } from '@/contexts/AdminContext';
+<<<<<<< HEAD
 import { useRouter } from 'next/navigation';
 
+=======
+import { AdminLayout } from '@/components/layout/AdminLayout';
+>>>>>>> 359f3ec (Complete structure UI updated)
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
