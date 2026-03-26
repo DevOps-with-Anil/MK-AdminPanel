@@ -227,7 +227,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           icon: Users,
           children: [
             { label: t('translate.sidebar_system_admins'), href: '/admin/users' },
-            { label: t('translate.sidebar_roles_management'), href: '/admin/roles' },
+            { label: t('translate.sidebar_system_roles'), href: '/admin/roles' },
           ],
         },
         {
@@ -236,8 +236,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           module: MODULES.PERMISSION_PACKAGES,
           icon: Package,
           children: [
-            { label: t('translate.sidebar_root_modules'), href: '/admin/modules/root-modules' },
-            { label: t('translate.sidebar_affiliate_modules'), href: '/admin/modules/affiliate-modules' },
+            { label: t('translate.sidebar_system_modules'), href: '/admin/modules/root-modules' },
+            { label: t('translate.sidebar_tenant_modules'), href: '/admin/modules/affiliate-modules' },
           ],
         },
         {

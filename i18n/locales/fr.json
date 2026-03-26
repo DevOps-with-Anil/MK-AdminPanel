@@ -55,6 +55,10 @@
   "sidebar_challenges": "Défis",
   "sidebar_verification": "Statut de vérification",
   "sidebar_profile": "Profil",
+  "sidebar_system_admins": "Administrateurs système",
+  "sidebar_system_roles": "Rôles système",
+  "sidebar_system_modules": "Modules système",
+  "sidebar_tenant_modules": "Modules des locataires",
 
   "dashboard_overview": "Vue d'ensemble du tableau de bord",
   "dashboard_welcome_message": "Bon retour, {name}. Voici ce qui se passe aujourd'hui.",
