@@ -15,18 +15,16 @@ import { LANGUAGES} from '@/lib/mock-data';
 import { useAdmin } from '@/contexts/AdminContext';
 import Image from 'next/image';
 import { login } from '@/services/auth.service';
-import { AdminType } from '@/types/admin.types';
 import { tokenStorage } from '@/utils/token';
 import { useTranslation } from '@/hooks/useTranslation';
 import { I18nContext } from '@/i18n/provider';
-import { Savate } from 'next/font/google';
 
 export default function RootLoginPage() {
   const { t } = useTranslation();
   const { locale, changeLanguage } = useContext(I18nContext);
 
   const router = useRouter();
-  const { setAdminType, setCurrentUser } = useAdmin();
+  const { setCurrentUser } = useAdmin();
 
   const [email, setEmail] = useState('root@mkproject.com');
   const [password, setPassword] = useState('Root@12345');
@@ -79,15 +77,7 @@ export default function RootLoginPage() {
       const { token, user } = res.data;
 
       tokenStorage.set(token);
-
-      const adminType: AdminType =
-        user.role.name.toLowerCase().includes('root')
-          ? 'root-admin'
-          : 'tenant-admin';
-
-      setAdminType(adminType);
       setCurrentUser(user);
-        console.log("Login Response on page ::  " + JSON.stringify(res));
 
       setSuccessMsg(t('translate.success'));
       setTimeout(() => router.push('/admin/dashboard'), 2500);

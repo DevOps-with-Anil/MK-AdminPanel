@@ -1,38 +1,25 @@
-
 'use client';
 
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAdmin } from '@/contexts/AdminContext';
-import { MODULES, MOCK_NOTIFICATIONS } from '@/lib/mock-data';
+import { ACTIONS, MOCK_NOTIFICATIONS } from '@/lib/mock-data';
+import { ADMIN_SIDEBAR_CONFIG, inferAdminType, type SidebarItem } from '@/lib/rbac';
 import {
-  Menu,
-  X,
-  User,
-  LogOut,
-  ChevronDown,
-  Bell,
-  Home,
-  KeyRound,
-  LayoutDashboard,
-  Building2,
-  CreditCard,
-  ShieldCheck,
-  BarChart3,
-  Ticket,
-  Package,
-  Users,
-  Lock,
-  Settings,
-  FileCheck,
-  UserCircle,
-  FileText,
-  CheckCircle2,
   AlertCircle,
   AlertTriangle,
-  Info,
+  Bell,
+  CheckCircle2,
+  ChevronDown,
   Clock,
+  Home,
+  Info,
+  KeyRound,
+  LogOut,
+  Menu,
+  User,
+  X,
 } from 'lucide-react';
 import {
   Breadcrumb,
@@ -40,90 +27,103 @@ import {
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
-  BreadcrumbSeparator
+  BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { tokenStorage } from "@/utils/token";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { tokenStorage } from '@/utils/token';
 import { profile } from '@/services/auth.service';
 import { I18nContext } from '@/i18n/provider';
 import { useTranslation } from '@/hooks/useTranslation';
 
 type Language = 'en' | 'fr';
-type Country = 'IN' | 'FR';
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
-
   const router = useRouter();
+  const pathname = usePathname();
   const { t } = useTranslation();
   const { changeLanguage } = useContext(I18nContext);
   const {
     currentAdminType,
     currentLanguage,
-    currentCountry,
     currentUser,
     setAdminType,
     setLanguage,
-    setCountry,
+    setCurrentUser,
     hasPermission,
   } = useAdmin();
-  const pathname = usePathname();
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  // Use a media query to determine if the screen is mobile
-  // const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  // const COUNTRIES: Record<Country, { label: string; flag: string }> = {
-  //   IN: { label: 'India', flag: '🇮🇳' },
-  //   FR: { label: 'France', flag: '🇫🇷' }
-  // };
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+  const hasInitializedRef = useRef(false);
 
   const LANGUAGES: Record<Language, { label: string; flag: string }> = {
-    en: { label: 'English', flag: '🇺🇸' },
-    fr: { label: 'French', flag: '🇫🇷' }
+    en: { label: 'English', flag: 'EN' },
+    fr: { label: 'French', flag: 'FR' },
   };
 
   const currentLanguageData = LANGUAGES[currentLanguage as Language] || LANGUAGES.en;
-  // const currentCountryData = COUNTRIES[currentCountry as Country] || COUNTRIES.IN;
-  const [user, setUser] = useState(null);
-  // const ProfilePage = () => {
-  const [profileData, setProfileData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const categoryMenus = { main: ADMIN_SIDEBAR_CONFIG[currentAdminType] };
 
   useEffect(() => {
+    if (hasInitializedRef.current) {
+      return;
+    }
 
-  const savedLang = localStorage.getItem('lang') || 'en';
-  setLanguage(savedLang as Language);
-  changeLanguage(savedLang);
+    hasInitializedRef.current = true;
+
+    const savedLang = localStorage.getItem('lang') || 'en';
+    setLanguage(savedLang as Language);
+    changeLanguage(savedLang);
 
     const fetchProfile = async () => {
-      setIsLoading(true);
+      const token = tokenStorage.get();
+      if (!token) {
+        return;
+      }
+
       try {
-        const token = tokenStorage.get(); // get token from cookie
-        if (!token) throw new Error("No token found");
-        const res = await profile(); // your API call
-        setProfileData(res);
-        // console.log("Profile Response on AdminLayout ::  " + JSON.stringify(res));
-      } catch (err: any) {
-        console.error(err);
-        setError(err.message || "Failed to load profile");
-      } finally {
-        setIsLoading(false);
+        const res = await profile();
+        const profileUser = res?.data;
+
+        if (!profileUser || typeof profileUser !== 'object') {
+          return;
+        }
+
+        setAdminType(
+          inferAdminType({
+            token,
+            roleType: profileUser.roleType,
+            roleName: profileUser.role?.name,
+          })
+        );
+        setCurrentUser(profileUser);
+      } catch {
+        // Keep the stored/login user state if profile sync fails on mount.
       }
     };
+
     fetchProfile();
-  }, []);
+  }, [changeLanguage, setAdminType, setCurrentUser, setLanguage]);
 
   const handleLogout = () => {
-    // Determine where to redirect based on current admin type
     tokenStorage.clear();
-    if (currentAdminType.startsWith('root-admin')) {
-      router.push('/auth/root-login');
-    } else {
-      router.push('/auth/admin-login');
-    }
-  };
+    localStorage.removeItem('mk_admin_user');
 
-  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+    if (currentAdminType === 'root-admin') {
+      router.push('/auth/root-login');
+      return;
+    }
+
+    router.push('/auth/admin-login');
+  };
 
   const toggleItem = (label: string) => {
     setExpandedItems((prev) => ({
@@ -134,220 +134,44 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   const generateBreadcrumbs = () => {
     const paths = pathname.split('/').filter(Boolean);
+    const filteredPaths = paths.filter((path) => path !== 'admin' && path !== 'dashboard');
 
-    // Filter out admin, dashboard, and 'modules' from clickable breadcrumb
-    const filteredPaths = paths.filter(path => path !== 'admin' && path !== 'dashboard');
+    return filteredPaths
+      .map((path, index) => {
+        const href = `/${paths.slice(0, index + 1).join('/')}`;
+        let label = path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ');
 
-    return filteredPaths.map((path, index) => {
-      // Build href from all previous paths INCLUDING 'modules' internally
-      const href = `/${paths.slice(0, index + 1).join('/')}`;
+        if (path === 'notifications') label = 'Notifications';
+        if (path === 'sub-admins') label = 'Sub Administrators';
+        if (path === 'verification') label = 'KYB Verifications';
+        if (path === 'modules') return { label: '', href: '', isLast: false };
 
-      // Map to nice labels
-      let label = path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ');
-      if (path === 'notifications') label = 'Notifications';
-      if (path === 'sub-admins') label = 'Sub Administrators';
-      if (path === 'verification') label = 'KYB Verifications';
-
-      // Hide modules from breadcrumb (optional: non-clickable)
-      if (path === 'modules') {
-        return { label: '', href: '', isLast: false }; // hide it completely
-      }
-
-      return {
-        label,
-        href,
-        isLast: index === filteredPaths.length - 1
-      };
-    }).filter(crumb => crumb.label); // remove empty hidden crumbs
+        return {
+          label,
+          href,
+          isLast: index === filteredPaths.length - 1,
+        };
+      })
+      .filter((crumb) => crumb.label);
   };
+
   const breadcrumbs = generateBreadcrumbs();
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'success': return <CheckCircle2 size={16} className="text-emerald-500" />;
-      case 'error': return <AlertCircle size={16} className="text-rose-500" />;
-      case 'warning': return <AlertTriangle size={16} className="text-amber-500" />;
-      default: return <Info size={16} className="text-blue-500" />;
+      case 'success':
+        return <CheckCircle2 size={16} className="text-emerald-500" />;
+      case 'error':
+        return <AlertCircle size={16} className="text-rose-500" />;
+      case 'warning':
+        return <AlertTriangle size={16} className="text-amber-500" />;
+      default:
+        return <Info size={16} className="text-blue-500" />;
     }
   };
 
-  // Get organized menu items by category
-  const getMenuByCategory = () => {
-    const categoryMenus: Record<string, Array<{
-      label: string;
-      href: string;
-      module: string;
-      icon: React.ElementType;
-      children?: Array<{ label: string; href: string }>
-    }>> = {
-      main: [],
-    };
-
-    if (currentAdminType.startsWith('root')) {
-      categoryMenus.main = [
-        {
-          label: t('translate.sidebar_dashboard'),
-          href: '/admin/dashboard',
-          module: MODULES.DASHBOARD,
-          icon: LayoutDashboard,
-        },
-        {
-          label: t('translate.sidebar_tenants'),
-          href: '/admin/affiliates',
-          module: MODULES.AFFILIATES,
-          icon: Building2,
-        },
-        {
-          label: t('translate.sidebar_subscription_plans'),
-          href: '/admin/plans',
-          module: MODULES.SUBSCRIPTION_PLANS,
-          icon: CreditCard,
-          children: [
-            { label: t('translate.sidebar_plans_list'), href: '/admin/plans' },
-            { label: t('translate.sidebar_add_plan'), href: '/admin/plans/new' },
-            { label: t('translate.sidebar_subscribers'), href: '/admin/plans/subscribers' },
-          ],
-        },
-        {
-          label: t('translate.sidebar_kyb_requests'),
-          href: '/admin/verification',
-          module: MODULES.KYB_REQUESTS,
-          icon: ShieldCheck,
-        },
-        {
-          label: t('translate.sidebar_support_tickets'),
-          href: '/admin/tickets',
-          module: MODULES.SUPPORT_TICKETS,
-          icon: Ticket,
-        },
-        {
-          label: t('translate.sidebar_admin_users'),
-          href: '/admin/users',
-          module: MODULES.ADMIN_USERS,
-          icon: Users,
-          children: [
-            { label: t('translate.sidebar_system_admins'), href: '/admin/users' },
-            { label: t('translate.sidebar_roles_management'), href: '/admin/roles' },
-          ],
-        },
-        {
-          label: t('translate.sidebar_permission_packages'),
-          href: '/admin/modules',
-          module: MODULES.PERMISSION_PACKAGES,
-          icon: Package,
-          children: [
-            { label: t('translate.sidebar_root_modules'), href: '/admin/modules/root-modules' },
-            { label: t('translate.sidebar_affiliate_modules'), href: '/admin/modules/affiliate-modules' },
-          ],
-        },
-        {
-          label: t('translate.sidebar_analytics_report'),
-          href: '/admin/analytics',
-          module: MODULES.ANALYTICS_REPORT,
-          icon: BarChart3,
-        },
-        {
-          label: t('translate.sidebar_security_compliance'),
-          href: '/admin/security',
-          module: MODULES.SECURITY_COMPLIANCE,
-          icon: Lock,
-        },
-        {
-          label: t('translate.sidebar_settings'),
-          href: '/admin/settings',
-          module: MODULES.SETTINGS,
-          icon: Settings,
-        },
-      ];
-    } else {
-      categoryMenus.main = [
-        {
-          label: t('translate.sidebar_dashboard'),
-          href: '/admin/dashboard',
-          module: MODULES.DASHBOARD,
-          icon: LayoutDashboard,
-        },
-        {
-          label: t('translate.sidebar_business_kyb'),
-          href: '/admin/verification',
-          module: MODULES.BUSINESS_KYB,
-          icon: FileCheck,
-        },
-        {
-          label: t('translate.sidebar_subscription_plans'),
-          href: '/admin/plans',
-          module: MODULES.SUBSCRIPTION_PLANS,
-          icon: CreditCard,
-        },
-        {
-          label: t('translate.sidebar_customers'),
-          href: '/admin/users',
-          module: MODULES.CUSTOMERS,
-          icon: UserCircle,
-        },
-        {
-          label: t('translate.sidebar_cms'),
-          href: '/admin/cms',
-          module: MODULES.CMS,
-          icon: FileText,
-          children: [
-            { label: t('translate.sidebar_contact'), href: '/admin/cms/contact' },
-            { label: t('translate.sidebar_video'), href: '/admin/videos' },
-            { label: t('translate.sidebar_news_articles'), href: '/admin/articles' },
-            { label: t('translate.sidebar_challenges'), href: '/admin/challenges' },
-            { label: t('translate.sidebar_about_us'), href: '/admin/about-us' },
-            { label: t('translate.sidebar_home_page'), href: '/admin/cms/home' },
-          ],
-        },
-        {
-          label: t('translate.sidebar_analytics_report'),
-          href: '/admin/analytics',
-          module: MODULES.ANALYTICS_REPORT,
-          icon: BarChart3,
-        },
-        {
-          label: t('translate.sidebar_admin_users'),
-          href: '/admin/sub-admins',
-          module: MODULES.ADMIN_USERS,
-          icon: Users,
-        },
-        {
-          label: t('translate.sidebar_support_tickets'),
-          href: '/admin/tickets',
-          module: MODULES.SUPPORT_TICKETS,
-          icon: Ticket,
-        },
-        {
-          label: t('translate.sidebar_security_compliance'),
-          href: '/admin/security',
-          module: MODULES.SECURITY_COMPLIANCE,
-          icon: Lock,
-        },
-        {
-          label: t('translate.sidebar_settings'),
-          href: '/admin/settings',
-          module: MODULES.SETTINGS,
-          icon: Settings,
-        },
-      ];
-    }
-
-    return categoryMenus;
-  };
-
-  const categoryMenus = getMenuByCategory();
-
-  // const isRTL = currentLanguage === 'ar';
-  const isRTL = false;
-
-  const renderMenuCategory = (categoryKey: string, items: Array<{
-    label: string;
-    href: string;
-    module: string;
-    icon: React.ElementType;
-    children?: Array<{ label: string; href: string }>
-  }>) => {
-    const visibleItems = items.filter((item) => hasPermission(item.module, 'view'));
+  const renderMenuCategory = (categoryKey: string, items: SidebarItem[]) => {
+    const visibleItems = items.filter((item) => hasPermission(item.module, ACTIONS.VIEW));
 
     if (visibleItems.length === 0) return null;
 
@@ -355,31 +179,50 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       <div key={categoryKey} className="space-y-1">
         {visibleItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href || (item.children && item.children.some(child => pathname === child.href));
+          const isActive =
+            pathname === item.href || (item.children && item.children.some((child) => pathname === child.href));
+          const itemLabel = t(item.labelKey);
 
           return (
             <div key={item.href}>
               {item.children ? (
                 <div>
-                  <button
-                    onClick={() => toggleItem(item.label)}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 text-[15px] font-medium rounded-lg transition-all duration-200 group ${isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-                      }`}
+                  <div
+                    className={`flex items-center rounded-lg transition-all duration-200 group ${
+                      isActive
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                    }`}
                   >
-                    <span className="flex items-center gap-3">
-                      <Icon size={18} className={`${isActive ? 'text-primary' : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground'} transition-colors`} />
-                      {sidebarOpen && <span>{item.label}</span>}
-                    </span>
-                    {sidebarOpen && (
-                      <ChevronDown
-                        size={14}
-                        className={`transition-transform duration-200 ${expandedItems[item.label] ? 'rotate-0' : '-rotate-90'}`}
+                    <Link
+                      href={item.href}
+                      className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 text-[15px] font-medium"
+                    >
+                      <Icon
+                        size={18}
+                        className={`${
+                          isActive ? 'text-primary' : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground'
+                        } transition-colors`}
                       />
+                      {sidebarOpen && <span>{itemLabel}</span>}
+                    </Link>
+                    {sidebarOpen && (
+                      <button
+                        type="button"
+                        onClick={() => toggleItem(itemLabel)}
+                        className="px-3 py-2.5"
+                        aria-label={`Toggle ${itemLabel}`}
+                      >
+                        <ChevronDown
+                          size={14}
+                          className={`transition-transform duration-200 ${
+                            expandedItems[itemLabel] ? 'rotate-0' : '-rotate-90'
+                          }`}
+                        />
+                      </button>
                     )}
-                  </button>
-                  {sidebarOpen && expandedItems[item.label] && (
+                  </div>
+                  {sidebarOpen && expandedItems[itemLabel] && (
                     <div className="ml-9 mt-1 space-y-1 border-l border-sidebar-border/50 pl-2">
                       {item.children.map((child) => {
                         const isChildActive = pathname === child.href;
@@ -387,12 +230,13 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                           <Link
                             key={child.href}
                             href={child.href}
-                            className={`block px-3 py-2 text-[14px] rounded-md transition-colors ${isChildActive
-                              ? 'text-primary font-medium bg-primary/5'
-                              : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/30'
-                              }`}
+                            className={`block px-3 py-2 text-[14px] rounded-md transition-colors ${
+                              isChildActive
+                                ? 'text-primary font-medium bg-primary/5'
+                                : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/30'
+                            }`}
                           >
-                            {child.label}
+                            {t(child.labelKey)}
                           </Link>
                         );
                       })}
@@ -402,16 +246,22 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               ) : (
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 text-[15px] font-medium rounded-lg transition-all duration-200 group ${isActive
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-                    }`}
+                  className={`flex items-center gap-3 px-3 py-2.5 text-[15px] font-medium rounded-lg transition-all duration-200 group ${
+                    isActive
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                  }`}
                 >
-                  <Icon size={18} className={`${isActive ? 'text-primary' : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground'} transition-colors`} />
-                  {sidebarOpen && <span className="truncate">{item.label}</span>}
+                  <Icon
+                    size={18}
+                    className={`${
+                      isActive ? 'text-primary' : 'text-sidebar-foreground/50 group-hover:text-sidebar-foreground'
+                    } transition-colors`}
+                  />
+                  {sidebarOpen && <span className="truncate">{itemLabel}</span>}
                   {!sidebarOpen && (
                     <div className="fixed left-20 bg-popover text-popover-foreground px-2 py-1 rounded md shadow-lg text-xs opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap border border-border">
-                      {item.label}
+                      {itemLabel}
                     </div>
                   )}
                 </Link>
@@ -424,13 +274,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className={`flex h-screen bg-background ${isRTL ? 'rtl' : 'ltr'}`}>
-      {/* Mobile Sidebar */}
+    <div className="flex h-screen bg-background ltr">
       <div
-        className={`fixed top-0 left-0 h-full z-50 ${mobileSidebarOpen ? 'w-64' : 'w-0'
-          } bg-sidebar border-r border-sidebar-border transition-all duration-300 flex flex-col overflow-hidden md:hidden`}
+        className={`fixed top-0 left-0 h-full z-50 ${mobileSidebarOpen ? 'w-64' : 'w-0'} bg-sidebar border-r border-sidebar-border transition-all duration-300 flex flex-col overflow-hidden md:hidden`}
       >
-        {/* Logo */}
         <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center font-bold text-primary-foreground text-sm">MK</div>
@@ -444,26 +291,16 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           </button>
         </div>
 
-        {/* Menu Items by Category */}
-        <nav className="flex-1 overflow-y-auto p-3 space-y-3">
-          {renderMenuCategory('main', categoryMenus.main)}
-        </nav>
+        <nav className="flex-1 overflow-y-auto p-3 space-y-3">{renderMenuCategory('main', categoryMenus.main)}</nav>
       </div>
 
-      {/* Overlay for mobile */}
       {mobileSidebarOpen && (
-        <div
-          onClick={() => setMobileSidebarOpen(false)}
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-        ></div>
+        <div onClick={() => setMobileSidebarOpen(false)} className="fixed inset-0 bg-black/50 z-40 md:hidden"></div>
       )}
 
-      {/* Desktop Sidebar */}
       <div
-        className={`hidden md:flex md:flex-col ${sidebarOpen ? 'md:w-64' : 'md:w-20'
-          } bg-sidebar border-r border-sidebar-border transition-all duration-300`}
+        className={`hidden md:flex md:flex-col ${sidebarOpen ? 'md:w-64' : 'md:w-20'} bg-sidebar border-r border-sidebar-border transition-all duration-300`}
       >
-        {/* Logo */}
         <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
           {sidebarOpen && (
             <div className="flex items-center gap-2">
@@ -473,27 +310,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           )}
         </div>
 
-        {/* Menu Items by Category */}
-        <nav className="flex-1 overflow-y-auto p-3 space-y-3">
-          {renderMenuCategory('main', categoryMenus.main)}
-        </nav>
+        <nav className="flex-1 overflow-y-auto p-3 space-y-3">{renderMenuCategory('main', categoryMenus.main)}</nav>
       </div>
 
-      {/* Overlay for mobile */}
-      {sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-        ></div>
-      )}
-
-      {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-
-        {/* Top Bar */}
         <header className="bg-card border-b border-border px-6 py-3 flex items-center justify-between sticky top-0 z-40">
           <div className="flex items-center gap-4">
-            {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
               className="p-2 hover:bg-sidebar-accent rounded-md transition-colors md:hidden"
@@ -501,13 +323,11 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               <Menu size={20} className="text-sidebar-foreground" />
             </button>
 
-            {/* System Logo and Title */}
             <div className="flex items-center gap-2 mr-2 md:mr-4 md:border-r md:border-border md:pr-4">
               <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center font-bold text-primary-foreground text-xl">MK</div>
               <span className="font-medium text-xl text-foreground hidden sm:inline-block">MK Project Admin</span>
             </div>
 
-            {/* Breadcrumbs */}
             <Breadcrumb className="hidden md:flex">
               <BreadcrumbList>
                 <BreadcrumbItem>
@@ -520,9 +340,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                   <React.Fragment key={crumb.href}>
                     <BreadcrumbItem>
                       {crumb.isLast ? (
-                        <BreadcrumbPage className="font-regular text-sm">
-                          {crumb.label}
-                        </BreadcrumbPage>
+                        <BreadcrumbPage className="font-regular text-sm">{crumb.label}</BreadcrumbPage>
                       ) : (
                         <BreadcrumbLink href={crumb.href} className="hover:text-primary transition-colors">
                           {crumb.label}
@@ -537,35 +355,6 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
-            {/* Country Selection (Only for Root Panel) */}
-
-            {/* {currentAdminType.startsWith('root') && (
-              <div className="flex items-center gap-2 md:border-r md:border-border md:pr-4">
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent transition-colors focus:outline-none">
-                    <span className="text-lg leading-none">{currentCountryData.flag}</span>
-                    <span className="text-sm font-medium text-foreground hidden md:inline-block">{currentCountryData.label}</span>
-                    <ChevronDown size={14} className="text-muted-foreground hidden md:inline-block" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-40">
-                    <DropdownMenuLabel>{t('translate.selectCountry')}</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {Object.entries(COUNTRIES).map(([code, data]) => (
-                      <DropdownMenuItem
-                        key={code}
-                        onClick={() => setCountry(code as Country)}
-                        className={`flex items-center gap-3 cursor-pointer ${currentCountry === code ? 'bg-accent text-accent-foreground' : ''}`}
-                      >
-                        <span className="text-lg leading-none">{data.flag}</span>
-                        <span className="text-sm">{data.label}</span>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            )} */}
-
-            {/* Language Selection */}
             <div className="flex items-center gap-2 md:border-r md:border-border md:pr-4">
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent/50 transition-colors focus:outline-none">
@@ -580,10 +369,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                     <DropdownMenuItem
                       key={code}
                       onClick={() => {
-                        setLanguage(code as Language);  // Admin context to set on dropdown
-                        changeLanguage(code as Language);           // i18n sync
+                        setLanguage(code as Language);
+                        changeLanguage(code as Language);
                       }}
-                      className={`flex items-center gap-3 cursor-pointer ${currentLanguage === code ? 'bg-accent/50 text-accent-foreground' : ''}`}
+                      className={`flex items-center gap-3 cursor-pointer ${
+                        currentLanguage === code ? 'bg-accent/50 text-accent-foreground' : ''
+                      }`}
                     >
                       <span className="text-lg leading-none">{data.flag}</span>
                       <span className="text-sm">{data.label}</span>
@@ -593,12 +384,11 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               </DropdownMenu>
             </div>
 
-            {/* Notifications Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="relative p-2 hover:bg-accent/50 rounded-full transition-all border border-transparent hover:border-border group">
                   <Bell size={20} className="text-muted-foreground group-hover:text-primary transition-colors" />
-                  {MOCK_NOTIFICATIONS.some(n => !n.isRead) && (
+                  {MOCK_NOTIFICATIONS.some((notification) => !notification.isRead) && (
                     <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-card animate-pulse shadow-[0_0_10px_rgba(99,102,241,0.5)]"></span>
                   )}
                 </button>
@@ -607,7 +397,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/20">
                   <div>
                     <h3 className="text-md font-medium font-black text-foreground tracking-wider">Notifications</h3>
-                    <p className="text-[13px] text-muted-foreground font-medium">You have {MOCK_NOTIFICATIONS.filter(n => !n.isRead).length} unread alerts</p>
+                    <p className="text-[13px] text-muted-foreground font-medium">
+                      You have {MOCK_NOTIFICATIONS.filter((notification) => !notification.isRead).length} unread alerts
+                    </p>
                   </div>
                   <button className="text-[14px] font-medium font-black text-primary hover:underline tracking-tighter">Mark all read</button>
                 </div>
@@ -616,14 +408,20 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                   {MOCK_NOTIFICATIONS.slice(0, 10).map((notification) => (
                     <DropdownMenuItem
                       key={notification.id}
-                      className={`flex flex-col items-start gap-1 p-4 cursor-pointer focus:bg-muted/50 transition-colors ${!notification.isRead ? 'bg-primary/5' : ''}`}
+                      className={`flex flex-col items-start gap-1 p-4 cursor-pointer focus:bg-muted/50 transition-colors ${
+                        !notification.isRead ? 'bg-primary/5' : ''
+                      }`}
                     >
                       <div className="flex items-start justify-between w-full gap-3">
                         <div className="flex items-center gap-2">
-                          <div className={`p-1.5 rounded-md bg-background border border-border shadow-sm`}>
+                          <div className="p-1.5 rounded-md bg-background border border-border shadow-sm">
                             {getNotificationIcon(notification.type)}
                           </div>
-                          <span className={`text-md font-black font-medium tracking-tight ${!notification.isRead ? 'text-foreground' : 'text-muted-foreground'}`}>
+                          <span
+                            className={`text-md font-black font-medium tracking-tight ${
+                              !notification.isRead ? 'text-foreground' : 'text-muted-foreground'
+                            }`}
+                          >
                             {notification.title}
                           </span>
                         </div>
@@ -631,9 +429,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                           {notification.time}
                         </span>
                       </div>
-                      <p className="text-[12px] text-muted-foreground font-medium leading-relaxed pl-8">
-                        {notification.description}
-                      </p>
+                      <p className="text-[12px] text-muted-foreground font-medium leading-relaxed pl-8">{notification.description}</p>
                     </DropdownMenuItem>
                   ))}
                 </div>
@@ -649,48 +445,34 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Profile Dropdown */}
             <div className="flex items-center gap-3 md:pl-4 md:border-l md:border-border">
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-3 focus:outline-none group">
                   <div className="text-right hidden sm:block">
-                    <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{profileData?.data?.name}</p>
-                    <p className="text-xs text-muted-foreground">{profileData?.data?.role?.name}</p>
+                    <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{currentUser.name}</p>
+                    <p className="text-xs text-muted-foreground">{currentUser.role.name}</p>
                   </div>
-                  {/* <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold group-hover:bg-primary/20 transition-all border border-primary/20">
-                    {currentUser.name.charAt(0)}
-                  </div> */}
                   <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold group-hover:bg-primary/20 transition-all border border-primary/20">
-                    {/* {currentUser?.name ? (
-                      currentUser.name.charAt(0).toUpperCase()
-                    ) : (
-                      <User className="w-4 h-4" />
-                    )} */}
                     <User className="w-4 h-4" />
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 p-0 overflow-hidden">
                   <div className="px-3 py-3 border-b border-border mb-1 bg-muted/20">
-                    {/* <p className="text-sm font-black text-foreground leading-none mb-1">{currentUser.name}</p>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">{currentUser.role.name}</p> */}
                     <div className="flex items-center gap-1.5 pt-2 border-t border-border/50">
                       <Clock size={12} className="text-primary" />
                       <div>
-                        <p className="text-[12px] font-medium font-black text-muted-foreground tracking-tighter leading-none">{t('translate.lastAccess')}</p>
+                        <p className="text-[12px] font-medium font-black text-muted-foreground tracking-tighter leading-none">
+                          {t('translate.lastAccess')}
+                        </p>
                         <p className="text-[12px] font-medium text-foreground">{currentUser.lastLogin}</p>
                       </div>
                     </div>
                   </div>
-                  <DropdownMenuItem className="cursor-pointer"
-                    onClick={() => router.push('/admin/profile')}
-                  >
+                  <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/admin/profile')}>
                     <User size={16} className="mr-2" />
                     <span>{t('translate.viewProfile')}</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="cursor-pointer"
-                    onClick={() => router.push('/admin/change-password')}
-                  >
+                  <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/admin/change-password')}>
                     <KeyRound size={16} className="mr-2" />
                     <span>{t('translate.changePassword')}</span>
                   </DropdownMenuItem>
@@ -708,14 +490,11 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        {/* Content Area */}
         <main className="flex-1 overflow-auto bg-muted/20 p-4 md:p-6">{children}</main>
 
-        {/* <Footer /> */}
         <footer className="py-4 text-center text-sm text-gray-500">
           &copy; {new Date().getFullYear()} MK Projects. {t('translate.footer')}
         </footer>
-
       </div>
     </div>
   );

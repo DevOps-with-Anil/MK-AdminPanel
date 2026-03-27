@@ -1,32 +1,33 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import {
   AdminType,
   Language,
   Country,
-  SubscriptionPlan,
   AdminUser,
   MOCK_USERS,
   TRANSLATIONS,
-  MODULES,
-  ACTIONS,
 } from '@/lib/mock-data';
+import {
+  inferAdminType,
+  isRootUser,
+  mapBackendUserToAdminUser,
+  persistAdminUser,
+  readStoredAdminUser,
+} from '@/lib/rbac';
+import type { User as BackendUser } from '@/types/admin.types';
+import { tokenStorage } from '@/utils/token';
 
 interface AdminContextType {
-  // Current State
   currentAdminType: AdminType;
   currentLanguage: Language;
   currentCountry: Country;
   currentUser: AdminUser;
-
-  // Setters
   setAdminType: (type: AdminType) => void;
   setLanguage: (lang: Language) => void;
   setCountry: (country: Country) => void;
-  setCurrentUser: (user: AdminUser) => void; // ✅ Added setter
-
-  // Helper Functions
+  setCurrentUser: (user: AdminUser | BackendUser) => void;
   t: (key: string) => string;
   hasPermission: (module: string, action: string) => boolean;
   hasFeature: (feature: string) => boolean;
@@ -35,40 +36,40 @@ interface AdminContextType {
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 export function AdminProvider({ children }: { children: ReactNode }) {
-  const [currentAdminType, setAdminType] = useState<AdminType>('root-admin');
+  const [currentAdminType, setAdminTypeState] = useState<AdminType>('root-admin');
   const [currentLanguage, setLanguage] = useState<Language>('en');
   const [currentCountry, setCountry] = useState<Country>('IN');
+  const [currentUser, setCurrentUserState] = useState<AdminUser>(MOCK_USERS['root-admin']);
 
-  // ✅ Add state for currentUser so it can be manually updated
-  const [currentUser, setCurrentUser] = useState<AdminUser>(
-    MOCK_USERS[currentAdminType]
-  );
+  useEffect(() => {
+    const storedUser = readStoredAdminUser();
+    if (!storedUser) {
+      return;
+    }
 
-  // Translation helper
+    setCurrentUserState(storedUser);
+    setAdminTypeState(storedUser.type);
+  }, []);
+
   const t = (key: string): string => {
     return TRANSLATIONS[currentLanguage][key] || key;
   };
 
-  // Permission checker
   const hasPermission = (module: string, action: string): boolean => {
+    if (currentAdminType === 'root-admin' || isRootUser(currentUser)) {
+      return true;
+    }
+
     return currentUser.role.permissions.some(
-      (p) => p.module === module && p.action === action
+      (permission) => permission.module === module && permission.action === action
     );
   };
 
-  // Feature checker based on subscription plan
   const hasFeature = (feature: string): boolean => {
     const planFeatures =
       {
         free: ['dashboard', 'cms_basic', 'support_tickets'],
-        pro: [
-          'dashboard',
-          'cms_full',
-          'challenges',
-          'ads_basic',
-          'support_tickets',
-          'analytics',
-        ],
+        pro: ['dashboard', 'cms_full', 'challenges', 'ads_basic', 'support_tickets', 'analytics'],
         enterprise: [
           'dashboard',
           'cms_full',
@@ -86,17 +87,33 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   };
 
   const handleSetAdminType = (type: AdminType) => {
-    setAdminType(type);
-    // Update currentUser automatically when admin type changes
-    setCurrentUser(MOCK_USERS[type]);
+    const nextUser = MOCK_USERS[type];
+    setAdminTypeState(type);
+    setCurrentUserState(nextUser);
+    persistAdminUser(nextUser);
   };
 
-  const handleSetLanguage = (lang: Language) => {
-    setLanguage(lang);
-  };
+  const handleSetCurrentUser = (user: AdminUser | BackendUser) => {
+    const backendUser =
+      'type' in user
+        ? user
+        : ('user' in user && user.user ? user.user : user);
 
-  const handleSetCountry = (country: Country) => {
-    setCountry(country);
+    const normalizedUser =
+      'type' in backendUser
+        ? backendUser
+        : mapBackendUserToAdminUser(
+            backendUser,
+            inferAdminType({
+              token: tokenStorage.get(),
+              roleType: backendUser.roleType,
+              roleName: backendUser.role?.name,
+            })
+          );
+
+    setCurrentUserState(normalizedUser);
+    setAdminTypeState(normalizedUser.type);
+    persistAdminUser(normalizedUser);
   };
 
   return (
@@ -107,9 +124,9 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         currentCountry,
         currentUser,
         setAdminType: handleSetAdminType,
-        setLanguage: handleSetLanguage,
-        setCountry: handleSetCountry,
-        setCurrentUser, // ✅ Provide setter
+        setLanguage,
+        setCountry,
+        setCurrentUser: handleSetCurrentUser,
         t,
         hasPermission,
         hasFeature,

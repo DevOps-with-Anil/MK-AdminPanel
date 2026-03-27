@@ -1,10 +1,23 @@
 // types/admin.types.ts
 export type AdminType = 'root-admin' | 'tenant-admin';
 
+export interface BackendActionPermission {
+  actionKey: string;
+  actionName?: Record<string, string>;
+  allowed: boolean;
+}
+
+export interface BackendPermission {
+  moduleKey: string;
+  moduleName?: Record<string, string>;
+  allowed: boolean;
+  actions?: BackendActionPermission[];
+}
+
 export interface Role {
   _id: string;
   name: string;
-  permissions: string[];
+  permissions: BackendPermission[];
 }
 
 export interface DeviceInfo {
@@ -16,9 +29,11 @@ export interface DeviceInfo {
 
 export interface User {
   _id: string;
+  id?: string;
   name: string;
   email: string;
   role: Role;
+  roleType?: string;
   status: 'ACTIVE' | 'INACTIVE';
   lastLoginAt: string;
   currentDevice: DeviceInfo;
