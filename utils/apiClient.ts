@@ -1,11 +1,9 @@
 
 import { tokenStorage } from "@/utils/token";
 
-
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
     
-console.log(BASE_URL + "   Base url. ")
+console.log("Base url   :   " + BASE_URL)
 /**
  * Generic API client
  * @param endpoint API endpoint
@@ -19,22 +17,11 @@ export async function apiClient(
 ) {
   const headers = new Headers(options.headers);
 
-  // Default JSON content type
-  if (!headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json");
-  }
-
-  // Set Authorization header with Bearer token
+  headers.set("Content-Type", "application/json");
   const token = tokenStorage.get();
-  if (token && !headers.has("Authorization")) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
-
-  // Set language header if provided
-  // if (language && !headers.has("Accept-Language")) {
-    headers.set("Accept-Language", localStorage.getItem('lang') || 'en');
-  // }
-
+  headers.set("Authorization", `Bearer ${token}`);
+  headers.set("Accept-Language", localStorage.getItem('lang') || 'en');
+  
   let response: Response;
 
   try {
@@ -48,12 +35,11 @@ export async function apiClient(
       message: error?.message || "Network error",
     };
   }
-
   let data: any = null;
   try {
     data = await response.json();
   } catch {
-    data = null; // Non-JSON response
+    data = null;
   }
 
   const message = data?.message || response.statusText || "Something went wrong";

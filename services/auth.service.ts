@@ -11,14 +11,11 @@ export const login = async (payload: { email: string; password: string }) => {
 };
 
 // ----------------------------- Fetch current logged-in user -----------------------------
-
 export const profile = async (): Promise<any> => {
   return await apiClient("auth/root/me", { method: "GET" });
 };  
 
-// -----------------------------
-// Change Password API request
-// -----------------------------
+// ----------------------------- Change Password API request -----------------------------
 export const changePassword = async (payload: {
   currentPassword: string;
   newPassword: string;
@@ -26,10 +23,6 @@ export const changePassword = async (payload: {
   // Send change password request
   const res = await apiClient("auth/root/changepassword", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ` + tokenStorage.get(),
-    },
     body: JSON.stringify(payload),
   });
 
@@ -38,10 +31,7 @@ export const changePassword = async (payload: {
   return res;
 };
 
-// -----------------------------
-// Fetch system roles
-// -----------------------------
-
+// ----------------------------- Fetch system roles -----------------------------
 export const getSystemRoles = async (payload: {
   page?: number;
   limit?: number;
@@ -59,14 +49,12 @@ export const getSystemRoles = async (payload: {
 
   const res = await apiClient(`role?${params.toString()}`, {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${tokenStorage.get()}`,
-    },
   });
 
   return res;
 };
 
+// ----------------------------- Create roles -----------------------------
 export const createRole = async (payload: {
   name: { en: string; fr: string; ar: string; ch?: string };
   description: { en: string; fr: string; ar: string; ch?: string };
@@ -74,10 +62,6 @@ export const createRole = async (payload: {
 }) => {
   const res = await apiClient("role", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ` + tokenStorage.get(),
-    },
     body: JSON.stringify(payload),
   });
 
@@ -85,10 +69,7 @@ export const createRole = async (payload: {
   return res;
 };
 
-// -----------------------------
-// Update Status Commonly
-// -----------------------------
-
+// ----------------------------- Update Status Commonly -----------------------------
 export const updateStatus = async (
   type: string,
   id: string,
@@ -96,56 +77,35 @@ export const updateStatus = async (
 ) => {
   const res = await apiClient(`${type}/${id}/status`, {
     method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${tokenStorage.get()}`,
-    },
     body: JSON.stringify(payload), // ✅ send object, not a string
   });
   return res;
 };
 
-// -----------------------------
-// Delete Entries Common function
-// -----------------------------
+// ----------------------------- Delete Entries Common function -----------------------------
 
 export const deleteEntity = async (type: string, id: string) => {
   const res = await apiClient(`${type}/${id}`, {
     method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${tokenStorage.get()}`,
-    },
   });
 
   return res;
 };
 
-// -----------------------------
-// Get Role By ID
-// -----------------------------
-
+// ----------------------------- Get Role By ID -----------------------------
 export const getRoleById = async (id: string) => {
   const res = await apiClient(`role/${id}`, {
     method: 'GET',
-    headers: {
-      Authorization: `Bearer ${tokenStorage.get()}`,
-    },
   });
 
   return res;
 };
 
-// -----------------------------
-// Update Role
-// -----------------------------
+// ----------------------------- Update Role -----------------------------
 
 export const updateRole = async (id: string, data: any) => {
   const res = await apiClient(`role/${id}`, {
-    method: 'PUT', // or PATCH (depends on backend)
-    headers: {
-      Authorization: `Bearer ${tokenStorage.get()}`,
-      'Content-Type': 'application/json',
-    },
+    method: 'PUT', 
     body: JSON.stringify(data),
   });
 
@@ -153,7 +113,6 @@ export const updateRole = async (id: string, data: any) => {
 };
 
 // ----------------------------- Fetch system users -----------------------------
-
 export const getSystemUsers = async (payload: {
   page: number;
   limit: number;
@@ -175,30 +134,21 @@ export const getSystemUsers = async (payload: {
 
   const res = await apiClient(`rootadmin?${params.toString()}`, {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${tokenStorage.get()}`,
-    },
   });
 
   return res;
 };
 
-// -----------------------------
-// Get Admin By ID
-// -----------------------------
+// ----------------------------- Get Admin By ID -----------------------------
 export const getAdminUserById = async (id: string) => {
   const res = await apiClient(`rootadmin/${id}`, {
     method: 'GET',
-    headers: {
-      Authorization: `Bearer ${tokenStorage.get()}`,
-    },
   });
 
   return res;
 };
 
 // ----------------------------- Add system users -----------------------------
-
 export const createAdminUser = async (payload: {
   name: string;
   email: string;
@@ -211,10 +161,6 @@ export const createAdminUser = async (payload: {
 }) => {
   const res = await apiClient("rootadmin", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ` + tokenStorage.get(),
-    },
     body: JSON.stringify(payload),
   });
 
@@ -223,7 +169,6 @@ export const createAdminUser = async (payload: {
 };
 
 // ----------------------------- Edit system users -----------------------------
-
 export const editAdminUser = async (userId: string, payload: {
   name: string;
   email: string;
@@ -236,10 +181,6 @@ export const editAdminUser = async (userId: string, payload: {
 }) => {
   const res = await apiClient(`rootadmin/${userId}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ` + tokenStorage.get(),
-    },
     body: JSON.stringify(payload),
   });
 
@@ -247,10 +188,7 @@ export const editAdminUser = async (userId: string, payload: {
   return res;
 };
 
-// -----------------------------
-// Fetch Root/Affiliate Modules
-// -----------------------------
-
+// ----------------------------- Fetch Root/Affiliate Modules -----------------------------
 export const getModulePackages = async (
   moduleType: string,
   payload: {
@@ -269,18 +207,12 @@ export const getModulePackages = async (
 
   const res = await apiClient(`${moduleType}?${params.toString()}`, {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${tokenStorage.get()}`,
-    },
-  });
+    });
 
   return res;
 };
 
-// -----------------------------
-// Create Root Modules
-// -----------------------------
-
+// ----------------------------- Create Root Modules -----------------------------
 export const createRootModules = async (payload: {
   key: string;
   moduleName: {
@@ -303,10 +235,6 @@ export const createRootModules = async (payload: {
 }) => {
   const res = await apiClient("systemmodule/add", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ` + tokenStorage.get(),
-    },
     body: JSON.stringify(payload),
   });
 
@@ -314,9 +242,7 @@ export const createRootModules = async (payload: {
   return res;
 };
 
-// -----------------------------
-// Create Tenat Modules
-// 
+// ----------------------------- Create Tenat Modules -----------------------------
 export const createTenantModules = async (payload: {
   key: string;
   moduleName: {
@@ -339,10 +265,6 @@ export const createTenantModules = async (payload: {
 }) => {
   const res = await apiClient("tenantmodule/add", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ` + tokenStorage.get(),
-    },
     body: JSON.stringify(payload),
   });
 
@@ -350,7 +272,7 @@ export const createTenantModules = async (payload: {
   return res;
 };
 
-
+// ----------------------------- Create List All Plans -----------------------------
 export const getPlans = async (payload: {
   page?: number;
   limit?: number;
@@ -367,15 +289,12 @@ export const getPlans = async (payload: {
   
   const res = await apiClient(`plan?${params.toString()}`, {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${tokenStorage.get()}`,
-    },
   });
 
   return res;
 };
 
-
+// ----------------------------- Create Plan -----------------------------
 export const createPlan = async (payload: {
   name: {
     en: string;
@@ -397,10 +316,6 @@ export const createPlan = async (payload: {
 }) => {
   const res = await apiClient("plan", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ` + tokenStorage.get(),
-    },
     body: JSON.stringify(payload),
   });
 
