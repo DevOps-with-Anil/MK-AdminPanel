@@ -6,7 +6,6 @@ import '../globals.css'
 import { Providers } from '@/app/providers/AuthProvider'
 import { AdminProvider } from "@/contexts/AdminContext"
 import { AdminLayout } from "@/components/layout/AdminLayout"
-import { I18nProvider } from '@/i18n/provider';
 
 
 const outfit = Outfit({
@@ -51,9 +50,7 @@ export default function RootLayout({
     <Providers>
       <AdminProvider>
         <AdminLayout>
-          <I18nProvider>
-            {children} {/* <-- page content will render here, layout persists */}
-          </I18nProvider>
+          {children} {/* <-- page content will render here, layout persists */}
         </AdminLayout>
       </AdminProvider>
     </Providers>

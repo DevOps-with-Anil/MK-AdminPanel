@@ -3,6 +3,7 @@
 
 import { createContext, useEffect, useState, ReactNode } from 'react';
 import { loadLocale } from '@/i18n/index';
+import enMessages from '@/i18n/locales/en.json';
 
 interface I18nContextProps {
   locale: string;
@@ -16,22 +17,49 @@ export const I18nContext = createContext<I18nContextProps>({
   messages: {}
 });
 
-export const I18nProvider = ({ children }: { children: ReactNode }) => {
-  const [locale, setLocale] = useState('en');
-  const [messages, setMessages] = useState<Record<string, any>>({});
+const DEFAULT_LOCALE = 'en';
+const localeCache: Record<string, { translate: Record<string, any> }> = {
+  en: { translate: enMessages },
+};
 
-  // load saved or default language
+const getInitialLocale = () => {
+  if (typeof window === 'undefined') {
+    return DEFAULT_LOCALE;
+  }
+
+  return localStorage.getItem('lang') || DEFAULT_LOCALE;
+};
+
+export const I18nProvider = ({ children }: { children: ReactNode }) => {
+  const [locale, setLocale] = useState(getInitialLocale);
+  const [messages, setMessages] = useState<Record<string, any>>(localeCache.en);
+
   useEffect(() => {
-    const savedLang = localStorage.getItem('lang') || 'en';
+    const savedLang = getInitialLocale();
     setLocale(savedLang);
 
-    loadLocale(savedLang).then(setMessages);
+    if (localeCache[savedLang]) {
+      setMessages(localeCache[savedLang]);
+      return;
+    }
+
+    loadLocale(savedLang).then((loadedMessages) => {
+      localeCache[savedLang] = loadedMessages;
+      setMessages(loadedMessages);
+    });
   }, []);
 
   const changeLanguage = async (lang: string) => {
     localStorage.setItem('lang', lang);
     setLocale(lang);
+
+    if (localeCache[lang]) {
+      setMessages(localeCache[lang]);
+      return;
+    }
+
     const msgs = await loadLocale(lang);
+    localeCache[lang] = msgs;
     setMessages(msgs);
   };
 
