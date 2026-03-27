@@ -95,9 +95,9 @@ export default function RolesPage() {
                   <tr key={role.id} className="border-b hover:bg-muted/50">
                     <td className="py-4 px-4 font-medium">
                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center">
+                          {/* <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center">
                              <Shield className="w-4 h-4 text-primary" />
-                          </div>
+                          </div> */}
                           {t(role.nameKey)}
                        </div>
                     </td>
