@@ -1,27 +1,6 @@
 import { apiClient } from "@/utils/apiClient";
 import { tokenStorage } from "@/utils/token";
 
-export interface PlanModel {
-  _id: string;
-  name: string;
-  description: string;
-  price: number;
-  currency: string;
-  duration: string;
-  modules: string[];
-  createdBy: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ApiResponse<T = any> {
-  status: number;
-  message: any;
-  data: T;
-  meta: any;
-}
-
 // ----------------------------- Login API request -----------------------------
 export const login = async (payload: { email: string; password: string }) => {
 
@@ -154,33 +133,6 @@ export const getRoleById = async (id: string) => {
   });
 
   return res;
-};
-
-// -----------------------------
-// Get Plan By ID
-// -----------------------------
-
-export const getPlanById = async (id: string): Promise<ApiResponse<PlanModel>> => {
-  if (!id) {
-    throw new Error('Plan id is required');
-  }
-
-  const res = await apiClient(`plan/${id}`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${tokenStorage.get()}`,
-    },
-  });
-
-  return res;
-};
-
-// -----------------------------
-// Get Plans By ID (alias, separate method for explicit naming)
-// -----------------------------
-
-export const getPlansById = async (id: string): Promise<ApiResponse<PlanModel>> => {
-  return getPlanById(id);
 };
 
 // -----------------------------
@@ -423,29 +375,6 @@ export const getPlans = async (payload: {
   return res;
 };
 
-export const deletePlan = async (id: string) => {
-  const res = await apiClient(`plan/${id}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${tokenStorage.get()}`,
-    },
-  });
-
-  return res;
-};
-
-export const updatePlan = async (id: string, payload: any) => {
-  const res = await apiClient(`plan/${id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${tokenStorage.get()}`,
-    },
-    body: JSON.stringify(payload),
-  });
-
-  return res;
-};
 
 export const createPlan = async (payload: {
   name: {
@@ -475,5 +404,8 @@ export const createPlan = async (payload: {
     body: JSON.stringify(payload),
   });
 
+  console.log("Create Plan Response:", res);
   return res;
 };
+
+

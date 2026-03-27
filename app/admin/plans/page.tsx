@@ -241,12 +241,12 @@ import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 
-import { getPlans, deletePlan } from '@/services/auth.service';
+import { getPlans } from '@/services/auth.service';
 
 interface Plan {
   id: string;
-  name: string;
-  description: string;
+  name: string ;
+  description: string ;
   price: number;
   currency: string;
   type: 'MONTHLY' | 'YEARLY';
@@ -320,16 +320,16 @@ export default function PlansPage() {
   const handleDelete = async (planId: string) => {
     if (!confirm(t('translate.plans_delete_confirm'))) return;
 
-    try {
-      await deletePlan(planId);
-      fetchPlans();
-    } catch (err) {
-      console.error('Delete error', err);
-    }
+    // try {
+    //   await deletePlan(planId);
+    //   fetchPlans();
+    // } catch (err) {
+    //   console.error('Delete error', err);
+    // }
   };
 
   const handleViewModules = (planId: string) => {
-    router.push(`/admin/plans/${planId}/modules-permissions`);
+    alert(`Viewing modules & permissions for plan ${planId}`);
   };
 
   // computed
@@ -489,3 +489,11 @@ export default function PlansPage() {
     </div>
   );
 }
+
+// export default function PlansPage() {
+//   return (
+//     <AdminProvider>
+//       <PlansPageContent />
+//     </AdminProvider>
+//   );
+// }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useAdmin } from '@/contexts/AdminContext';
+import { AdminProvider } from '@/contexts/AdminContext';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
@@ -51,8 +51,7 @@ interface Module {
 
 /* ================= COMPONENT ================= */
 
-export default function ModulesPage() {
-  const { t } = useAdmin();
+function ModulesPageContent() {
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -220,8 +219,10 @@ export default function ModulesPage() {
         <div className="flex items-start gap-4">
           <Layers className="text-primary w-7 h-7 mt-1" />
           <div>
-            <h1 className="text-xl font-medium">{t('modules.title')}</h1>
-            <p className="text-muted-foreground">{t('modules.subtitle')}</p>
+            <h1 className="text-xl font-medium">Modules & Features</h1>
+            <p className="text-muted-foreground">
+              Manage platform modules and permissions
+            </p>
           </div>
         </div>
 
@@ -229,7 +230,7 @@ export default function ModulesPage() {
           <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" />
             <Input
-              placeholder={t('modules.searchPlaceholder')}
+              placeholder="Search Modules..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -239,7 +240,7 @@ export default function ModulesPage() {
           <Link href="/admin/modules/affiliate-modules/new">
             <Button className="gap-2">
               <Plus className="w-4 h-4" />
-              {t('modules.newModule')}
+              New Module
             </Button>
           </Link>
         </div>
@@ -253,16 +254,16 @@ export default function ModulesPage() {
             {/* ✅ UPDATED HEADER WITH THEME SELECT */}
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>{t('modules.available')}</CardTitle>
+                <CardTitle>Available Modules</CardTitle>
                 <CardDescription>
-                  {t('users.show')}: {page} / {totalPages}
+                  Page {page} of {totalPages}
                 </CardDescription>
               </div>
               {/* Page Row Limit */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
-                    {t('users.show')}: {limit}
+                    Show: {limit}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -319,7 +320,7 @@ export default function ModulesPage() {
                         // }}
                         >
                           <Edit2 className="w-4 h-4 mr-2" />
-                          {t('plans.edit')}
+                          Edit
                         </DropdownMenuItem>
 
                         {/* ✅ DELETE */}
@@ -331,7 +332,7 @@ export default function ModulesPage() {
                           }}
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
-                          {t('plans.delete')}
+                          Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -349,7 +350,7 @@ export default function ModulesPage() {
                         }}
                         className="cursor-pointer"
                       >
-                        {mod.status === 'active' ? t('plans.active') : t('plans.inactive')}
+                        {mod.status}
                       </Badge>
 
                     </div>
@@ -397,7 +398,7 @@ export default function ModulesPage() {
         <div>
           <Card className="sticky top-0">
             <CardHeader>
-              <CardTitle>{t('modules.actions')}</CardTitle>
+              <CardTitle>Module Actions</CardTitle>
             </CardHeader>
 
             <CardContent>
@@ -445,7 +446,9 @@ export default function ModulesPage() {
                     </div>
                   ))
               ) : (
-                <p className="text-center text-muted-foreground">{t('modules.emptyActions')}</p>
+                <p className="text-center text-muted-foreground">
+                  Please select a module to view its actions
+                </p>
               )}
             </CardContent>
           </Card>
@@ -457,7 +460,7 @@ export default function ModulesPage() {
         <Card>
           <CardContent className="text-center pt-6">
             <p className="text-2xl font-bold">{modules.length}</p>
-            <p>{t('modules.totalModules')}</p>
+            <p>Total Modules</p>
           </CardContent>
         </Card>
 
@@ -466,7 +469,7 @@ export default function ModulesPage() {
             <p className="text-2xl font-bold">
               {modules.reduce((s, m) => s + m.actionsCount, 0)}
             </p>
-            <p>{t('modules.totalPermissions')}</p>
+            <p>Total Permissions</p>
           </CardContent>
         </Card>
 
@@ -475,10 +478,20 @@ export default function ModulesPage() {
             <p className="text-2xl font-bold">
               {modules.filter((m) => m.status === 'active').length}
             </p>
-            <p>{t('modules.activeModules')}</p>
+            <p>Active Modules</p>
           </CardContent>
         </Card>
       </div>
     </div>
+  );
+}
+
+/* ================= EXPORT ================= */
+
+export default function ModulesPage() {
+  return (
+    <AdminProvider>
+      <ModulesPageContent />
+    </AdminProvider>
   );
 }

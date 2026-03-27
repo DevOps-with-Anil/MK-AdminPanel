@@ -1,6 +1,6 @@
 'use client';
 
-import { useAdmin } from '@/contexts/AdminContext';
+import { AdminProvider } from '@/contexts/AdminContext';
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -136,9 +136,8 @@ function CountryMultiSelect({ selected, onChange }: { selected: string[]; onChan
   );
 }
 
-export default function EditUserPage() {
+function EditUserContent() {
   const params = useParams();
-  const { t } = useAdmin();
   const userId = params.id as string;
 
   const [formData, setFormData] = useState<FormData>({
@@ -174,10 +173,10 @@ export default function EditUserPage() {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!formData.name.trim()) newErrors.name = t('users.name') + ' is required';
-    if (!formData.email.trim()) newErrors.email = t('users.email') + ' is required';
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
     // if (!formData.password.trim()) newErrors.password = 'Password is required';
-    if (!formData.phoneNumber.trim()) newErrors.phoneNumber = t('users.phoneNumber') + ' is required';
+    if (!formData.phoneNumber.trim()) newErrors.phoneNumber = 'Phone number is required';
     // if (!formData.role) newErrors.role = 'Role is required';
     if (!formData.status) newErrors.status = 'Status is required';
     if (!formData.allowedCountries.length) newErrors.allowedCountries = 'Select at least one country';
@@ -293,8 +292,8 @@ export default function EditUserPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-xl font-medium">{t('users.editTitle')}</h1>
-          <p className="text-muted-foreground">{t('users.editSubtitle')}</p>
+          <h1 className="text-xl font-medium">Edit Admin User</h1>
+          <p className="text-muted-foreground">Modify user details and permissions</p>
         </div>
       </div>
 
@@ -302,12 +301,12 @@ export default function EditUserPage() {
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>{t('users.detailsTitle')}</CardTitle>
-              <CardDescription>{t('users.detailsDesc')}</CardDescription>
+              <CardTitle>User Information</CardTitle>
+              <CardDescription>Update admin details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <Label>{t('users.name')}</Label>
+                <Label>Full Name</Label>
                 <Input
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
@@ -317,7 +316,7 @@ export default function EditUserPage() {
               </div>
 
               <div>
-                <Label>{t('users.email')}</Label>
+                <Label>Email</Label>
                 <Input
                   type="email"
                   value={formData.email}
@@ -329,11 +328,11 @@ export default function EditUserPage() {
 
               <div className="grid grid-cols-[120px_1fr] gap-4">
                 <div>
-                  <Label>{t('users.phoneCode')}</Label>
+                  <Label>Phone Code</Label>
                   <Dropdown options={PHONE_CODES} value={formData.phoneCode} onChange={(val) => handleInputChange('phoneCode', val)} />
                 </div>
                 <div>
-                  <Label>{t('users.phoneNumber')}</Label>
+                  <Label>Phone Number</Label>
                   <Input
                     type="number"
                     value={formData.phoneNumber}
@@ -345,7 +344,7 @@ export default function EditUserPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>{t('users.role')}</Label>
+                  <Label>Role</Label>
                   {loadingRoles ? (
                     <div>Loading roles...</div>
                   ) : (
@@ -353,20 +352,20 @@ export default function EditUserPage() {
                       options={roles}
                       value={formData.role}
                       onChange={(val) => handleInputChange('role', val)}
-                      placeholder={t('users.selectRole')}
+                      placeholder="Select role"
                     />
                   )}
                   {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
                 </div>
 
                 <div>
-                  <Label>{t('users.status')}</Label>
+                  <Label>Status</Label>
                   <Dropdown
                     options={[
-                      { id: 'ACTIVE', label: t('users.active') },
-                      { id: 'INACTIVE', label: t('users.inactive') },
+                      { id: 'ACTIVE', label: 'Active' },
+                      { id: 'INACTIVE', label: 'Inactive' },
                     ]}
-                    value={{ id: formData.status, label: formData.status === 'ACTIVE' ? t('users.active') : t('users.inactive') }}
+                    value={{ id: formData.status, label: formData.status === 'ACTIVE' ? 'Active' : 'Inactive' }}
                     onChange={(val) => handleInputChange('status', val.id as StatusType)}
                   />
                   {errors.status && <p className="text-red-500 text-sm mt-1">{errors.status}</p>}
@@ -374,7 +373,7 @@ export default function EditUserPage() {
               </div>
 
               <div>
-                <Label>{t('users.allowedCountries')}</Label>
+                <Label>Allowed Countries</Label>
                 <CountryMultiSelect
                   selected={formData.allowedCountries}
                   onChange={(val) => handleInputChange('allowedCountries', val)}
@@ -383,11 +382,11 @@ export default function EditUserPage() {
               </div>
 
               <div>
-                <Label>{t('users.adminImage')}</Label>
+                <Label>Admin Image</Label>
                 <div className="flex items-center gap-4">
                   {formData.image && <img src={formData.image} className="w-20 h-20 rounded-full object-cover border" />}
                   <label className="flex items-center gap-2 cursor-pointer px-3 py-2 border rounded-md">
-                    <Upload className="w-4 h-4" /> {t('users.uploadImage')}
+                    <Upload className="w-4 h-4" /> Upload Image
                     <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
                   </label>
                 </div>
@@ -395,10 +394,10 @@ export default function EditUserPage() {
 
               <div className="flex gap-3 mt-4">
                 <Button onClick={handleSave} className="gap-2 bg-primary flex-1" disabled={isLoading}>
-                  <Save className="w-4 h-4" /> {isLoading ? t('roles.creating') : t('users.saveChanges')}
+                  <Save className="w-4 h-4" /> {isLoading ? 'Saving...' : 'Save Changes'}
                 </Button>
                 <Button onClick={() => setIsEditing(!isEditing)} variant="outline" className="flex-1">
-                  {isEditing ? t('plans.cancel') : t('users.edit')}
+                  {isEditing ? 'Cancel' : 'Edit'}
                 </Button>
               </div>
             </CardContent>
@@ -406,5 +405,13 @@ export default function EditUserPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function EditUserPage() {
+  return (
+    <AdminProvider>
+      <EditUserContent />
+    </AdminProvider>
   );
 }
