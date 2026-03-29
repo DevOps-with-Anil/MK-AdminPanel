@@ -39,7 +39,7 @@
   "sidebar_add_plan": "Ajouter un plan",
   "sidebar_subscribers": "Abonnés",
   "sidebar_affiliates": "Affiliés",
-  "sidebar_tenants": "Locataires",
+  "sidebar_tenants": "Affiliés",
   "sidebar_kyb_requests": "Demandes KYB",
   "sidebar_business_kyb": "KYB entreprise",
   "sidebar_customers": "Clients",
@@ -118,6 +118,8 @@
   "plans_delete_confirm": "Êtes-vous sûr de vouloir supprimer ce plan ?",
   "plans_active": "Actif",
   "plans_inactive": "Inactif",
+  "no_data": "Aucun plan trouvé",
+  "no_data_description": "Aucun plan n'est disponible. Créez un nouveau plan pour commencer.",
 
   "plans_create_title": "Créer un nouveau plan",
   "plans_create_subtitle": "Définir les détails, le prix et les fonctionnalités du plan",

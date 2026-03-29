@@ -1,5 +1,5 @@
+
 import { apiClient } from "@/utils/apiClient";
-import { tokenStorage } from "@/utils/token";
 
 // ----------------------------- Login API request -----------------------------
 export const login = async (payload: { email: string; password: string }) => {
@@ -56,8 +56,8 @@ export const getSystemRoles = async (payload: {
 
 // ----------------------------- Create roles -----------------------------
 export const createRole = async (payload: {
-  name: { en: string; fr: string; ar: string; ch?: string };
-  description: { en: string; fr: string; ar: string; ch?: string };
+  name: { en: string; fr: string; };
+  description: { en: string; fr: string; };
   status: 'ACTIVE' | 'INACTIVE'; // added status
 }) => {
   const res = await apiClient("role", {
@@ -218,16 +218,12 @@ export const createRootModules = async (payload: {
   moduleName: {
     en: string;
     fr: string;
-    ar: string;
-    hi?: string;
   };
   actions: {
     key: string;
     actionName: {
       en: string;
       fr: string;
-      ar: string;
-      hi?: string;
     };
     status?: 'ACTIVE' | 'INACTIVE';
   }[];
@@ -248,17 +244,13 @@ export const createTenantModules = async (payload: {
   moduleName: {
     en: string;
     fr: string;
-    ar: string;
-    hi?: string;
   };
   actions: {
     key: string;
     actionName: {
       en: string;
       fr: string;
-      ar: string;
-      hi?: string;
-    };
+  };
     status?: 'ACTIVE' | 'INACTIVE';
   }[];
   status?: 'ACTIVE' | 'INACTIVE';

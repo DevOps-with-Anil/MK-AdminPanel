@@ -1,19 +1,21 @@
+import React from "react"
+import type { Metadata } from 'next'
+import { Outfit, Geist_Mono } from 'next/font/google'
+import '../globals.css'
+import { Providers } from '@/app/providers/AuthProvider'
+import { AdminProvider } from "@/contexts/AdminContext"
+import { AdminLayout } from "@/components/layout/AdminLayout"
+import { I18nProvider } from '@/i18n/provider';
 
-import React from "react";
-import type { Metadata } from "next";
-import { Outfit, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import { AdminProvider } from "@/contexts/AdminContext";
-import { I18nProvider } from "@/i18n/provider";
 
 const outfit = Outfit({
   subsets: ["latin"],
-  variable: "--font-outfit",
+  variable: '--font-outfit',
 });
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
-  variable: "--font-geist-mono",
+  variable: '--font-geist-mono',
 });
 
 export const metadata: Metadata = {
@@ -40,18 +42,18 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+}: Readonly<{
+  children: React.ReactNode
+}>) {
   return (
-    <html lang="en" className={`${outfit.variable} ${geistMono.variable}`}>
-      <body className="font-sans antialiased">
-        <AdminProvider>
+    <Providers>
+      <AdminProvider>
+        <AdminLayout>
           <I18nProvider>
-            {children}
+            {children} {/* <-- page content will render here, layout persists */}
           </I18nProvider>
-        </AdminProvider>
-      </body>
-    </html>
-  );
+        </AdminLayout>
+      </AdminProvider>
+    </Providers>
+  )
 }

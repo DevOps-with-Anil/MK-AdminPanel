@@ -1,15 +1,11 @@
-
 import { tokenStorage } from "@/utils/token";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-    
-console.log("Base url   :   " + BASE_URL)
-/**
- * Generic API client
- * @param endpoint API endpoint
- * @param options Fetch options
- * @param language Optional language header (e.g., 'en', 'fr')
- */
+
+if (!BASE_URL) {
+  throw new Error("NEXT_PUBLIC_API_BASE_URL is not defined");
+}
+
 export async function apiClient(
   endpoint: string,
   options: RequestInit = {},
@@ -17,11 +13,26 @@ export async function apiClient(
 ) {
   const headers = new Headers(options.headers);
 
-  headers.set("Content-Type", "application/json");
-  const token = tokenStorage.get();
-  headers.set("Authorization", `Bearer ${token}`);
-  headers.set("Accept-Language", localStorage.getItem('lang') || 'en');
-  
+  const isFormData = options.body instanceof FormData;
+
+  // Only set JSON content-type when needed
+  if (!isFormData) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  // Token handling
+  const token = tokenStorage.getToken();
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  // Safe language handling (SSR-safe)
+  let lang = language || "en";
+  if (typeof window !== "undefined") {
+    lang = localStorage.getItem("lang") || lang;
+  }
+  headers.set("Accept-Language", lang);
+
   let response: Response;
 
   try {
@@ -30,31 +41,33 @@ export async function apiClient(
       headers,
     });
   } catch (error: any) {
-    throw {
-      status: 0,
-      message: error?.message || "Network error",
-    };
+    throw new Error(error?.message || "Network error");
   }
+
   let data: any = null;
+
   try {
     data = await response.json();
   } catch {
     data = null;
   }
 
-  const message = data?.message || response.statusText || "Something went wrong";
+  const message =
+    data?.message || response.statusText || "Something went wrong";
+
+  const meta = data?.meta ?? null;
 
   if (!response.ok) {
-    throw {
-      status: response.status,
-      message,
-      data,
-    };
+    const error: any = new Error(message);
+    error.status = response.status;
+    error.data = data;
+    throw error;
   }
 
   return {
     status: response.status,
     message,
     data: data?.data ?? data,
+    meta,
   };
 }

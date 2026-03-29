@@ -1,4 +1,3 @@
-// hooks/useDeleteEntity.ts
 'use client';
 import { useState } from 'react';
 import { deleteEntity } from '@/services/auth.service';

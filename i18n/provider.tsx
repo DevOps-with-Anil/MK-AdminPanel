@@ -1,58 +1,122 @@
+
 'use client';
 
-import { createContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { loadLocale } from '@/i18n/index';
+import {
+  createContext,
+  useEffect,
+  useState,
+  ReactNode,
+  useCallback,
+} from 'react';
+import { loadLocale } from '@/i18n';
+import {
+  LANGUAGES,
+  DEFAULT_LANGUAGE,
+  Language,
+  isLanguage,
+} from '@/i18n/languages';
+
+// recursive message type
+type Messages = {
+  [key: string]: string | Messages;
+};
+
+type InterpolationValues = Record<string, string | number | boolean>;
 
 interface I18nContextProps {
-  locale: string;
-  changeLanguage: (lang: string) => Promise<void>;
-  messages: Record<string, any>;
-  t: (key: string) => string; 
+  locale: Language;
+  changeLanguage: (lang: Language) => Promise<void>;
+  messages: Messages;
+  t: (key: string, vars?: InterpolationValues, fallback?: string) => string;
 }
 
 export const I18nContext = createContext<I18nContextProps>({
-  locale: 'en',
-  changeLanguage: async () => {},
+  locale: DEFAULT_LANGUAGE,
+  changeLanguage: async () => { },
   messages: {},
   t: (key: string) => key,
 });
 
 export const I18nProvider = ({ children }: { children: ReactNode }) => {
-  const [locale, setLocale] = useState('en');
-  const [messages, setMessages] = useState<Record<string, any>>({});
+  const [locale, setLocale] = useState<Language>(DEFAULT_LANGUAGE);
+  const [messages, setMessages] = useState<Messages>({});
+  const [loading, setLoading] = useState(true);
 
-  // ✅ Load initial language
+  // ✅ load initial language safely
   useEffect(() => {
-    const savedLang = localStorage.getItem('lang') || 'en';
-    setLocale(savedLang);
+    const init = async () => {
+      try {
+        const savedLang = localStorage.getItem('lang');
 
-    loadLocale(savedLang).then(setMessages);
+        const lang =
+          savedLang && isLanguage(savedLang)
+            ? savedLang
+            : DEFAULT_LANGUAGE;
+
+        const msgs = await loadLocale(lang);
+
+        setLocale(lang);
+        setMessages(msgs);
+      } catch (err) {
+        console.error('Failed to initialize i18n:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    init();
   }, []);
 
-  // ✅ Change language
-  const changeLanguage = async (lang: string) => {
-    localStorage.setItem('lang', lang);
-    setLocale(lang);
+  // change language safely
+  const changeLanguage = useCallback(async (lang: Language) => {
+    try {
+      localStorage.setItem('lang', lang);
+      setLocale(lang);
 
-    const msgs = await loadLocale(lang);
-    setMessages(msgs);
+      const msgs = await loadLocale(lang);
+      setMessages(msgs);
+    } catch (err) {
+      console.error(`Failed to change language to ${lang}`, err);
+    }
+  }, []);
+
+  // safe nested getter
+  const getValue = (obj: Messages, path: string): unknown => {
+    return path.split('.').reduce<unknown>((acc, key) => {
+      if (typeof acc === 'object' && acc !== null && key in acc) {
+        return (acc as Record<string, unknown>)[key];
+      }
+      return undefined;
+    }, obj);
   };
 
-  // ✅ Translation function (supports nested keys)
+  // translation function
   const t = useCallback(
-    (key: string): string => {
-      const keys = key.split('.');
-      let value: any = messages;
+    (
+      key: string,
+      vars?: InterpolationValues,
+      fallback?: string
+    ): string => {
+      const raw = getValue(messages, key);
 
-      for (let k of keys) {
-        value = value?.[k];
-        if (!value) return key; // fallback
+      if (typeof raw !== 'string') {
+        return fallback || key;
       }
 
-      return typeof value === 'string' ? value : key;
+      if (!vars) return raw;
+
+      return raw.replace(/{{(.*?)}}/g, (_, v: string) => {
+        const value = vars[v.trim()];
+        return value !== undefined && value !== null
+          ? String(value)
+          : '';
+      });
     },
     [messages]
   );
+
+  // ⛔ prevent UI flicker before language loads
+  if (loading) return null;
 
   return (
     <I18nContext.Provider value={{ locale, changeLanguage, messages, t }}>

@@ -11,15 +11,13 @@ import {
 import {
   AlertCircle, Eye, EyeOff, Loader2, CheckCircle, Globe
 } from 'lucide-react';
-import { LANGUAGES} from '@/lib/mock-data';
+import { LANGUAGES, Language } from '@/i18n/languages';
 import { useAdmin } from '@/contexts/AdminContext';
 import Image from 'next/image';
 import { login } from '@/services/auth.service';
-import { AdminType } from '@/types/admin.types';
 import { tokenStorage } from '@/utils/token';
 import { useTranslation } from '@/hooks/useTranslation';
 import { I18nContext } from '@/i18n/provider';
-import { Savate } from 'next/font/google';
 
 export default function RootLoginPage() {
   const { t } = useTranslation();
@@ -54,14 +52,14 @@ export default function RootLoginPage() {
   // Check auth
   useEffect(() => {
 
-   
+
     const token = document.cookie
       .split('; ')
       .find(row => row.startsWith('mk_token='))
       ?.split('=')[1];
 
     if (token) {
-      router.replace('/admin/dashboard');
+      router.replace('/root/dashboard');
     } else {
       setCheckingAuth(false);
     }
@@ -74,23 +72,26 @@ export default function RootLoginPage() {
     setSuccessMsg('');
 
     try {
-
       const res = await login({ email, password });
       const { token, user } = res.data;
 
-      tokenStorage.set(token);
+      // ✅ Use userType directly
+      const roleType = user.userType;
 
-      const adminType: AdminType =
-        user.role.name.toLowerCase().includes('root')
-          ? 'root-admin'
-          : 'tenant-admin';
+      // Save in cookie
+      tokenStorage.set(token, roleType);
 
-      setAdminType(adminType);
       setCurrentUser(user);
-        console.log("Login Response on page ::  " + JSON.stringify(res));
+
+      console.log("Login Response ::", res);
 
       setSuccessMsg(t('translate.success'));
-      setTimeout(() => router.push('/admin/dashboard'), 2500);
+
+      setTimeout(() => {
+      router.replace("/root/dashboard");  
+      }, 1500);
+      
+
     } catch (err: any) {
       setError(err?.message || t('translate.error'));
     } finally {
@@ -110,41 +111,44 @@ export default function RootLoginPage() {
     <div className="relative min-h-screen bg-slate-950 flex items-center justify-center p-4">
 
       {/* 🌐 Language Dropdown */}
-<div className="absolute top-4 right-4" ref={dropdownRef}>
-  <button
-    onClick={() => setOpenLang(!openLang)}
-    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-800 transition"
-  >
-    <Globe className="w-4 h-4" />
-    <span className="text-xs uppercase">
-      {LANGUAGES[locale as 'en' | 'fr'].flag} {locale.toUpperCase()}
-    </span>
-  </button>
 
-  {openLang && (
-    <div className="mt-2 w-36 bg-slate-900 border border-slate-700 rounded-lg shadow-lg overflow-hidden">
-      {Object.entries(LANGUAGES)
-        .filter(([code]) => code === 'en' || code === 'fr')
-        .map(([code, data]) => (
-          <button
-            key={code}
-            onClick={() => {
-              changeLanguage(code as 'en' | 'fr');
-              setOpenLang(false);
-            }}
-            className={`w-full text-left px-3 py-2 text-sm transition flex items-center gap-2 ${
-              locale === code
-                ? 'bg-slate-800 text-white'
-                : 'text-slate-300 hover:bg-slate-800'
-            }`}
-          >
-            <span>{data.flag}</span>
-            <span>{data.label}</span>
-          </button>
-        ))}
-    </div>
-  )}
-</div>
+
+      <div className="absolute top-4 right-4" ref={dropdownRef}>
+        <button
+          onClick={() => setOpenLang(!openLang)}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-800 transition"
+        >
+          <span className="flex items-center gap-1 text-sm">
+            <span className="text-sm leading-none">
+              {LANGUAGES[locale as Language]?.flag}
+            </span>
+            <span className="leading-none">
+              {LANGUAGES[locale as Language]?.label}
+            </span>
+          </span>
+        </button>
+
+        {openLang && (
+          <div className="absolute right-0 mt-2 w-40 bg-slate-900 border border-slate-700 rounded-lg shadow-lg overflow-hidden">
+            {Object.entries(LANGUAGES).map(([code, data]) => (
+              <button
+                key={code}
+                onClick={() => {
+                  changeLanguage(code as Language);
+                  setOpenLang(false);
+                }}
+                className={`w-full px-3 py-2 text-sm flex items-center gap-2 transition ${locale === code
+                  ? 'bg-slate-800 text-white'
+                  : 'text-slate-300 hover:bg-slate-800'
+                  }`}
+              >
+                <span className="text-base leading-none">{data.flag}</span>
+                <span className="leading-none">{data.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="w-full max-w-md">
         <div className="text-center mb-8">

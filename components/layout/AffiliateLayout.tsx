@@ -173,7 +173,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       main: [],
     };
 
-    if (tokenStorage.getRole() === "ROOT") {
+    if (currentAdminType.startsWith('root')) {
       categoryMenus.main = [
         {
           label: t('translate.sidebar_dashboard'),
