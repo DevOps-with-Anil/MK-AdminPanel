@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAdmin } from '@/contexts/AdminContext';
 import { ACTIONS, MOCK_NOTIFICATIONS } from '@/lib/mock-data';
-import { ADMIN_SIDEBAR_CONFIG, inferAdminType, type SidebarItem } from '@/lib/rbac';
+import { ADMIN_SIDEBAR_CONFIG, inferAdminType, readStoredAdminUser, type SidebarItem } from '@/lib/rbac';
 import {
   AlertCircle,
   AlertTriangle,
@@ -38,7 +38,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { tokenStorage } from '@/utils/token';
-import { profile } from '@/services/auth.service';
+import { adminProfile, profile } from '@/services/auth.service';
 import { I18nContext } from '@/i18n/provider';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -62,6 +62,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+  const [isAuthResolved, setIsAuthResolved] = useState(false);
   const hasInitializedRef = useRef(false);
 
   const LANGUAGES: Record<Language, { label: string; flag: string }> = {
@@ -86,11 +87,14 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     const fetchProfile = async () => {
       const token = tokenStorage.get();
       if (!token) {
+        setIsAuthResolved(true);
         return;
       }
 
       try {
-        const res = await profile();
+        const storedUser = readStoredAdminUser();
+        const activeAdminType = storedUser?.type || currentAdminType;
+        const res = activeAdminType === 'tenant-admin' ? await adminProfile() : await profile();
         const profileUser = res?.data;
 
         if (!profileUser || typeof profileUser !== 'object') {
@@ -107,6 +111,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         setCurrentUser(profileUser);
       } catch {
         // Keep the stored/login user state if profile sync fails on mount.
+      } finally {
+        setIsAuthResolved(true);
       }
     };
 
@@ -291,7 +297,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-3 space-y-3">{renderMenuCategory('main', categoryMenus.main)}</nav>
+        <nav className="flex-1 overflow-y-auto p-3 space-y-3">
+          {isAuthResolved ? renderMenuCategory('main', categoryMenus.main) : null}
+        </nav>
       </div>
 
       {mobileSidebarOpen && (
@@ -310,7 +318,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           )}
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-3 space-y-3">{renderMenuCategory('main', categoryMenus.main)}</nav>
+        <nav className="flex-1 overflow-y-auto p-3 space-y-3">
+          {isAuthResolved ? renderMenuCategory('main', categoryMenus.main) : null}
+        </nav>
       </div>
 
       <div className="flex-1 flex flex-col overflow-hidden">

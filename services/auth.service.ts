@@ -31,11 +31,23 @@ export const login = async (payload: { email: string; password: string }) => {
   });
 };
 
+// ----------------------------- Admin (Tenant) Login API request -----------------------------
+export const adminLogin = async (payload: { email: string; password: string }) => {
+  return apiClient("auth/admin", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+};
+
 // ----------------------------- Fetch current logged-in user -----------------------------
 
 export const profile = async (): Promise<any> => {
   return await apiClient("auth/root/me", { method: "GET" });
-};  
+};
+
+export const adminProfile = async (): Promise<any> => {
+  return await apiClient("auth/admin/me", { method: "GET" });
+};
 
 // -----------------------------
 // Change Password API request

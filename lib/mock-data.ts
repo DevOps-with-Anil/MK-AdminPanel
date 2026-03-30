@@ -305,28 +305,28 @@ export const MOCK_NOTIFICATIONS: Notification[] = [
 ];
 
 // Mock Admin Users
-export const MOCK_USERS: Record<AdminType, AdminUser> = {
-  'root-admin': {
-    id: 'user-1',
-    name: 'Ahmed Khan',
-    email: 'ahmed@admin.com',
-    type: 'root-admin',
-    role: MOCK_ROLES['root-admin'],
-    country: 'FR',
-    subscriptionPlan: 'enterprise',
-    lastLogin: 'Mar 12, 2026, 02:45 PM',
-  },
-   'tenant-admin': {
-    id: 'user-3',
-    name: 'Hassan Malik',
-    email: 'hassan@affiliate.com',
-    type: 'tenant-admin',
-    role: MOCK_ROLES['tenant-admin'],
-    country: 'IN',
-    subscriptionPlan: 'pro',
-    lastLogin: 'Mar 12, 2026, 09:15 AM',
-  },
-};
+// export const MOCK_USERS: Record<AdminType, AdminUser> = {
+//   'root-admin': {
+//     id: 'user-1',
+//     name: 'Ahmed Khan',
+//     email: 'ahmed@admin.com',
+//     type: 'root-admin',
+//     role: MOCK_ROLES['root-admin'],
+//     country: 'FR',
+//     subscriptionPlan: 'enterprise',
+//     lastLogin: 'Mar 12, 2026, 02:45 PM',
+//   },
+//    'tenant-admin': {
+//     id: 'user-3',
+//     name: 'Hassan Malik',
+//     email: 'hassan@affiliate.com',
+//     type: 'tenant-admin',
+//     role: MOCK_ROLES['tenant-admin'],
+//     country: 'IN',
+//     subscriptionPlan: 'pro',
+//     lastLogin: 'Mar 12, 2026, 09:15 AM',
+//   },
+// };
 
 // Subscription Plans Feature Matrix
 // export const SUBSCRIPTION_PLANS = {

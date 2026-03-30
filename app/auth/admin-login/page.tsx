@@ -7,10 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Eye, EyeOff, Loader2, Store } from 'lucide-react';
+import { useAdmin } from '@/contexts/AdminContext';
+import { adminLogin } from '@/services/auth.service';
+import { tokenStorage } from '@/utils/token';
 
 
 export default function AffiliateLoginPage() {
   const router = useRouter();
+  const { setCurrentUser } = useAdmin();
+
   const [email, setEmail] = useState('root@mkproject.com');
   const [password, setPassword] = useState('Root@12345');
   const [showPassword, setShowPassword] = useState(false);
@@ -18,7 +23,24 @@ export default function AffiliateLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
 
-  const handleLogin = async (e: any) => { }
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const res = await adminLogin({ email, password });
+      const { token, user } = res.data;
+
+      tokenStorage.set(token);
+      setCurrentUser(user);
+      router.push('/admin/dashboard');
+    } catch (err: any) {
+      setError(err?.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
 
 
