@@ -1,9 +1,20 @@
 {
   "metadata_title": "MK Project | Enterprise Admin Management",
   "metadata_description": "Enterprise multi-tenant admin panel with role-based access control, subscription plans, and modular permissions for MK Project",
-  
-  
-  
+
+  "adminLogin": {
+    "panelTitle": "Affiliate Panel",
+    "signInTitle": "Affiliate Sign In",
+    "signInDescription": "Enter business credentials to access your dashboard",
+    "emailLabel": "Business Email",
+    "emailPlaceholder": "hassan@affiliate.com",
+    "passwordLabel": "Password",
+    "loginButton": "Login to Dashboard",
+    "signingIn": "Signing in...",
+    "poweredBy": "Enterprise business portal powered by MK Project",
+    "error": "Login failed. Please check your credentials."
+  },
+
   "title": "MK Administration",
   "signIn": "System Sign In",
   "description": "Enter root credentials to manage the platform",

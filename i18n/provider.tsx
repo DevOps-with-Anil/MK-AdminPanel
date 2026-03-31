@@ -18,8 +18,8 @@ export const I18nContext = createContext<I18nContextProps>({
 });
 
 const DEFAULT_LOCALE = 'en';
-const localeCache: Record<string, { translate: Record<string, any> }> = {
-  en: { translate: enMessages },
+const localeCache: Record<string, any> = {
+  en: enMessages,
 };
 
 const getInitialLocale = () => {
@@ -44,8 +44,10 @@ export const I18nProvider = ({ children }: { children: ReactNode }) => {
     }
 
     loadLocale(savedLang).then((loadedMessages) => {
-      localeCache[savedLang] = loadedMessages;
-      setMessages(loadedMessages);
+      // If loadedMessages has a 'translate' key, extract its content
+      const extractedMessages = loadedMessages?.translate || loadedMessages;
+      localeCache[savedLang] = extractedMessages;
+      setMessages(extractedMessages);
     });
   }, []);
 
@@ -58,9 +60,10 @@ export const I18nProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    const msgs = await loadLocale(lang);
-    localeCache[lang] = msgs;
-    setMessages(msgs);
+    const loadedMessages = await loadLocale(lang);
+    const extractedMessages = loadedMessages?.translate || loadedMessages;
+    localeCache[lang] = extractedMessages;
+    setMessages(extractedMessages);
   };
 
   return (

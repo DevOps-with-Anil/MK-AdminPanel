@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAdmin } from '@/contexts/AdminContext';
@@ -71,7 +71,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   };
 
   const currentLanguageData = LANGUAGES[currentLanguage as Language] || LANGUAGES.en;
-  const categoryMenus = { main: ADMIN_SIDEBAR_CONFIG[currentAdminType] };
+  
+  const categoryMenus = useMemo(() => ({ 
+    main: ADMIN_SIDEBAR_CONFIG[currentAdminType] || [] 
+  }), [currentAdminType]);
 
   useEffect(() => {
     if (hasInitializedRef.current) {
@@ -101,23 +104,54 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        setAdminType(
-          inferAdminType({
-            token,
-            roleType: profileUser.roleType,
-            roleName: profileUser.role?.name,
-          })
-        );
+        const inferredType = inferAdminType({
+          token,
+          roleType: profileUser.roleType,
+          roleName: profileUser.role?.name,
+        });
+
+        setAdminType(inferredType);
         setCurrentUser(profileUser);
-      } catch {
-        // Keep the stored/login user state if profile sync fails on mount.
+      } catch (error) {
+        console.error("Profile fetch error:", error);
       } finally {
         setIsAuthResolved(true);
       }
     };
 
     fetchProfile();
-  }, [changeLanguage, setAdminType, setCurrentUser, setLanguage]);
+  }, [changeLanguage, setAdminType, setCurrentUser, setLanguage, currentAdminType]);
+
+  // URL-based Access Control (Security Check) - Applied for both Root and Tenant Admins
+  useEffect(() => {
+    if (!isAuthResolved) return;
+
+    // Skip check for dashboard and profile/password pages which are common for all
+    if (pathname === '/admin/dashboard' || pathname === '/admin/profile' || pathname === '/admin/change-password' || pathname === '/admin/notifications') return;
+
+    const allSidebarItems = ADMIN_SIDEBAR_CONFIG[currentAdminType] || [];
+    
+    const isPathAllowed = allSidebarItems.some(item => {
+      // Direct match
+      if (item.href === pathname) {
+        return hasPermission(item.module, ACTIONS.VIEW);
+      }
+      // Check children
+      if (item.children) {
+        return item.children.some(child => child.href === pathname) && hasPermission(item.module, ACTIONS.VIEW);
+      }
+      // Check for nested routes (e.g., /admin/plans/new matches /admin/plans module)
+      if (pathname.startsWith(item.href + '/')) {
+        return hasPermission(item.module, ACTIONS.VIEW);
+      }
+      return false;
+    });
+
+    if (!isPathAllowed && pathname.startsWith('/admin')) {
+      console.warn(`Unauthorized access attempt to ${pathname}. Redirecting...`);
+      router.push('/admin/dashboard');
+    }
+  }, [pathname, isAuthResolved, currentAdminType, hasPermission, router]);
 
   const handleLogout = () => {
     tokenStorage.clear();

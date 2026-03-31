@@ -2,6 +2,19 @@
   "metadata_title": "MK Project | Gestion Admin d'Entreprise",
   "metadata_description": "Panneau d'administration multi-tenant avec contrôle d'accès basé sur les rôles, plans d'abonnement et permissions modulaires pour MK Project",
 
+  "adminLogin": {
+    "panelTitle": "Panneau d'Affilié",
+    "signInTitle": "Connexion Affilié",
+    "signInDescription": "Entrez les identifiants d'entreprise pour accéder à votre tableau de bord",
+    "emailLabel": "E-mail professionnel",
+    "emailPlaceholder": "hassan@affiliate.com",
+    "passwordLabel": "Mot de passe",
+    "loginButton": "Se connecter au tableau de bord",
+    "signingIn": "Connexion en cours...",
+    "poweredBy": "Portail d'entreprise optimisé par MK Project",
+    "error": "Échec de la connexion. Veuillez vérifier vos identifiants."
+  },
+
   "title": "Administration MK",
   "signIn": "Connexion au système",
   "description": "Entrez les identifiants root pour gérer la plateforme",

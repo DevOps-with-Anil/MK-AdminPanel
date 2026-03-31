@@ -1,20 +1,23 @@
 'use client';
 
-import React from "react"
-import { useState } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, Eye, EyeOff, Loader2, Store } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, Loader2, Store, Globe } from 'lucide-react';
 import { useAdmin } from '@/contexts/AdminContext';
 import { adminLogin } from '@/services/auth.service';
 import { tokenStorage } from '@/utils/token';
-
+import { useTranslation } from '@/hooks/useTranslation';
+import { I18nContext } from '@/i18n/provider';
+import { LANGUAGES } from '@/lib/mock-data';
 
 export default function AffiliateLoginPage() {
   const router = useRouter();
   const { setCurrentUser } = useAdmin();
+  const { t } = useTranslation();
+  const { locale, changeLanguage } = useContext(I18nContext);
 
   const [email, setEmail] = useState('root@mkproject.com');
   const [password, setPassword] = useState('Root@12345');
@@ -22,6 +25,20 @@ export default function AffiliateLoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Language dropdown state
+  const [openLang, setOpenLang] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: any) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpenLang(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,38 +53,66 @@ export default function AffiliateLoginPage() {
       setCurrentUser(user);
       router.push('/admin/dashboard');
     } catch (err: any) {
-      setError(err?.message || 'Login failed. Please check your credentials.');
+      setError(err?.message || t('adminLogin.error')); // Use translation key for error
     } finally {
       setIsLoading(false);
     }
   };
 
-
-
   return (
-    <div className="min-h-screen bg-indigo-50 flex items-center justify-center p-4">
+    <div className="relative min-h-screen bg-indigo-50 flex items-center justify-center p-4">
+      
+      {/* 🌐 Language Dropdown */}
+      <div className="absolute top-4 right-4" ref={dropdownRef}>
+        <button
+          onClick={() => setOpenLang(!openLang)}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-indigo-100 text-indigo-900 hover:bg-indigo-50 transition shadow-sm"
+        >
+          <Globe className="w-4 h-4 text-indigo-600" />
+          <span className="text-xs uppercase font-medium">
+            {LANGUAGES[locale as 'en' | 'fr'].flag} {locale.toUpperCase()}
+          </span>
+        </button>
+
+        {openLang && (
+          <div className="absolute right-0 mt-2 w-36 bg-white border border-indigo-100 rounded-lg shadow-lg overflow-hidden z-50">
+            {Object.entries(LANGUAGES)
+              .filter(([code]) => code === 'en' || code === 'fr')
+              .map(([code, data]) => (
+                <button
+                  key={code}
+                  onClick={() => {
+                    changeLanguage(code as 'en' | 'fr');
+                    setOpenLang(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 text-sm transition flex items-center gap-2 ${
+                    locale === code
+                      ? 'bg-indigo-50 text-indigo-900 font-medium'
+                      : 'text-indigo-600 hover:bg-indigo-50'
+                  }`}
+                >
+                  <span>{data.flag}</span>
+                  <span>{data.label}</span>
+                </button>
+              ))}
+          </div>
+        )}
+      </div>
+
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="w-20 h-20 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-200">
             <Store className="w-10 h-10 text-white" />
-            {/* <Image
-              src="/apple-icon-tran.png"
-              alt=""
-              width={60}
-              height={60}
-              className="object-contain"
-              priority
-            /> */}
           </div>
-          <h1 className="text-3xl font-bold text-indigo-900 mb-2">Affiliate Panel</h1>
+          <h1 className="text-3xl font-bold text-indigo-900 mb-2">{t('adminLogin.panelTitle')}</h1>
         </div>
 
         {/* Login Card */}
         <Card className="border-indigo-100 shadow-xl bg-white/80 backdrop-blur-sm">
           <CardHeader className="space-y-1 border-b border-indigo-200">
-            <CardTitle className="text-indigo-950">Affiliate Sign In</CardTitle>
-            <CardDescription className="text-indigo-600/70">Enter business credentials to access your dashboard</CardDescription>
+            <CardTitle className="text-indigo-950">{t('adminLogin.signInTitle')}</CardTitle>
+            <CardDescription className="text-indigo-600/70">{t('adminLogin.signInDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             <form onSubmit={handleLogin} className="space-y-4">
@@ -82,12 +127,12 @@ export default function AffiliateLoginPage() {
               {/* Email Field */}
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium text-indigo-900">
-                  Business Email
+                  {t('adminLogin.emailLabel')}
                 </label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="hassan@affiliate.com"
+                  placeholder={t('adminLogin.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
@@ -99,7 +144,7 @@ export default function AffiliateLoginPage() {
               {/* Password Field */}
               <div className="space-y-2">
                 <label htmlFor="password" className="text-sm font-medium text-indigo-900">
-                  Password
+                  {t('adminLogin.passwordLabel')}
                 </label>
                 <div className="relative">
                   <Input
@@ -136,17 +181,17 @@ export default function AffiliateLoginPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Signing in...
+                    {t('adminLogin.signingIn')}
                   </>
                 ) : (
-                  'Login to Dashboard'
+                  t('adminLogin.loginButton')
                 )}
               </Button>
             </form>
 
             <div className="mt-6 pt-6 border-t border-indigo-50">
               <p className="text-center text-xs text-indigo-400">
-                Enterprise business portal powered by MK Project
+                {t('adminLogin.poweredBy')}
               </p>
             </div>
           </CardContent>
