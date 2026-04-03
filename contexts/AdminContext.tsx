@@ -6,7 +6,6 @@ import {
   Language,
   Country,
   AdminUser,
-  MOCK_USERS,
   TRANSLATIONS,
 } from '@/lib/mock-data';
 import {
@@ -35,11 +34,30 @@ interface AdminContextType {
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
+const EMPTY_ADMIN_USER: AdminUser = {
+  id: '',
+  name: '',
+  email: '',
+  type: 'root-admin',
+  role: {
+    id: '',
+    name: '',
+    permissions: [],
+  },
+  country: 'IN',
+  subscriptionPlan: 'enterprise',
+  lastLogin: '',
+};
+
+function isAdminUser(user: AdminUser | BackendUser): user is AdminUser {
+  return 'type' in user;
+}
+
 export function AdminProvider({ children }: { children: ReactNode }) {
   const [currentAdminType, setAdminTypeState] = useState<AdminType>('root-admin');
   const [currentLanguage, setLanguage] = useState<Language>('en');
   const [currentCountry, setCountry] = useState<Country>('IN');
-  const [currentUser, setCurrentUserState] = useState<AdminUser>(MOCK_USERS['root-admin']);
+  const [currentUser, setCurrentUserState] = useState<AdminUser>(EMPTY_ADMIN_USER);
 
   useEffect(() => {
     const storedUser = readStoredAdminUser();
@@ -87,29 +105,20 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   };
 
   const handleSetAdminType = (type: AdminType) => {
-    const nextUser = MOCK_USERS[type];
     setAdminTypeState(type);
-    setCurrentUserState(nextUser);
-    persistAdminUser(nextUser);
   };
 
   const handleSetCurrentUser = (user: AdminUser | BackendUser) => {
-    const backendUser =
-      'type' in user
-        ? user
-        : ('user' in user && user.user ? user.user : user);
-
-    const normalizedUser =
-      'type' in backendUser
-        ? backendUser
-        : mapBackendUserToAdminUser(
-            backendUser,
-            inferAdminType({
-              token: tokenStorage.get(),
-              roleType: backendUser.roleType,
-              roleName: backendUser.role?.name,
-            })
-          );
+    const normalizedUser = isAdminUser(user)
+      ? user
+      : mapBackendUserToAdminUser(
+          user,
+          inferAdminType({
+            token: tokenStorage.get(),
+            roleType: user.roleType,
+            roleName: user.role?.name,
+          })
+        );
 
     setCurrentUserState(normalizedUser);
     setAdminTypeState(normalizedUser.type);

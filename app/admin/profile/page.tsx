@@ -1,8 +1,8 @@
 'use client';
 
-import { AdminProvider } from '@/contexts/AdminContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import { useRouter } from 'next/navigation';
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   Card,
@@ -32,6 +32,7 @@ import {
 function ProfileContent() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { currentUser } = useAdmin();
 
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,12 +43,22 @@ function ProfileContent() {
   const [avatar, setAvatar] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    name: 'ROOT ADMIN',
-    email: 'root@mkproject.com',
+    name: '',
+    email: '',
     phoneNumber: '',
-    role: 'ROOT ADMIN',
+    role: '',
     status: 'ACTIVE',
   });
+
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      name: currentUser.name || '',
+      email: currentUser.email || '',
+      role: currentUser.role.name || '',
+      status: currentUser.id ? 'ACTIVE' : prev.status,
+    }));
+  }, [currentUser]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -271,9 +282,5 @@ function ProfileContent() {
 }
 
 export default function ProfilePage() {
-  return (
-    <AdminProvider>
-      <ProfileContent />
-    </AdminProvider>
-  );
+  return <ProfileContent />;
 }

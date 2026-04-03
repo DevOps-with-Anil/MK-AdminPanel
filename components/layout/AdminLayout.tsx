@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAdmin } from '@/contexts/AdminContext';
 import { ACTIONS, MOCK_NOTIFICATIONS } from '@/lib/mock-data';
-import { ADMIN_SIDEBAR_CONFIG, inferAdminType, readStoredAdminUser, type SidebarItem } from '@/lib/rbac';
+import { ADMIN_SIDEBAR_CONFIG, inferAdminType, persistAdminUser, readStoredAdminUser, type SidebarItem } from '@/lib/rbac';
 import {
   AlertCircle,
   AlertTriangle,
@@ -63,6 +63,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [isAuthResolved, setIsAuthResolved] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const hasInitializedRef = useRef(false);
 
   const LANGUAGES: Record<Language, { label: string; flag: string }> = {
@@ -75,6 +76,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const categoryMenus = useMemo(() => ({ 
     main: ADMIN_SIDEBAR_CONFIG[currentAdminType] || [] 
   }), [currentAdminType]);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     if (hasInitializedRef.current) {
@@ -110,8 +115,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           roleName: profileUser.role?.name,
         });
 
-        setAdminType(inferredType);
         setCurrentUser(profileUser);
+        setAdminType(inferredType);
       } catch (error) {
         console.error("Profile fetch error:", error);
       } finally {
@@ -155,7 +160,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   const handleLogout = () => {
     tokenStorage.clear();
-    localStorage.removeItem('mk_admin_user');
+    persistAdminUser(null);
 
     if (currentAdminType === 'root-admin') {
       router.push('/auth/root-login');
@@ -313,6 +318,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const displayName = currentUser.name || '';
+  const displayRole = currentUser.role.name || '';
+  const displayLastLogin = currentUser.lastLogin || '';
+
   return (
     <div className="flex h-screen bg-background ltr">
       <div
@@ -400,136 +409,162 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
           <div className="flex items-center gap-2 md:gap-4">
             <div className="flex items-center gap-2 md:border-r md:border-border md:pr-4">
-              <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent/50 transition-colors focus:outline-none">
+              {isMounted ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent/50 transition-colors focus:outline-none">
+                    <span className="text-lg leading-none">{currentLanguageData.flag}</span>
+                    <span className="text-sm font-medium text-foreground hidden md:inline-block">{currentLanguageData.label}</span>
+                    <ChevronDown size={14} className="text-muted-foreground hidden md:inline-block" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuLabel>{t('translate.selectLanguage')}</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {Object.entries(LANGUAGES).map(([code, data]) => (
+                      <DropdownMenuItem
+                        key={code}
+                        onClick={() => {
+                          setLanguage(code as Language);
+                          changeLanguage(code as Language);
+                        }}
+                        className={`flex items-center gap-3 cursor-pointer ${
+                          currentLanguage === code ? 'bg-accent/50 text-accent-foreground' : ''
+                        }`}
+                      >
+                        <span className="text-lg leading-none">{data.flag}</span>
+                        <span className="text-sm">{data.label}</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <div className="flex items-center gap-2 px-2 py-1.5 rounded-md">
                   <span className="text-lg leading-none">{currentLanguageData.flag}</span>
                   <span className="text-sm font-medium text-foreground hidden md:inline-block">{currentLanguageData.label}</span>
                   <ChevronDown size={14} className="text-muted-foreground hidden md:inline-block" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40">
-                  <DropdownMenuLabel>{t('translate.selectLanguage')}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {Object.entries(LANGUAGES).map(([code, data]) => (
-                    <DropdownMenuItem
-                      key={code}
-                      onClick={() => {
-                        setLanguage(code as Language);
-                        changeLanguage(code as Language);
-                      }}
-                      className={`flex items-center gap-3 cursor-pointer ${
-                        currentLanguage === code ? 'bg-accent/50 text-accent-foreground' : ''
-                      }`}
-                    >
-                      <span className="text-lg leading-none">{data.flag}</span>
-                      <span className="text-sm">{data.label}</span>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                </div>
+              )}
             </div>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="relative p-2 hover:bg-accent/50 rounded-full transition-all border border-transparent hover:border-border group">
-                  <Bell size={20} className="text-muted-foreground group-hover:text-primary transition-colors" />
-                  {MOCK_NOTIFICATIONS.some((notification) => !notification.isRead) && (
-                    <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-card animate-pulse shadow-[0_0_10px_rgba(99,102,241,0.5)]"></span>
-                  )}
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80 p-0 shadow-2xl border-border overflow-hidden rounded-xl">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/20">
-                  <div>
-                    <h3 className="text-md font-medium font-black text-foreground tracking-wider">Notifications</h3>
-                    <p className="text-[13px] text-muted-foreground font-medium">
-                      You have {MOCK_NOTIFICATIONS.filter((notification) => !notification.isRead).length} unread alerts
-                    </p>
+            {isMounted ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="relative p-2 hover:bg-accent/50 rounded-full transition-all border border-transparent hover:border-border group">
+                    <Bell size={20} className="text-muted-foreground group-hover:text-primary transition-colors" />
+                    {MOCK_NOTIFICATIONS.some((notification) => !notification.isRead) && (
+                      <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-card animate-pulse shadow-[0_0_10px_rgba(99,102,241,0.5)]"></span>
+                    )}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80 p-0 shadow-2xl border-border overflow-hidden rounded-xl">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/20">
+                    <div>
+                      <h3 className="text-md font-medium font-black text-foreground tracking-wider">Notifications</h3>
+                      <p className="text-[13px] text-muted-foreground font-medium">
+                        You have {MOCK_NOTIFICATIONS.filter((notification) => !notification.isRead).length} unread alerts
+                      </p>
+                    </div>
+                    <button className="text-[14px] font-medium font-black text-primary hover:underline tracking-tighter">Mark all read</button>
                   </div>
-                  <button className="text-[14px] font-medium font-black text-primary hover:underline tracking-tighter">Mark all read</button>
-                </div>
 
-                <div className="max-h-[400px] overflow-y-auto custom-scrollbar divide-y divide-border/50">
-                  {MOCK_NOTIFICATIONS.slice(0, 10).map((notification) => (
-                    <DropdownMenuItem
-                      key={notification.id}
-                      className={`flex flex-col items-start gap-1 p-4 cursor-pointer focus:bg-muted/50 transition-colors ${
-                        !notification.isRead ? 'bg-primary/5' : ''
-                      }`}
-                    >
-                      <div className="flex items-start justify-between w-full gap-3">
-                        <div className="flex items-center gap-2">
-                          <div className="p-1.5 rounded-md bg-background border border-border shadow-sm">
-                            {getNotificationIcon(notification.type)}
+                  <div className="max-h-[400px] overflow-y-auto custom-scrollbar divide-y divide-border/50">
+                    {MOCK_NOTIFICATIONS.slice(0, 10).map((notification) => (
+                      <DropdownMenuItem
+                        key={notification.id}
+                        className={`flex flex-col items-start gap-1 p-4 cursor-pointer focus:bg-muted/50 transition-colors ${
+                          !notification.isRead ? 'bg-primary/5' : ''
+                        }`}
+                      >
+                        <div className="flex items-start justify-between w-full gap-3">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 rounded-md bg-background border border-border shadow-sm">
+                              {getNotificationIcon(notification.type)}
+                            </div>
+                            <span
+                              className={`text-md font-black font-medium tracking-tight ${
+                                !notification.isRead ? 'text-foreground' : 'text-muted-foreground'
+                              }`}
+                            >
+                              {notification.title}
+                            </span>
                           </div>
-                          <span
-                            className={`text-md font-black font-medium tracking-tight ${
-                              !notification.isRead ? 'text-foreground' : 'text-muted-foreground'
-                            }`}
-                          >
-                            {notification.title}
+                          <span className="text-[9px] font-medium text-muted-foreground/60 uppercase whitespace-nowrap pt-1">
+                            {notification.time}
                           </span>
                         </div>
-                        <span className="text-[9px] font-medium text-muted-foreground/60 uppercase whitespace-nowrap pt-1">
-                          {notification.time}
-                        </span>
-                      </div>
-                      <p className="text-[12px] text-muted-foreground font-medium leading-relaxed pl-8">{notification.description}</p>
-                    </DropdownMenuItem>
-                  ))}
-                </div>
+                        <p className="text-[12px] text-muted-foreground font-medium leading-relaxed pl-8">{notification.description}</p>
+                      </DropdownMenuItem>
+                    ))}
+                  </div>
 
-                <div className="p-2 border-t border-border bg-muted/50">
-                  <button
-                    onClick={() => router.push('/admin/notifications')}
-                    className="w-full py-2 text-[12px] font-black text-center text-primary hover:bg-primary/50 rounded-lg transition-colors uppercase tracking-widest border border-dashed border-primary/20"
-                  >
-                    View All Activity Log
-                  </button>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <div className="flex items-center gap-3 md:pl-4 md:border-l md:border-border">
-              <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-3 focus:outline-none group">
-                  <div className="text-right hidden sm:block">
-                    <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{currentUser.name}</p>
-                    <p className="text-xs text-muted-foreground">{currentUser.role.name}</p>
+                  <div className="p-2 border-t border-border bg-muted/50">
+                    <button
+                      onClick={() => router.push('/admin/notifications')}
+                      className="w-full py-2 text-[12px] font-black text-center text-primary hover:bg-primary/50 rounded-lg transition-colors uppercase tracking-widest border border-dashed border-primary/20"
+                    >
+                      View All Activity Log
+                    </button>
                   </div>
-                  <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold group-hover:bg-primary/20 transition-all border border-primary/20">
-                    <User className="w-4 h-4" />
-                  </div>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 p-0 overflow-hidden">
-                  <div className="px-3 py-3 border-b border-border mb-1 bg-muted/20">
-                    <div className="flex items-center gap-1.5 pt-2 border-t border-border/50">
-                      <Clock size={12} className="text-primary" />
-                      <div>
-                        <p className="text-[12px] font-medium font-black text-muted-foreground tracking-tighter leading-none">
-                          {t('translate.lastAccess')}
-                        </p>
-                        <p className="text-[12px] font-medium text-foreground">{currentUser.lastLogin}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/admin/profile')}>
-                    <User size={16} className="mr-2" />
-                    <span>{t('translate.viewProfile')}</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/admin/change-password')}>
-                    <KeyRound size={16} className="mr-2" />
-                    <span>{t('translate.changePassword')}</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={handleLogout}
-                    className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
-                  >
-                    <LogOut size={16} className="mr-2" />
-                    <span>{t('translate.logout')}</span>
-                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            ) : (
+              <button className="relative p-2 rounded-full border border-transparent">
+                <Bell size={20} className="text-muted-foreground" />
+              </button>
+            )}
+
+            <div className="flex items-center gap-3 md:pl-4 md:border-l md:border-border">
+              {isMounted ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center gap-3 focus:outline-none group">
+                    <div className="text-right hidden sm:block">
+                      <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{displayName}</p>
+                      <p className="text-xs text-muted-foreground">{displayRole}</p>
+                    </div>
+                    <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold group-hover:bg-primary/20 transition-all border border-primary/20">
+                      <User className="w-4 h-4" />
+                    </div>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 p-0 overflow-hidden">
+                    <div className="px-3 py-3 border-b border-border mb-1 bg-muted/20">
+                      <div className="flex items-center gap-1.5 pt-2 border-t border-border/50">
+                        <Clock size={12} className="text-primary" />
+                        <div>
+                          <p className="text-[12px] font-medium font-black text-muted-foreground tracking-tighter leading-none">
+                            {t('translate.lastAccess')}
+                          </p>
+                          <p className="text-[12px] font-medium text-foreground">{displayLastLogin}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/admin/profile')}>
+                      <User size={16} className="mr-2" />
+                      <span>{t('translate.viewProfile')}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/admin/change-password')}>
+                      <KeyRound size={16} className="mr-2" />
+                      <span>{t('translate.changePassword')}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+                    >
+                      <LogOut size={16} className="mr-2" />
+                      <span>{t('translate.logout')}</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="text-right hidden sm:block">
+                    <p className="text-sm font-bold text-foreground">{displayName}</p>
+                    <p className="text-xs text-muted-foreground">{displayRole}</p>
+                  </div>
+                  <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold border border-primary/20">
+                    <User className="w-4 h-4" />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </header>

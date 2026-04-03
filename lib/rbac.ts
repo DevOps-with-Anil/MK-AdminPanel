@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 
 export const ADMIN_USER_STORAGE_KEY = 'mk_admin_user';
+const ADMIN_USER_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 5;
 
 export type SidebarItem = {
   labelKey: string;
@@ -244,26 +245,34 @@ export function mapBackendUserToAdminUser(user: BackendUser, adminType?: AdminTy
 }
 
 export function readStoredAdminUser(): AdminUser | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof document === 'undefined') return null;
 
-  const raw = localStorage.getItem(ADMIN_USER_STORAGE_KEY);
+  const match = document.cookie.match(
+    new RegExp(`(?:^|; )${ADMIN_USER_STORAGE_KEY}=([^;]*)`)
+  );
+  const raw = match?.[1];
   if (!raw) return null;
 
   try {
-    return JSON.parse(raw) as AdminUser;
+    return JSON.parse(decodeURIComponent(raw)) as AdminUser;
   } catch {
-    localStorage.removeItem(ADMIN_USER_STORAGE_KEY);
+    persistAdminUser(null);
     return null;
   }
 }
 
 export function persistAdminUser(user: AdminUser | null) {
-  if (typeof window === 'undefined') return;
+  if (typeof document === 'undefined') return;
 
   if (!user) {
-    localStorage.removeItem(ADMIN_USER_STORAGE_KEY);
+    document.cookie = `${ADMIN_USER_STORAGE_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Strict`;
     return;
   }
 
-  localStorage.setItem(ADMIN_USER_STORAGE_KEY, JSON.stringify(user));
+  const serializedUser = encodeURIComponent(JSON.stringify(user));
+  const isProd = process.env.NODE_ENV === 'production';
+
+  document.cookie = `${ADMIN_USER_STORAGE_KEY}=${serializedUser}; path=/; max-age=${ADMIN_USER_COOKIE_MAX_AGE_SECONDS}; SameSite=Strict${
+    isProd ? '; Secure' : ''
+  }`;
 }

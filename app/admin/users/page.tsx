@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useContext, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { getSystemUsers, updateStatus } from '@/services/auth.service';
-import { I18nContext } from '@/i18n/provider';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const PAGE_LIMIT_OPTIONS = [10, 25, 50, 'All'] as const;
 
@@ -31,20 +31,7 @@ interface AdminUser {
 }
 
 export default function AdminUsersPage() {
-  const { messages } = useContext(I18nContext);
-  const t = (key: string, placeholders?: Record<string, string | number>) => {
-    const normalizedKey = key.replace(/^translate\./, '');
-    let value = messages.translate?.[normalizedKey] || key;
-
-    if (placeholders) {
-      for (const [ph, phValue] of Object.entries(placeholders)) {
-        value = value.replace(`{{${ph}}}`, String(phValue));
-        value = value.replace(`{${ph}}`, String(phValue));
-      }
-    }
-
-    return value;
-  };
+  const { t } = useTranslation();
 
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);

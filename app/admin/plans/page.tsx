@@ -1,6 +1,6 @@
 ﻿
 'use client';
-import { useContext, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import { Plus, Edit2, Trash2, MoreVertical, CreditCard, Settings } from 'lucide-
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { getPlans, updateStatus, deletePlan } from '@/services/auth.service';
 import { useDeleteEntity } from '@/hooks/useDeleteEntity';
-import { I18nContext } from '@/i18n/provider';
+import { useTranslation } from '@/hooks/useTranslation';
 
 
 interface Plan {
@@ -27,20 +27,7 @@ interface Plan {
 
 
 export default function PlansPage() {
-  const { messages } = useContext(I18nContext);
-  const t = (key: string, placeholders?: Record<string, string | number>) => {
-    const normalizedKey = key.replace(/^translate\./, '');
-    let value = messages.translate?.[normalizedKey] || key;
-
-    if (placeholders) {
-      for (const [ph, phValue] of Object.entries(placeholders)) {
-        value = value.replace(`{{${ph}}}`, String(phValue));
-        value = value.replace(`{${ph}}`, String(phValue));
-      }
-    }
-
-    return value;
-  };
+  const { t } = useTranslation();
   const router = useRouter();
 
   const handleViewModules = (planId: string) => {

@@ -3,8 +3,6 @@ import type { Metadata } from 'next'
 import { Outfit, Geist_Mono } from 'next/font/google'
 // import { Analytics } from '@vercel/analytics/next'
 import '../globals.css'
-import { Providers } from '@/app/providers/AuthProvider'
-import { AdminProvider } from "@/contexts/AdminContext"
 import { AdminLayout } from "@/components/layout/AdminLayout"
 
 
@@ -47,12 +45,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <Providers>
-      <AdminProvider>
-        <AdminLayout>
-          {children} {/* <-- page content will render here, layout persists */}
-        </AdminLayout>
-      </AdminProvider>
-    </Providers>
+    <AdminLayout>
+      {children}
+    </AdminLayout>
   )
 }
