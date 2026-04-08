@@ -158,7 +158,6 @@ function ModulesPageContent() {
     }
   };
 
-
   /* ================= TOGGLE ACTION ================= */
 
   const handleToggleActionStatus = (
@@ -186,22 +185,23 @@ function ModulesPageContent() {
 
   /* ================= DELETE ROLE ================= */
 
-  const handleDelete = async (
-    moduleId: string,
-    moduleName: string
-  ) => {
-    if (!confirm(`Delete "${moduleName}" Module?`)) return;
+  // const handleDelete = async (
+  //   moduleId: string,
+  //   moduleName: string
+  // ) => {
+  //   if (!confirm(`Delete "${moduleName}" Module?`)) return;
 
-    try {
-      await deleteEntity('systemmodule', moduleId);
+  //   try {
+  //     await deleteEntity('systemmodule', moduleId);
 
-      // ✅ instant UI update
-      setModules(prev => prev.filter(r => r.id !== moduleId));
-    } catch (err) {
-      console.error(err);
-      alert('Failed to delete module');
-    }
-  };
+  //     // ✅ instant UI update
+  //     setModules(prev => prev.filter(r => r.id !== moduleId));
+  //   } catch (err) {
+  //     console.error(err);
+  //     alert('Failed to delete module');
+  //   }
+  // };
+  
   /* ================= FILTER ================= */
 
   const filteredModules = modules.filter(
@@ -237,7 +237,7 @@ function ModulesPageContent() {
             />
           </div>
 
-          <Link href="/admin/modules/root-modules/new">
+          <Link href="/root/modules/root-modules/new">
             <Button className="gap-2">
               <Plus className="w-4 h-4" />
               New Module
@@ -303,8 +303,7 @@ function ModulesPageContent() {
                         {mod.key}
                       </p>
                     </div>
-
-                    <DropdownMenu>
+                    {/* <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm">
                           <MoreVertical />
@@ -312,7 +311,6 @@ function ModulesPageContent() {
                       </DropdownMenuTrigger>
 
                       <DropdownMenuContent>
-                        {/* ✅ EDIT */}
                         <DropdownMenuItem
                         // onClick={(e) => {
                         //   e.stopPropagation();
@@ -323,7 +321,7 @@ function ModulesPageContent() {
                           Edit
                         </DropdownMenuItem>
 
-                        {/* ✅ DELETE */}
+            
                         <DropdownMenuItem
                           className="text-red-500"
                           onClick={(e) => {
@@ -335,7 +333,7 @@ function ModulesPageContent() {
                           Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
-                    </DropdownMenu>
+                    </DropdownMenu> */}
                   </div>
 
                   <div className="flex justify-between mt-3">
@@ -348,7 +346,11 @@ function ModulesPageContent() {
                           handleToggleStatus(mod.id,
                             mod.status);
                         }}
-                        className="cursor-pointer"
+                        className={
+                      mod.status === 'active'
+                        ? ''
+                        : 'bg-red-100 text-gray-600 border-red-300'
+                    }
                       >
                         {mod.status}
                       </Badge>

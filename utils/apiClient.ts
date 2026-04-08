@@ -40,6 +40,10 @@ export async function apiClient(
       ...options,
       headers,
     });
+
+      console.log("Set Merge Module..... : " + JSON.stringify(response))
+
+
   } catch (error: any) {
     throw new Error(error?.message || "Network error");
   }
@@ -58,6 +62,7 @@ export async function apiClient(
   const meta = data?.meta ?? null;
 
   if (!response.ok) {
+    console.log("Response data when error comes. :  " + message + "   status code :  "+response.status + "  data  :  "+data);
     const error: any = new Error(message);
     error.status = response.status;
     error.data = data;

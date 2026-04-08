@@ -1,12 +1,8 @@
 'use client';
 
 import { AdminProvider } from '@/contexts/AdminContext';
-<<<<<<< HEAD
 import { useRouter } from 'next/navigation';
 
-=======
-import { AdminLayout } from '@/components/layout/AdminLayout';
->>>>>>> 359f3ec (Complete structure UI updated)
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,7 +10,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Lock, AlertCircle, CheckCircle2, Loader2, EyeOff, Eye } from 'lucide-react';
 import { changePassword } from '@/services/auth.service';
-import { validatePasswordChange } from '@/utils/validators';
 
 function ChangePasswordContent() {
   const [isLoading, setIsLoading] = useState(false);
@@ -31,6 +26,32 @@ function ChangePasswordContent() {
     confirmPassword: '',
   });
 
+
+function validatePassword(data: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+}) {
+    if (!data.currentPassword) {
+        return "Current password is required";
+    }
+
+    if (!data.newPassword) {
+        return "New password is required";
+    }
+
+    if (data.newPassword.length < 8) {
+        return "Password must be at least 8 characters long..";
+    }
+
+    if (data.newPassword !== data.confirmPassword) {
+        return "New passwords do not match";
+    }
+
+    return null; // valid
+}
+
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -38,7 +59,7 @@ function ChangePasswordContent() {
     setSuccess(false);
 
     // Centralized validation
-    const validationError = validatePasswordChange(formData);
+    const validationError = validatePassword(formData);
 
     if (validationError) {
       setError(validationError);
@@ -54,26 +75,26 @@ function ChangePasswordContent() {
       });
 
       console.log("Chnage Password Response on Page ::  " + JSON.stringify(res));
-
-      // Success
-      setSuccess(true);
+      
       // Reset form
       setFormData({
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
       });
+      
+      // Success
+      setSuccess(true);
+      setTimeout(() => {
+      setSuccess(false);  
+      }, 2000);
 
     } catch (err: any) {
-      console.error(err);
-
-      // Unauthorized case
-      if (err?.status === 401) {
-        router.push('/admin/dashboard');
-        return;
-      }
-
-      setError(err?.message || 'Failed to update password.');
+      setError(err?.message);
+      setTimeout(() => {
+      setError("");  
+      }, 2000);
+      
     } finally {
       setIsLoading(false);
     }

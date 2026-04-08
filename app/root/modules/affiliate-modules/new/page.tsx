@@ -249,7 +249,7 @@ function ModulePage() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="flex items-center gap-4">
-        <Link href="/admin/modules/affiliate-modules">
+        <Link href="/root/modules/affiliate-modules">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="w-4 h-4" />
           </Button>
@@ -489,7 +489,7 @@ function ModulePage() {
               Create Module
             </Button>
 
-            <Link href="/admin/modules/affiliate-modules">
+            <Link href="/root/modules/affiliate-modules">
               <Button variant="outline">Cancel</Button>
             </Link>
           </div>

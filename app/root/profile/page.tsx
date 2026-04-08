@@ -101,7 +101,7 @@ function ProfileContent() {
                 </Button>
               )}
 
-              <Link href="/admin/change-password">
+              <Link href="/root/change-password">
                 <Button className="gap-2 bg-primary hover:bg-primary/90 w-full md:w-auto">
                   <Lock className="w-4 h-4" />
                   Change Password

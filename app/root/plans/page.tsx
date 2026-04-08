@@ -33,10 +33,13 @@ import {
 
 import { getPlans } from '@/services/auth.service';
 
+import { useDeleteEntity } from '@/hooks/useDeleteEntity';
+
+
 interface Plan {
   id: string;
-  name: string ;
-  description: string ;
+  name: string;
+  description: string;
   price: number;
   currency: string;
   type: 'MONTHLY' | 'YEARLY';
@@ -58,6 +61,8 @@ export default function PlansPage() {
 
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const { deleteEntity, loadingId } = useDeleteEntity();
+
 
   // debounce
   useEffect(() => {
@@ -88,7 +93,7 @@ export default function PlansPage() {
           price: r.price ?? 0,
           currency: r.currency ?? 'USD',
           type: r.type ?? 'MONTHLY',
-          features: r.features ?? [],
+          features: r.modules ?? [],
           subscribers: r.assignedUserCount ?? 0,
           status: r.status === 'ACTIVE' ? 'active' : 'inactive',
         })) || [];
@@ -107,20 +112,31 @@ export default function PlansPage() {
   }, [fetchPlans]);
 
   // handlers
-  const handleDelete = async (planId: string) => {
-    if (!confirm(t('translate.plans_delete_confirm'))) return;
+  const handleDelete = async (
+    planId: string,
+    planName: string
+  ) => {
+    if (!confirm(`Delete "${planName}" plan?`)) return;
 
-    // try {
-    //   await deletePlan(planId);
-    //   fetchPlans();
-    // } catch (err) {
-    //   console.error('Delete error', err);
-    // }
+    try {
+      await deleteEntity('plan', planId);
+
+      // ✅ instant UI update
+      setPlans(prev => prev.filter(p => p.id !== planId));
+
+    } catch (err) {
+      console.error(err);
+      alert('Failed to delete plan');
+    }
   };
 
   const handleViewModules = (planId: string) => {
-    alert(`Viewing modules & permissions for plan ${planId}`);
-  };
+  if (!planId) {
+    alert('Plan ID missing');
+    return;
+  }
+  router.push(`/root/plans/modules/${planId}`);
+};
 
   // computed
   const totalRevenue = plans.reduce(
@@ -193,30 +209,30 @@ export default function PlansPage() {
 
       {/* LOADING */}
       {loading ? (
-  <p className="text-center text-muted-foreground">
-    {t('translate.common_loading') || 'Loading...'}
-  </p>
-) : plans.length === 0 ? (
-  <div className="flex justify-center items-center py-20">
-    <Card className="w-full max-w-md text-center">
-      <CardContent className="pt-6">
-        <p className="text-lg font-medium">
-          {t('translate.no_data') || 'No Plans Found'}
+        <p className="text-center text-muted-foreground">
+          {t('translate.common_loading') || 'Loading...'}
         </p>
-        <p className="text-sm text-muted-foreground mt-2">
-          {t('translate.no_data_description') ||
-            'No plans are available. Create a new plan to get started.'}
-        </p>
+      ) : plans.length === 0 ? (
+        <div className="flex justify-center items-center py-20">
+          <Card className="w-full max-w-md text-center">
+            <CardContent className="pt-6">
+              <p className="text-lg font-medium">
+                {t('translate.no_data') || 'No Plans Found'}
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                {t('translate.no_data_description') ||
+                  'No plans are available. Create a new plan to get started.'}
+              </p>
 
-        <Link href="/root/plans/new">
-          <Button className="mt-4 gap-2">
-            <Plus className="w-4 h-4" />
-            {t('translate.plans_new_plan')}
-          </Button>
-        </Link>
-      </CardContent>
-    </Card>
-  </div>
+              <Link href="/root/plans/new">
+                <Button className="mt-4 gap-2">
+                  <Plus className="w-4 h-4" />
+                  {t('translate.plans_new_plan')}
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {plans.map((plan) => (
@@ -262,7 +278,7 @@ export default function PlansPage() {
 
                       <DropdownMenuItem
                         className="text-destructive"
-                        onClick={() => handleDelete(plan.id)}
+                        onClick={() => handleDelete(plan.id, plan.name)}
                       >
                         <Trash2 className="w-4 h-4 mr-2" />
                         {t('translate.plans_delete')}
@@ -272,16 +288,22 @@ export default function PlansPage() {
                 </div>
               </CardHeader>
 
-              <CardContent className="flex flex-col justify-between flex-1">
-                <div className="text-sm text-muted-foreground">
+              <CardContent className="flex flex-col justify-between flex-1 gap-4">
+                {/* <div className="text-sm text-muted-foreground">
                   <strong>
                     {t('translate.plans_modules_features')}:
                   </strong>{' '}
                   {plan.features.length}
-                </div>
+                </div> */}
 
                 <div className="flex justify-between items-center pt-4 border-t">
-                  <Badge>
+                  <Badge
+                    className={
+                      plan.status === 'active'
+                        ? ''
+                        : 'bg-red-100 text-gray-600 border-red-300'
+                    }
+                  >
                     {t(`translate.plans_${plan.status}`)}
                   </Badge>
 

@@ -1,295 +1,317 @@
 'use client';
 
-import { AdminProvider } from '@/contexts/AdminContext';
-import { AdminLayout } from '@/components/layout/AdminLayout';
-import { useState } from 'react';
+import { useState, useRef, useEffect, useContext } from 'react';
 import { useParams } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAdmin } from '@/contexts/AdminContext';
+import {
+  Card, CardContent, CardHeader, CardTitle, CardDescription
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Save, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 
-interface PlanForm {
-  name: string;
-  price: number;
-  billing: 'monthly' | 'yearly';
-  description: string;
-  features: string[];
-  status: 'active' | 'inactive';
-}
+import { updatePlan, getPlantoEdit } from '@/services/auth.service';
 
-function EditPlanContent() {
-  const params = useParams();
-  const planId = params.id as string;
-  const [isEditing, setIsEditing] = useState(true);
-  const [newFeature, setNewFeature] = useState('');
-  const [formData, setFormData] = useState<PlanForm>({
-    name: 'Pro Plan',
-    price: 99,
-    billing: 'monthly',
-    description: 'Best for growing teams with advanced features',
-    features: ['Dashboard', 'Full CMS', 'Analytics', 'Support Tickets', 'Ad Management'],
-    status: 'active',
-  });
+import { I18nContext } from '@/i18n/provider';
+import { LANGUAGES, DEFAULT_LANGUAGE, Language } from '@/i18n/languages';
 
-  const handleInputChange = (field: string, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+import { MultiLangTabs } from '@/components/common/MultiLangTabs';
+import { MultiLangInput } from '@/components/common/MultiLangInput';
+import { MultiLangTextarea } from '@/components/common/MultiLangTextarea';
 
-  const addFeature = () => {
-    if (newFeature.trim()) {
-      setFormData((prev) => ({
-        ...prev,
-        features: [...prev.features, newFeature],
-      }));
-      setNewFeature('');
-    }
-  };
+// ---------------------- Dropdown ----------------------
+function Dropdown({ options, value, onChange }: any) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
-  const removeFeature = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      features: prev.features.filter((_, i) => i !== index),
-    }));
-  };
-
-  const handleSave = () => {
-    setIsEditing(false);
-    alert('Plan updated successfully!');
-  };
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/root/plans">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Edit Subscription Plan</h1>
-            <p className="text-muted-foreground">Configure plan details and features</p>
-          </div>
-        </div>
-      </div>
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full px-3 py-2 border rounded flex justify-between"
+      >
+        {options.find((o: any) => o.id === value)?.label || 'Select'}
+        <ChevronDown className="w-4 h-4" />
+      </button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          {/* Basic Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Plan Details</CardTitle>
-              <CardDescription>Basic plan information</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <Label htmlFor="name" className="mb-2 block">
-                  Plan Name
-                </Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  placeholder="e.g., Pro Plan"
-                  disabled={!isEditing}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="price" className="mb-2 block">
-                    Price
-                  </Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) => handleInputChange('price', parseFloat(e.target.value))}
-                    placeholder="99"
-                    disabled={!isEditing}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="billing" className="mb-2 block">
-                    Billing Cycle
-                  </Label>
-                  <select
-                    id="billing"
-                    value={formData.billing}
-                    onChange={(e) => handleInputChange('billing', e.target.value)}
-                    disabled={!isEditing}
-                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground disabled:opacity-50"
-                  >
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="description" className="mb-2 block">
-                  Description
-                </Label>
-                <textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  placeholder="Plan description"
-                  disabled={!isEditing}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground disabled:opacity-50"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Features */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Included Features</CardTitle>
-              <CardDescription>Features available in this plan</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {formData.features.map((feature, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border border-border rounded-lg">
-                  <span className="text-foreground">{feature}</span>
-                  {isEditing && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFeature(index)}
-                      className="text-destructive hover:text-destructive/90"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-
-              {isEditing && (
-                <div className="flex gap-2">
-                  <Input
-                    type="text"
-                    value={newFeature}
-                    onChange={(e) => setNewFeature(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addFeature()}
-                    placeholder="Add new feature..."
-                  />
-                  <Button onClick={addFeature} className="gap-2">
-                    <Plus className="w-4 h-4" />
-                    Add
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Status */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Plan Status</CardTitle>
-              <CardDescription>Control plan availability</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-4">
-                <select
-                  value={formData.status}
-                  onChange={(e) => handleInputChange('status', e.target.value as any)}
-                  disabled={!isEditing}
-                  className="flex-1 px-3 py-2 border border-border rounded-md bg-background text-foreground disabled:opacity-50"
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-                <Badge className={formData.status === 'active' ? 'bg-primary' : 'bg-muted'}>
-                  {formData.status}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            <Button
-              onClick={handleSave}
-              disabled={!isEditing}
-              className="gap-2 bg-primary hover:bg-primary/90 flex-1"
+      {open && (
+        <div className="absolute w-full bg-white border mt-1 rounded shadow">
+          {options.map((opt: any) => (
+            <div
+              key={opt.id}
+              onClick={() => {
+                onChange(opt.id);
+                setOpen(false);
+              }}
+              className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
             >
-              <Save className="w-4 h-4" />
-              Save Changes
-            </Button>
-            <Button
-              onClick={() => setIsEditing(!isEditing)}
-              variant="outline"
-              className="flex-1"
-            >
-              {isEditing ? 'Cancel' : 'Edit'}
-            </Button>
-          </div>
+              {opt.label}
+            </div>
+          ))}
         </div>
-
-        {/* Pricing Preview */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Pricing Preview</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-center p-4 border border-border rounded-lg">
-                <p className="text-sm text-muted-foreground mb-1">Price</p>
-                <p className="text-3xl font-bold text-primary">
-                  ${formData.price}
-                  <span className="text-lg text-muted-foreground">/{formData.billing.charAt(0)}</span>
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">Features Count</p>
-                <Badge className="bg-primary text-primary-foreground">
-                  {formData.features.length} features
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Quick Info</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm">
-              <div>
-                <p className="text-muted-foreground mb-1">Plan ID</p>
-                <p className="font-mono text-foreground">{planId}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground mb-1">Subscribers</p>
-                <p className="text-2xl font-bold text-foreground">450</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground mb-1">Monthly Revenue</p>
-                <p className="text-2xl font-bold text-accent">${(formData.price * 450).toLocaleString()}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
 
-export default function EditPlanPage() {
+// ---------------------- Constants ----------------------
+const CURRENCIES = ['USD', 'EUR'];
+
+const PLAN_TYPES = [
+  { id: 'MONTHLY', label: 'Monthly' },
+  { id: 'YEARLY', label: 'Yearly' }
+];
+
+const STATUS_TYPES = [
+  { id: 'INACTIVE', label: 'Inactive' },
+  { id: 'ACTIVE', label: 'Active' }
+];
+
+// ---------------------- Types ----------------------
+type MultiLangText = Record<Language, string>;
+
+interface PlanForm {
+  name: MultiLangText;
+  description: MultiLangText;
+  price: string;
+  currency: string;
+  type: string;
+  status: string;
+}
+
+// ---------------------- Helpers ----------------------
+const createEmptyLangObject = (): MultiLangText =>
+  Object.fromEntries(Object.keys(LANGUAGES).map(l => [l, ''])) as MultiLangText;
+
+// ✅ FIXED NORMALIZER
+const normalizeMultiLang = (value: any): MultiLangText => {
+  if (typeof value === 'object' && value !== null) {
+    return {
+      ...createEmptyLangObject(),
+      ...value
+    };
+  }
+
+  return {
+    ...createEmptyLangObject(),
+    [DEFAULT_LANGUAGE]: value || ''
+  };
+};
+
+// ---------------------- Component ----------------------
+export default function PlanFormPage() {
+  const { locale } = useContext(I18nContext);
+  const { t } = useAdmin();
+
+  const params = useParams();
+  const planId = params?.id as string;
+  const isEditMode = !!planId;
+
+  const [formData, setFormData] = useState<PlanForm>({
+    name: createEmptyLangObject(),
+    description: createEmptyLangObject(),
+    price: '',
+    currency: 'USD',
+    type: 'MONTHLY',
+    status: 'INACTIVE',
+  });
+
+  const [currentLang, setCurrentLang] = useState<Language>(locale);
+  const [errors, setErrors] = useState<any>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+
+  // ---------------------- Load Plan ----------------------
+  useEffect(() => {
+    if (!planId) return;
+
+    const fetchPlan = async () => {
+      try {
+        setIsLoading(true);
+
+        const res = await getPlantoEdit(planId);
+        const plan = res.data;
+
+        setFormData({
+          name: normalizeMultiLang(plan.name),
+          description: normalizeMultiLang(plan.description),
+          price: String(plan.price || ''),
+          currency: plan.currency || 'USD',
+          type: plan.duration || 'MONTHLY',
+          status: plan.status || 'INACTIVE',
+        });
+
+      } catch {
+        setErrors({ global: 'Failed to load plan' });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPlan();
+  }, [planId]);
+
+  // ---------------------- Handlers ----------------------
+  const handleInputChange = (field: keyof PlanForm, value: string, lang?: Language) => {
+    if (lang && (field === 'name' || field === 'description')) {
+      setFormData(prev => ({
+        ...prev,
+        [field]: { ...prev[field], [lang]: value }
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    }
+  };
+
+  const validateForm = () => {
+    const e: any = {};
+
+    if (!formData.name[DEFAULT_LANGUAGE]) {
+      e.name = 'Name required';
+    }
+
+    if (!formData.price || Number(formData.price) <= 0) {
+      e.price = 'Invalid price';
+    }
+
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  // ---------------------- Save ----------------------
+  const handleSave = async () => {
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    setSuccessMessage('');
+
+    try {
+      await updatePlan(planId as string, formData);
+
+      setSuccessMessage('Plan updated successfully!');
+
+
+    } catch (err: any) {
+      setErrors({ global: err?.message || 'Failed to update plan' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ---------------------- UI ----------------------
   return (
-    <AdminProvider>
-      <EditPlanContent />
-    </AdminProvider>
+    <div className="space-y-6 max-w-xl">
+
+      <div className="flex items-center gap-4">
+        <Link href="/root/plans">
+          <Button variant="ghost" size="sm">
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+        </Link>
+
+        <div>
+          <h1 className="text-xl font-medium">Edit Plan</h1>
+          <p className="text-sm text-muted-foreground">Update your plan</p>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Plan Details</CardTitle>
+          <CardDescription>
+            Fill plan information in multiple languages
+          </CardDescription>
+          {/* <CardTitle>
+    {t('ranslate.plans_edit_title')}
+  </CardTitle>
+  <CardDescription>
+    {t('translate.plans_details_subtitle')}
+  </CardDescription> */}
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+
+          {successMessage && <div className="text-green-600">{successMessage}</div>}
+          {errors.global && <div className="text-red-600">{errors.global}</div>}
+
+          <MultiLangTabs currentLang={currentLang} onChange={setCurrentLang} />
+
+          <MultiLangInput
+            label="Plan Name"
+            value={formData.name}
+            currentLang={currentLang}
+            onChange={(l, v) => handleInputChange('name', v, l)}
+            error={errors.name}
+          />
+
+          <MultiLangTextarea
+            label="Description"
+            value={formData.description}
+            currentLang={currentLang}
+            onChange={(l, v) => handleInputChange('description', v, l)}
+          />
+
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Label className="mb-2 block">Currency</Label>
+              <Dropdown
+                options={CURRENCIES.map(c => ({ id: c, label: c }))}
+                value={formData.currency}
+                onChange={(v: string) => handleInputChange('currency', v)}
+              />
+            </div>
+
+            <div className="flex-1">
+              <Label className="mb-2 block">Price</Label>
+              <Input
+                type="number"
+                value={formData.price}
+                onChange={e => handleInputChange('price', e.target.value)}
+              />
+            </div>
+          </div>
+
+
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Label className="mb-2 block">Plan Type</Label>
+              <Dropdown
+                options={PLAN_TYPES}
+                value={formData.type}
+                onChange={(v: string) => handleInputChange('type', v)}
+              />
+            </div>
+
+            <div className="flex-1">
+              <Label className="mb-2 block">Status</Label>
+              <Dropdown
+                options={STATUS_TYPES}
+                value={formData.status}
+                onChange={(v: string) => handleInputChange('status', v)}
+              />
+            </div>
+          </div>
+
+          <Button onClick={handleSave} disabled={isLoading} className="w-full">
+            <Save className="w-4 h-4 mr-2" />
+            {isLoading ? 'Saving...' : 'Update Plan'}
+          </Button>
+
+        </CardContent>
+      </Card>
+    </div>
   );
 }

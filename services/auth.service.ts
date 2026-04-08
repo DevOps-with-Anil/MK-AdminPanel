@@ -1,6 +1,7 @@
 
 import { apiClient } from "@/utils/apiClient";
 
+
 // ----------------------------- Login API request -----------------------------
 export const login = async (payload: { email: string; password: string }) => {
 
@@ -13,17 +14,14 @@ export const login = async (payload: { email: string; password: string }) => {
 // ----------------------------- Fetch current logged-in user -----------------------------
 export const profile = async (): Promise<any> => {
   return await apiClient("auth/root/me", { method: "GET" });
-};  
+};
 
 // ----------------------------- Change Password API request -----------------------------
-export const changePassword = async (payload: {
-  currentPassword: string;
-  newPassword: string;
-}) => {
+export const changePassword = async (data: any) => {
   // Send change password request
   const res = await apiClient("auth/root/changepassword", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(data),
   });
 
   console.log("Change Password Response:", res);
@@ -55,16 +53,11 @@ export const getSystemRoles = async (payload: {
 };
 
 // ----------------------------- Create roles -----------------------------
-export const createRole = async (payload: {
-  name: { en: string; fr: string; };
-  description: { en: string; fr: string; };
-  status: 'ACTIVE' | 'INACTIVE'; // added status
-}) => {
+export const createRole =  async (data: any) => {
   const res = await apiClient("role", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(data),
   });
-
   console.log("Create Role Response:", res);
   return res;
 };
@@ -77,18 +70,16 @@ export const updateStatus = async (
 ) => {
   const res = await apiClient(`${type}/${id}/status`, {
     method: 'PATCH',
-    body: JSON.stringify(payload), // ✅ send object, not a string
+    body: JSON.stringify(payload),
   });
   return res;
 };
 
 // ----------------------------- Delete Entries Common function -----------------------------
-
 export const deleteEntity = async (type: string, id: string) => {
   const res = await apiClient(`${type}/${id}`, {
     method: 'DELETE',
   });
-
   return res;
 };
 
@@ -97,15 +88,23 @@ export const getRoleById = async (id: string) => {
   const res = await apiClient(`role/${id}`, {
     method: 'GET',
   });
-
   return res;
 };
 
 // ----------------------------- Update Role -----------------------------
-
 export const updateRole = async (id: string, data: any) => {
   const res = await apiClient(`role/${id}`, {
-    method: 'PUT', 
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+
+  return res;
+};
+
+// ----------------------------- Update Role Permissin  -----------------------------
+export const updateRoleModules = async (roleId: string, data: any) => {
+  const res = await apiClient(`role/${roleId}/permissions`, {
+    method: 'POST',
     body: JSON.stringify(data),
   });
 
@@ -149,19 +148,10 @@ export const getAdminUserById = async (id: string) => {
 };
 
 // ----------------------------- Add system users -----------------------------
-export const createAdminUser = async (payload: {
-  name: string;
-  email: string;
-  password: string;
-  phoneCode: string;
-  phoneNumber: string;
-  role: string; // ObjectId string
-  allowedCountries: string[];
-  status: string;
-}) => {
+export const createAdminUser = async (data: any) => {
   const res = await apiClient("rootadmin", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(data),
   });
 
   console.log("Create Admin User Response:", res);
@@ -169,21 +159,11 @@ export const createAdminUser = async (payload: {
 };
 
 // ----------------------------- Edit system users -----------------------------
-export const editAdminUser = async (userId: string, payload: {
-  name: string;
-  email: string;
-  password?: string;
-  phoneCode: string;
-  phoneNumber: string;
-  role?: string; // ObjectId string
-  allowedCountries: string[];
-  status: string;
-}) => {
+export const editAdminUser = async (userId: string, data: any) => {
   const res = await apiClient(`rootadmin/${userId}`, {
     method: "PUT",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(data),
   });
-
   console.log("Edit Admin User Response:", res);
   return res;
 };
@@ -207,31 +187,16 @@ export const getModulePackages = async (
 
   const res = await apiClient(`${moduleType}?${params.toString()}`, {
     method: "GET",
-    });
+  });
 
   return res;
 };
 
 // ----------------------------- Create Root Modules -----------------------------
-export const createRootModules = async (payload: {
-  key: string;
-  moduleName: {
-    en: string;
-    fr: string;
-  };
-  actions: {
-    key: string;
-    actionName: {
-      en: string;
-      fr: string;
-    };
-    status?: 'ACTIVE' | 'INACTIVE';
-  }[];
-  status?: 'ACTIVE' | 'INACTIVE';
-}) => {
+export const createRootModules = async (data: any) => {
   const res = await apiClient("systemmodule/add", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(data),
   });
 
   console.log("Create Module Response:", res);
@@ -239,25 +204,10 @@ export const createRootModules = async (payload: {
 };
 
 // ----------------------------- Create Tenat Modules -----------------------------
-export const createTenantModules = async (payload: {
-  key: string;
-  moduleName: {
-    en: string;
-    fr: string;
-  };
-  actions: {
-    key: string;
-    actionName: {
-      en: string;
-      fr: string;
-  };
-    status?: 'ACTIVE' | 'INACTIVE';
-  }[];
-  status?: 'ACTIVE' | 'INACTIVE';
-}) => {
+export const createTenantModules = async (data: any) => {
   const res = await apiClient("tenantmodule/add", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(data),
   });
 
   console.log("Create Module Response:", res);
@@ -269,7 +219,7 @@ export const getPlans = async (payload: {
   page?: number;
   limit?: number;
   search?: string;
-  
+
 }) => {
 
   const params = new URLSearchParams();
@@ -278,7 +228,7 @@ export const getPlans = async (payload: {
   params.append("limit", String(payload.limit));
 
   if (payload.search) params.append("search", payload.search);
-  
+
   const res = await apiClient(`plan?${params.toString()}`, {
     method: "GET",
   });
@@ -287,32 +237,83 @@ export const getPlans = async (payload: {
 };
 
 // ----------------------------- Create Plan -----------------------------
-export const createPlan = async (payload: {
-  name: {
-    en: string;
-    fr?: string;
-    ar?: string;
-    hi?: string;
-  };
-  description: {
-    en: string;
-    fr?: string;
-    ar?: string;
-    hi?: string;
-  };
-  price: number;
-  currency: string;
-  duration: 'MONTHLY' | 'YEARLY' | 'WEEKLY' | 'DAILY';
-  status?: 'ACTIVE' | 'INACTIVE'; // ✅ add this
-   modules: [],
-}) => {
+export const createPlan = async (data: any) => {
   const res = await apiClient("plan", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(data),
   });
 
   console.log("Create Plan Response:", res);
   return res;
 };
 
+// ----------------------------- Get Plan By ID to Edit -----------------------------
+export const getPlantoEdit = async (id: string) => {
+  const res = await apiClient(`plan/fetch/${id}`, {
+    method: 'GET',
+  });
+  console.log("Plan Details Response:", JSON.stringify(res));
 
+  return res;
+};
+
+// ----------------------------- Edit Plan  -----------------------------
+export const updatePlan = async (planId: string, data: any) => {
+  const res = await apiClient(`plan/${planId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+
+  return res;
+};
+
+// ----------------------------- Update Plan Permissin  -----------------------------
+export const updatePlanModules = async (planId: string, data: any) => {
+  const res = await apiClient(`plan/${planId}/modules`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+  return res;
+};
+
+// ----------------------------- Fetch Affiliates -----------------------------
+export const getAffiliates = async (payload: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}) => {
+
+  const params = new URLSearchParams();
+
+  params.append("page", String(payload.page));
+  params.append("limit", String(payload.limit));
+
+  if (payload.search) params.append("search", payload.search);
+  if (payload.status) params.append("status", payload.status);
+
+  const res = await apiClient(`affiliate?${params.toString()}`, {
+    method: "GET",
+  });
+
+  return res;
+};
+
+// ----------------------------- Create Affiliates -----------------------------
+export const createAffiliate = async (data: any) => {
+  const res = await apiClient("affiliate", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  console.log("Create Affiliate Response:", res);
+  return res;
+};
+
+// ----------------------------- Get Affiliate By ID -----------------------------
+export const getAffiliateById = async (id: string) => {
+  const res = await apiClient(`affiliate/${id}`, {
+    method: 'GET',
+  });
+  return res;
+};

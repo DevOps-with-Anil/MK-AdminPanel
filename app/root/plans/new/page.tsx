@@ -257,8 +257,16 @@ export default function AddPlanPage() {
       {/* Card */}
       <Card>
         <CardHeader>
-          <CardTitle />
-          <CardDescription>{t('plans.createSubtitle')}</CardDescription>
+          <CardTitle>Plan Details</CardTitle>
+          <CardDescription>
+            Fill plan information in multiple languages
+          </CardDescription>
+          {/* <CardTitle>
+    {t('translate.plans_details_title')}
+  </CardTitle>
+  <CardDescription>
+    {t('translate.plans_details_subtitle')}
+  </CardDescription> */}
         </CardHeader>
 
         <CardContent className="space-y-4">

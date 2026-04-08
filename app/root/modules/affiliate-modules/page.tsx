@@ -240,7 +240,7 @@ function ModulesPageContent() {
             />
           </div>
 
-          <Link href="/admin/modules/affiliate-modules/new">
+          <Link href="/root/modules/affiliate-modules/new">
             <Button className="gap-2">
               <Plus className="w-4 h-4" />
               New Module
@@ -351,7 +351,11 @@ function ModulesPageContent() {
                           handleToggleStatus(mod.id,
                             mod.status);
                         }}
-                        className="cursor-pointer"
+                        className={
+                          mod.status === 'active'
+                            ? ''
+                            : 'bg-red-100 text-gray-600 border-red-300'
+                        }
                       >
                         {mod.status}
                       </Badge>

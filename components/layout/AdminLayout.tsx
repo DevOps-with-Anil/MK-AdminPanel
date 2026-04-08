@@ -194,7 +194,6 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           icon: CreditCard,
           children: [
             { label: t('translate.sidebar_plans_list'), href: '/root/plans' },
-            { label: t('translate.sidebar_add_plan'), href: '/root/plans/new' },
             { label: t('translate.sidebar_subscribers'), href: '/root/plans/subscribers' },
           ],
         },
@@ -630,7 +629,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
                 <div className="p-2 border-t border-border bg-muted/50">
                   <button
-                    onClick={() => router.push('/admin/notifications')}
+                    onClick={() => router.push('/root/notifications')}
                     className="w-full py-2 text-[12px] font-black text-center text-primary hover:bg-primary/50 rounded-lg transition-colors uppercase tracking-widest border border-dashed border-primary/20"
                   >
                     View All Activity Log
@@ -672,14 +671,14 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                     </div>
                   </div>
                   <DropdownMenuItem className="cursor-pointer"
-                    onClick={() => router.push('/admin/profile')}
+                    onClick={() => router.push('/root/profile')}
                   >
                     <User size={16} className="mr-2" />
                     <span>{t('translate.viewProfile')}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="cursor-pointer"
-                    onClick={() => router.push('/admin/change-password')}
+                    onClick={() => router.push('/root/change-password')}
                   >
                     <KeyRound size={16} className="mr-2" />
                     <span>{t('translate.changePassword')}</span>

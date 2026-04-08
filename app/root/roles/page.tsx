@@ -374,11 +374,11 @@ function RolesPageContent() {
                             </DropdownMenuItem>
 
                             <DropdownMenuItem
-                              // onClick={() =>
-                              //   router.push(
-                              //     `/root/roles/edit/${role.id}`
-                              //   )
-                              // }
+                              onClick={() =>
+                                router.push(
+                                  `/root/roles/modules/${role.id}`
+                                )
+                              }
                             >
                               <Settings2 className="w-4 h-4 mr-2" />
                               Assing Permissions
