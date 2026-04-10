@@ -1,9 +1,9 @@
 import { tokenStorage } from "@/utils/token";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_ADMIN_API_BASE_URL;
 
 if (!BASE_URL) {
-  throw new Error("NEXT_PUBLIC_API_BASE_URL is not defined");
+  throw new Error("NEXT_ADMIN_API_BASE_URL is not defined");
 }
 
 export async function apiClient(
