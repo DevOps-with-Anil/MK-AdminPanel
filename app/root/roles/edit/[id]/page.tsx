@@ -25,6 +25,10 @@ import { MultiLangTabs } from '@/components/common/MultiLangTabs';
 import { MultiLangInput } from '@/components/common/MultiLangInput';
 import { MultiLangTextarea } from '@/components/common/MultiLangTextarea';
 
+import { AppMessage } from '@/components/common/AppMessage';
+import { useAppMessage } from '@/hooks/ui/useAppMessage';
+
+
 
 /* ================= TYPES ================= */
 
@@ -86,7 +90,9 @@ function EditRoleContent() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
-  const [success, setSuccess] = useState(false);
+  // const [success, setSuccess] = useState(false);
+
+  const { message, type, visible, showMessage, clearMessage } = useAppMessage();
 
   /* ================= FETCH ================= */
 
@@ -171,7 +177,6 @@ function EditRoleContent() {
   /* ================= SUBMIT ================= */
 
   const handleSubmit = async () => {
-    setSuccess(false);
 
     const validationErrors = validate();
 
@@ -187,13 +192,18 @@ function EditRoleContent() {
     setIsLoading(true);
 
     try {
-      await updateRole(id as string, formData);
 
-      setSuccess(true);
+      const res = await updateRole(id as string, formData);
 
-      setTimeout(() => {
-        router.push('/root/roles');
-      }, 1000);
+      showMessage(
+        res?.message || "Role updated successfully!",
+        "success"
+      );
+
+
+      // setTimeout(() => {
+      //   router.push('/root/roles');
+      // }, 1000);
 
     } catch (err: any) {
       setErrors({
@@ -318,18 +328,18 @@ function EditRoleContent() {
                   </Button>
                 </Link>
               </div>
-
-              {/* Success Feedback */}
-              {success && (
-                <p className="text-green-600 text-sm">
-                  Role updated successfully!
-                </p>
-              )}
-
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* RIGHT SIDE RESPONSE MESSAGE */}
+      <AppMessage
+        visible={visible}
+        message={message}
+        type={type}
+        onClose={clearMessage}
+      />
     </div>
   );
 }

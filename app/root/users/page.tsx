@@ -18,6 +18,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAdmin } from '@/contexts/AdminContext';
 import { getSystemUsers, updateStatus } from '@/services/auth.service';
+import { formatDate } from "@/utils/dateFormatter";
+
 
 const PAGE_LIMIT_OPTIONS = [10, 25, 50, 'All'] as const;
 
@@ -29,6 +31,7 @@ interface AdminUser {
   status: 'active' | 'inactive';
   createdAt: string;
   updating?: boolean;
+  photo?: string;
 }
 
 function UsersPageContent() {
@@ -70,6 +73,7 @@ function UsersPageContent() {
         id: u._id,
         name: u.name,
         email: u.email,
+        photo: u.photo,
         role: u.role?.name?.toLowerCase().replace(/\s/g, '-') || 'unknown',
         status: u.status === 'ACTIVE' ? 'active' : 'inactive',
         createdAt: u.createdAt,
@@ -103,15 +107,6 @@ function UsersPageContent() {
     }
   };
 
-  const formatDateTime = (date: string) =>
-    new Date(date).toLocaleString('en-IN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
 
   /* ================= DELETE USER ================= */
   const handleDelete = async (userId: string, adminName: string) => {
@@ -197,6 +192,7 @@ function UsersPageContent() {
             <table className="w-full">
               <thead>
                 <tr className="border-b">
+                  <th className="text-left py-3 px-4">Image</th>
                   <th className="text-left py-3 px-4">Name</th>
                   <th className="text-left py-3 px-4">Email</th>
                   <th className="text-left py-3 px-4">Role</th>
@@ -209,33 +205,72 @@ function UsersPageContent() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-6">Loading users...</td>
+                    <td colSpan={7} className="text-center py-6">
+                      Loading users...
+                    </td>
                   </tr>
                 ) : users.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-6">No users found</td>
+                    <td colSpan={7} className="text-center py-6">
+                      No users found
+                    </td>
                   </tr>
                 ) : (
-                  users.map(user => (
+                  users.map((user) => (
                     <tr key={user.id} className="border-b hover:bg-muted/50">
+
+                      {/* IMAGE COLUMN */}
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          {user.photo ? (
+                            <img
+                              src={user.photo}
+                              alt={user.name}
+                              className="w-14 h-14 rounded-full object-cover border"
+                            />
+                          ) : (
+                            <div className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center text-3xl font-bold">
+                              {user.name?.charAt(0)?.toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* NAME */}
                       <td className="py-4 px-4 font-medium">{user.name}</td>
+
+                      {/* EMAIL */}
                       <td className="py-4 px-4 text-muted-foreground">{user.email}</td>
+
+                      {/* ROLE */}
                       <td className="py-4 px-4">
                         <Badge variant="secondary">
                           {user.role.replace('-', ' ')}
                         </Badge>
-                        </td>
+                      </td>
+
+                      {/* STATUS */}
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-2">
                           <Switch
                             checked={user.status === 'active'}
                             disabled={user.updating}
-                            onCheckedChange={() => handleToggleStatus(user.id, user.status)}
+                            onCheckedChange={() =>
+                              handleToggleStatus(user.id, user.status)
+                            }
                           />
-                          <span className="text-sm">{user.status === 'active' ? 'Active' : 'Inactive'}</span>
+                          <span className="text-sm">
+                            {user.status === 'active' ? 'Active' : 'Inactive'}
+                          </span>
                         </div>
                       </td>
-                      <td className="py-4 px-4 text-sm text-muted-foreground">{formatDateTime(user.createdAt)}</td>
+
+                      {/* CREATED */}
+                      <td className="py-4 px-4 text-sm text-muted-foreground">
+                        {formatDate(user.createdAt)}
+                      </td>
+
+                      {/* ACTIONS */}
                       <td className="py-4 px-4 text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -243,12 +278,17 @@ function UsersPageContent() {
                               <MoreVertical className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>
+
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                              <Link href={`/root/users/edit/${user.id}`} className="flex items-center gap-2">
+                              <Link
+                                href={`/root/users/edit/${user.id}`}
+                                className="flex items-center gap-2"
+                              >
                                 <Edit2 className="w-4 h-4" /> Edit
                               </Link>
                             </DropdownMenuItem>
+
                             <DropdownMenuItem
                               className="text-destructive flex items-center gap-2"
                               onClick={() => handleDelete(user.id, user.name)}
@@ -262,40 +302,41 @@ function UsersPageContent() {
                   ))
                 )}
               </tbody>
+
             </table>
           </div>
 
           {/* PAGINATION */}
-            <div className="flex justify-end gap-2 p-4">
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={page === 1}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                Prev
-              </Button>
+          <div className="flex justify-end gap-2 p-4">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={page === 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              Prev
+            </Button>
 
-              {[...Array(totalPages)].map((_, i) => (
-                <Button
-                  key={i}
-                  size="sm"
-                  variant={page === i + 1 ? 'default' : 'outline'}
-                  onClick={() => setPage(i + 1)}
-                >
-                  {i + 1}
-                </Button>
-              ))}
-
+            {[...Array(totalPages)].map((_, i) => (
               <Button
+                key={i}
                 size="sm"
-                variant="outline"
-                disabled={page === totalPages}
-                onClick={() => setPage((p) => p + 1)}
+                variant={page === i + 1 ? 'default' : 'outline'}
+                onClick={() => setPage(i + 1)}
               >
-                Next
+                {i + 1}
               </Button>
-            </div>
+            ))}
+
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={page === totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -224,12 +224,13 @@ export default function PlansPage() {
                   'No plans are available. Create a new plan to get started.'}
               </p>
 
-              <Link href="/root/plans/new">
+              {/* <Link href="/root/plans/new">
                 <Button className="mt-4 gap-2">
                   <Plus className="w-4 h-4" />
                   {t('translate.plans_new_plan')}
                 </Button>
-              </Link>
+              </Link> */}
+
             </CardContent>
           </Card>
         </div>

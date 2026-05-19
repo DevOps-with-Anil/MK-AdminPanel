@@ -2,7 +2,7 @@
 
 import { AdminProvider } from '@/contexts/AdminContext';
 import { useRouter } from 'next/navigation';
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 import {
   Card,
@@ -11,6 +11,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +37,16 @@ import {
   Camera
 } from 'lucide-react';
 
+import { tokenStorage } from "@/utils/token";
+import { profile, updateProfile } from '@/services/auth.service';
+
+import { I18nContext } from '@/i18n/provider';
+import { LANGUAGES, Language } from '@/i18n/languages';
+import { useTranslation } from '@/hooks/useTranslation';
+
+import { AppMessage } from '@/components/common/AppMessage';
+import { useAppMessage } from '@/hooks/ui/useAppMessage';
+
 function ProfileContent() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -36,46 +54,164 @@ function ProfileContent() {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
+  // const [success, setSuccess] = useState(false);
+  // const [error, setError] = useState('');
+
+  const { message, type, visible, showMessage, clearMessage } = useAppMessage();
+
 
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<File | null>(null);
 
   const [formData, setFormData] = useState({
-    name: 'ROOT ADMIN',
-    email: 'root@mkproject.com',
+    name: '',
+    email: '',
+    phoneCode: '',
     phoneNumber: '',
-    role: 'ROOT ADMIN',
-    status: 'ACTIVE',
+    role: '',
+    status: '',
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+
+  useEffect(() => {
+    // const savedLang = localStorage.getItem('lang') || 'en';
+    const fetchProfile = async () => {
+      setIsLoading(true);
+      try {
+        const token = tokenStorage.getToken(); // get token from cookie
+        if (!token) throw new Error("No token found");
+        const res = await profile(); // your API call
+        const profileData = res.data;
+
+        setFormData({
+          name: profileData?.name ?? '',
+          email: profileData?.email ?? '',
+          phoneCode: profileData.phoneCode ?? '',
+          phoneNumber: profileData?.phoneNumber ?? '',
+          role: profileData?.role?.name ?? '',
+          status: profileData?.status ?? '',
+        });
+
+        setAvatar(profileData?.photo ?? null);
+        console.log("Profile Response on AdminLayout ::  " + JSON.stringify(res));
+      } catch (err: any) {
+        console.error(err);
+        // setError(err.message || "Failed to load profile");
+        showMessage(
+          err.message || "Failed to load profile",
+          'danger'
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  const handleSubmit = async (
+    e: React.FormEvent
+  ) => {
+
     e.preventDefault();
 
-    setError('');
-    setSuccess(false);
     setIsLoading(true);
 
     try {
-      // TODO: update profile API
 
-      setSuccess(true);
+      const payload = new FormData();
+
+      payload.append('name', formData.name);
+      payload.append('phoneCode', formData.phoneCode);
+      payload.append('phoneNumber', formData.phoneNumber);
+
+      /**
+       * Upload image
+       */
+      if (profileImage) {
+        payload.append('photo', profileImage);
+      }
+
+      /**
+       * API call
+       */
+      const res = await updateProfile(payload);
+
+      const updatedUser = res.data;
+
+      /**
+       * Update local state
+       */
+      setFormData((prev) => ({
+        ...prev,
+        name: updatedUser?.name ?? '',
+        email: updatedUser?.email ?? '',
+        phoneCode: updatedUser?.phoneCode ?? '',
+        phoneNumber: updatedUser?.phoneNumber ?? '',
+        role: updatedUser?.role?.name ?? prev.role,
+        status: updatedUser?.status ?? prev.status,
+      }));
+
+      /**
+       * Update avatar
+       */
+      setAvatar(updatedUser?.photo ?? avatar);
+
+      /**
+       * SAVE UPDATED PROFILE GLOBALLY
+       */
+      // localStorage.setItem(
+      //   'profileData',
+      //   JSON.stringify(updatedUser)
+      // );
+
+      /**
+       * NOTIFY HEADER / LAYOUT
+       */
+      window.dispatchEvent(
+        new Event('profile-updated')
+      );
+
+      // setSuccess(true);
+      showMessage(
+        `Profile updated successfully`,
+        'success'
+      );
+
       setIsEditing(false);
-    } catch (err) {
-      setError('Failed to update profile.');
+
+    } catch (err: any) {
+
+      console.error(err);
+
+      showMessage(
+        err?.message ||
+        'Failed to update profile.',
+        'danger'
+      );
+
+
     } finally {
+
       setIsLoading(false);
     }
   };
+
 
   const handleCancel = () => {
     setIsEditing(false);
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
+
     if (!file) return;
 
+    // store actual file
+    setProfileImage(file);
+
+    // preview image
     const preview = URL.createObjectURL(file);
     setAvatar(preview);
   };
@@ -158,7 +294,7 @@ function ProfileContent() {
               </div>
             </div>
 
-            {error && (
+            {/* {error && (
               <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg flex items-center gap-3">
                 <AlertCircle className="w-5 h-5" />
                 <p className="text-sm font-medium">{error}</p>
@@ -172,7 +308,7 @@ function ProfileContent() {
                   Profile updated successfully!
                 </p>
               </div>
-            )}
+            )} */}
 
             {/* Name */}
             <div className="space-y-2">
@@ -211,20 +347,49 @@ function ProfileContent() {
             <div className="space-y-2">
               <Label>Phone Number</Label>
 
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <div className="flex gap-2">
 
-                <Input
+                {/* Phone Code */}
+                <Select
                   disabled={!isEditing}
-                  value={formData.phoneNumber}
-                  onChange={(e) =>
+                  value={formData.phoneCode}
+                  onValueChange={(value) =>
                     setFormData({
                       ...formData,
-                      phoneNumber: e.target.value,
+                      phoneCode: value,
                     })
                   }
-                  className="pl-9 bg-muted/30"
-                />
+                >
+                  <SelectTrigger className="w-[120px] bg-muted/30">
+                    <SelectValue placeholder="+91" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    <SelectItem value="+91">🇮🇳 +91</SelectItem>
+                    <SelectItem value="+1">🇺🇸 +1</SelectItem>
+                    <SelectItem value="+44">🇬🇧 +44</SelectItem>
+                    <SelectItem value="+61">🇦🇺 +61</SelectItem>
+                    <SelectItem value="+971">🇦🇪 +971</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Phone Number */}
+                <div className="relative flex-1">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+
+                  <Input
+                    disabled={!isEditing}
+                    value={formData.phoneNumber}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        phoneNumber: e.target.value,
+                      })
+                    }
+                    className="pl-9 bg-muted/30"
+                    placeholder="Enter phone number"
+                  />
+                </div>
               </div>
             </div>
 
@@ -266,6 +431,15 @@ function ProfileContent() {
           </form>
         </CardContent>
       </Card>
+
+
+      {/* RIGHT SIDE RESPONSE MESSAGE */}
+      <AppMessage
+        visible={visible}
+        message={message}
+        type={type}
+        onClose={clearMessage}
+      />
     </div>
   );
 }

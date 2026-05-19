@@ -1,117 +1,573 @@
 
+// import { apiClient } from "@/utils/apiClient";
+
+
+// // **************************************************************************  
+// // ***************************** Root Auth APIs ****************************
+// // ************************************************************************** 
+
+// // ----------------------------- Login API request -----------------------------
+// export const login = async (payload: { email: string; password: string }) => {
+
+//   return apiClient("auth/root", {
+//     method: "POST",
+//     body: JSON.stringify(payload),
+//   });
+// };
+
+// // ----------------------------- Fetch current logged-in user -----------------------------
+// export const profile = async (): Promise<any> => {
+//   return await apiClient("auth/root/me", { method: "GET" });
+// };
+
+// // ----------------------------- Change Password API request -----------------------------
+// export const changePassword = async (data: any) => {
+//   // Send change password request
+//   const res = await apiClient("auth/root/changepassword", {
+//     method: "POST",
+//     body: JSON.stringify(data),
+//   });
+
+//   console.log("Change Password Response:", res);
+
+//   return res;
+// };
+
+
+
+// // **************************************************************************  
+// // ***************************** SYSTEM ACCESS MANAGEMENT APIs ****************************
+// // ************************************************************************** 
+
+// // ----------------------------- Fetch system roles -----------------------------
+// export const getSystemRoles = async (payload: {
+//   page?: number;
+//   limit?: number;
+//   search?: string;
+//   status?: string;
+// }) => {
+
+//   const params = new URLSearchParams();
+
+//   params.append("page", String(payload.page));
+//   params.append("limit", String(payload.limit));
+
+//   if (payload.search) params.append("search", payload.search);
+//   if (payload.status) params.append("status", payload.status);
+
+//   const res = await apiClient(`role?${params.toString()}`, {
+//     method: "GET",
+//   });
+
+//   return res;
+// };
+
+// // ----------------------------- Create roles -----------------------------
+// export const createRole = async (data: any) => {
+//   const res = await apiClient("role", {
+//     method: "POST",
+//     body: JSON.stringify(data),
+//   });
+//   console.log("Create Role Response:", res);
+//   return res;
+// };
+
+// // ----------------------------- Update Status Commonly -----------------------------
+// export const updateStatus = async (
+//   type: string,
+//   id: string,
+//   payload: { status: 'ACTIVE' | 'INACTIVE' }
+// ) => {
+//   const res = await apiClient(`${type}/${id}/status`, {
+//     method: 'PATCH',
+//     body: JSON.stringify(payload),
+//   });
+//   return res;
+// };
+
+// // ----------------------------- Delete Entries Common function -----------------------------
+// export const deleteEntity = async (type: string, id: string) => {
+//   const res = await apiClient(`${type}/${id}`, {
+//     method: 'DELETE',
+//   });
+//   return res;
+// };
+
+// // ----------------------------- Get Role By ID -----------------------------
+// export const getRoleById = async (id: string) => {
+//   const res = await apiClient(`role/${id}`, {
+//     method: 'GET',
+//   });
+//   return res;
+// };
+
+// // ----------------------------- Update Role -----------------------------
+// export const updateRole = async (id: string, data: any) => {
+//   const res = await apiClient(`role/${id}`, {
+//     method: 'PUT',
+//     body: JSON.stringify(data),
+//   });
+
+//   return res;
+// };
+
+// // ----------------------------- Update Role Permissin  -----------------------------
+// export const updateRoleModules = async (roleId: string, data: any) => {
+//   const res = await apiClient(`role/${roleId}/permissions`, {
+//     method: 'POST',
+//     body: JSON.stringify(data),
+//   });
+
+//   return res;
+// };
+
+// // ----------------------------- Fetch Users -----------------------------
+// export const getSystemUsers = async (payload: {
+//   page: number;
+//   limit: number;
+//   search?: string;
+//   status?: string;
+//   roleId?: string;
+//   country?: string;
+// }) => {
+
+//   const params = new URLSearchParams();
+
+//   params.append("page", String(payload.page));
+//   params.append("limit", String(payload.limit));
+
+//   if (payload.search) params.append("search", payload.search);
+//   if (payload.status) params.append("status", payload.status);
+//   if (payload.roleId) params.append("roleId", payload.roleId);
+//   if (payload.country) params.append("country", payload.country);
+
+//   const res = await apiClient(`rootadmin?${params.toString()}`, {
+//     method: "GET",
+//   });
+
+//   return res;
+// };
+
+// // ----------------------------- Get User By ID -----------------------------
+// export const getAdminUserById = async (id: string) => {
+//   const res = await apiClient(`rootadmin/${id}`, {
+//     method: 'GET',
+//   });
+
+//   return res;
+// };
+
+// // ----------------------------- Add User -----------------------------
+// export const createAdminUser = async (data: any) => {
+//   const res = await apiClient("rootadmin", {
+//     method: "POST",
+//     body: JSON.stringify(data),
+//   });
+
+//   console.log("Create Admin User Response:", res);
+//   return res;
+// };
+
+// // ----------------------------- Edit Users -----------------------------
+// export const editAdminUser = async (userId: string, data: any) => {
+//   const res = await apiClient(`rootadmin/${userId}`, {
+//     method: "PUT",
+//     body: JSON.stringify(data),
+//   });
+//   console.log("Edit Admin User Response:", res);
+//   return res;
+// };
+
+
+
+// // **************************************************************************  
+// // ***************************** SYSTEM Module APIs ****************************
+// // ************************************************************************** 
+
+// // ----------------------------- Fetch Root/Affiliate Modules -----------------------------
+// export const getModulePackages = async (
+//   moduleType: string,
+//   payload: {
+//     page?: number;
+//     limit?: number;
+//     search?: string;
+//     status?: string;
+//   }
+// ) => {
+//   const params = new URLSearchParams();
+
+//   if (payload.page) params.append("page", String(payload.page));
+//   if (payload.limit) params.append("limit", String(payload.limit));
+//   if (payload.search) params.append("search", payload.search);
+//   if (payload.status) params.append("status", payload.status);
+
+//   const res = await apiClient(`${moduleType}?${params.toString()}`, {
+//     method: "GET",
+//   });
+
+//   return res;
+// };
+
+// // ----------------------------- Create Root Modules -----------------------------
+// export const createRootModules = async (data: any) => {
+//   const res = await apiClient("systemmodule/add", {
+//     method: "POST",
+//     body: JSON.stringify(data),
+//   });
+
+//   console.log("Create Module Response:", res);
+//   return res;
+// };
+
+// // ----------------------------- Create Tenat Modules -----------------------------
+// export const createTenantModules = async (data: any) => {
+//   const res = await apiClient("tenantmodule/add", {
+//     method: "POST",
+//     body: JSON.stringify(data),
+//   });
+
+//   console.log("Create Module Response:", res);
+//   return res;
+// };
+
+
+
+// // **************************************************************************  
+// // ***************************** SYSTEM PLANS APIs ****************************
+// // ************************************************************************** 
+
+// // ----------------------------- List All Plans -----------------------------
+// export const getPlans = async (payload: {
+//   page?: number;
+//   limit?: number;
+//   search?: string;
+
+// }) => {
+
+//   const params = new URLSearchParams();
+
+//   params.append("page", String(payload.page));
+//   params.append("limit", String(payload.limit));
+
+//   if (payload.search) params.append("search", payload.search);
+
+//   const res = await apiClient(`plan?${params.toString()}`, {
+//     method: "GET",
+//   });
+
+//   return res;
+// };
+
+// // ----------------------------- Create Plan -----------------------------
+// export const createPlan = async (data: any) => {
+//   const res = await apiClient("plan", {
+//     method: "POST",
+//     body: JSON.stringify(data),
+//   });
+
+//   console.log("Create Plan Response:", res);
+//   return res;
+// };
+
+// // ----------------------------- Get Plan By ID to Edit -----------------------------
+// export const getPlantoEdit = async (id: string) => {
+//   const res = await apiClient(`plan/fetch/${id}`, {
+//     method: 'GET',
+//   });
+//   console.log("Plan Details Response:", JSON.stringify(res));
+
+//   return res;
+// };
+
+// // ----------------------------- Edit Plan  -----------------------------
+// export const updatePlan = async (planId: string, data: any) => {
+//   const res = await apiClient(`plan/${planId}`, {
+//     method: 'PUT',
+//     body: JSON.stringify(data),
+//   });
+
+//   return res;
+// };
+
+// // ----------------------------- Update Plan Permissin  -----------------------------
+// export const updatePlanModules = async (planId: string, data: any) => {
+//   const res = await apiClient(`plan/${planId}/modules`, {
+//     method: 'POST',
+//     body: JSON.stringify(data),
+//   });
+
+//   return res;
+// };
+
+
+
+// // **************************************************************************  
+// // ***************************** AFFILIATES APIs ****************************
+// // ************************************************************************** 
+
+// // ----------------------------- Fetch Affiliates -----------------------------
+// export const getAffiliates = async (payload: {
+//   page?: number;
+//   limit?: number;
+//   search?: string;
+//   status?: string;
+// }) => {
+
+//   const params = new URLSearchParams();
+
+//   params.append("page", String(payload.page));
+//   params.append("limit", String(payload.limit));
+
+//   if (payload.search) params.append("search", payload.search);
+//   if (payload.status) params.append("status", payload.status);
+
+//   const res = await apiClient(`affiliate?${params.toString()}`, {
+//     method: "GET",
+//   });
+
+//   return res;
+// };
+
+// // ----------------------------- Create Affiliates -----------------------------
+// export const createAffiliate = async (data: any) => {
+//   const res = await apiClient("affiliate", {
+//     method: "POST",
+//     body: JSON.stringify(data),
+//   });
+//   console.log("Create Affiliate Response:", res);
+//   return res;
+// };
+
+// // ----------------------------- Get Tenant By ID -----------------------------
+// export const getTenantById = async (id: string) => {
+//   const res = await apiClient(`affiliate/${id}`, {
+//     method: 'GET',
+//   });
+//   return res;
+// };
+
+// // ----------------------------- Get Tenant By ID To EDIT -----------------------------
+// export const getTenantByIdtoEdit = async (id: string) => {
+//   const res = await apiClient(`affiliate/fetch/${id}`, {
+//     method: 'GET',
+//   });
+//   return res;
+// };
+
+
+
+// // **************************************************************************  
+// // ***************************** TENANT KYBAPIs ****************************
+// // ************************************************************************** 
+
+// // ----------------------------- Get Tenant KYB -----------------------------
+// export const getTenantKYB = async (id: string) => {
+//   const res = await apiClient(`tenantkyb/${id}`, {
+//     method: 'GET',
+//   });
+//   return res;
+// };
+
+// // ----------------------------- Get System KYB Doc -----------------------------
+// export const getKYBDocTypes = async () => {
+//   const res = await apiClient(`kybdoc`, {
+//     method: 'GET',
+//   });
+//   return res;
+// };
+
+// // ----------------------------- Upload Tenant KYB -----------------------------
+// export const uploadTenantKYB = async (
+//   data: FormData
+// ) => {
+//   const res = await apiClient(
+//     'tenantkyb/upload',
+//     {
+//       method: 'POST',
+//       body: data,
+//     }
+//   );
+//   console.log(
+//     'Upload Tenant KYB Response:',
+//     res
+//   );
+//   return res;
+// };
+
+
+// // **************************************************************************  
+// // ***************************** Tenant Plan APIs ***************************
+// // ************************************************************************** 
+
+// // ----------------------------- Assign Subscription Plan -----------------------------
+// export const assignTenantPlan = async (data: any) => {
+//   const res = await apiClient(
+//     'tenant-subscriptions/assign-plan',
+//     {
+//       method: 'POST',
+//       body: JSON.stringify(data),
+//     }
+//   );
+
+//   console.log(
+//     'Assign Subscription Plan Response:',
+//     res
+//   );
+
+//   return res;
+// };
+
+// // ----------------------------- Cancel Subscription Plan  -----------------------------
+// export const cancelTenantPlan = async (data: any) => {
+//   const res = await apiClient("tenant-subscriptions/cancel", {
+//     method: "POST",
+//     body: JSON.stringify(data),
+//   });
+//   console.log("Cancel Subscription Plan Response:", res);
+//   return res;
+// };
+
+// // ----------------------------- Cancel Subscription Plan  -----------------------------
+// export const updateTenantPlan = async (data: any) => {
+//   const res = await apiClient("tenant-subscriptions/update-plan", {
+//     method: "POST",
+//     body: JSON.stringify(data),
+//   });
+//   console.log("Update Subscription Plan Response:", res);
+//   return res;
+// };
+
+
+
+
 import { apiClient } from "@/utils/apiClient";
 
+/* ==========================================================================
+   AUTH APIs
+========================================================================== */
 
-// ----------------------------- Login API request -----------------------------
+// Login
 export const login = async (payload: { email: string; password: string }) => {
-
   return apiClient("auth/root", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 };
 
-// ----------------------------- Fetch current logged-in user -----------------------------
+// Get current user profile
 export const profile = async (): Promise<any> => {
-  return await apiClient("auth/root/me", { method: "GET" });
+  return apiClient("auth/root/me", { method: "GET" });
 };
 
-// ----------------------------- Change Password API request -----------------------------
+// Update profile
+export const updateProfile = async (
+  data: FormData
+) => {
+
+  const res = await apiClient(
+    "auth/root/updateprofile",
+    {
+      method: "PUT",
+      body: data,
+    }
+  );
+
+  console.log(
+    "Update Profile Response:",
+    res
+  );
+
+  return res;
+};
+
+// Change password
 export const changePassword = async (data: any) => {
-  // Send change password request
   const res = await apiClient("auth/root/changepassword", {
     method: "POST",
     body: JSON.stringify(data),
   });
 
   console.log("Change Password Response:", res);
-
   return res;
 };
 
-// ----------------------------- Fetch system roles -----------------------------
+
+/* ==========================================================================
+   SYSTEM ACCESS MANAGEMENT
+========================================================================== */
+
+// Get system roles
 export const getSystemRoles = async (payload: {
   page?: number;
   limit?: number;
   search?: string;
   status?: string;
 }) => {
-
   const params = new URLSearchParams();
 
-  params.append("page", String(payload.page));
-  params.append("limit", String(payload.limit));
-
+  if (payload.page) params.append("page", String(payload.page));
+  if (payload.limit) params.append("limit", String(payload.limit));
   if (payload.search) params.append("search", payload.search);
   if (payload.status) params.append("status", payload.status);
 
-  const res = await apiClient(`role?${params.toString()}`, {
-    method: "GET",
-  });
-
-  return res;
+  return apiClient(`role?${params.toString()}`, { method: "GET" });
 };
 
-// ----------------------------- Create roles -----------------------------
-export const createRole =  async (data: any) => {
+// Create role
+export const createRole = async (data: any) => {
   const res = await apiClient("role", {
     method: "POST",
     body: JSON.stringify(data),
   });
+
   console.log("Create Role Response:", res);
   return res;
 };
 
-// ----------------------------- Update Status Commonly -----------------------------
+// Update status (generic)
 export const updateStatus = async (
   type: string,
   id: string,
-  payload: { status: 'ACTIVE' | 'INACTIVE' }
+  payload: { status: "ACTIVE" | "INACTIVE" }
 ) => {
-  const res = await apiClient(`${type}/${id}/status`, {
-    method: 'PATCH',
+  return apiClient(`${type}/${id}/status`, {
+    method: "PATCH",
     body: JSON.stringify(payload),
   });
-  return res;
 };
 
-// ----------------------------- Delete Entries Common function -----------------------------
+// Delete entity (generic)
 export const deleteEntity = async (type: string, id: string) => {
-  const res = await apiClient(`${type}/${id}`, {
-    method: 'DELETE',
-  });
-  return res;
+  return apiClient(`${type}/${id}`, { method: "DELETE" });
 };
 
-// ----------------------------- Get Role By ID -----------------------------
+// Get role by ID
 export const getRoleById = async (id: string) => {
-  const res = await apiClient(`role/${id}`, {
-    method: 'GET',
-  });
-  return res;
+  return apiClient(`role/${id}`, { method: "GET" });
 };
 
-// ----------------------------- Update Role -----------------------------
+// Update role
 export const updateRole = async (id: string, data: any) => {
-  const res = await apiClient(`role/${id}`, {
-    method: 'PUT',
+  return apiClient(`role/${id}`, {
+    method: "PUT",
     body: JSON.stringify(data),
   });
-
-  return res;
 };
 
-// ----------------------------- Update Role Permissin  -----------------------------
+// Update role permissions
 export const updateRoleModules = async (roleId: string, data: any) => {
-  const res = await apiClient(`role/${roleId}/permissions`, {
-    method: 'POST',
+  return apiClient(`role/${roleId}/permissions`, {
+    method: "POST",
     body: JSON.stringify(data),
   });
-
-  return res;
 };
 
-// ----------------------------- Fetch system users -----------------------------
+
+/* ==========================================================================
+   SYSTEM USERS
+========================================================================== */
+
+// Get system users
 export const getSystemUsers = async (payload: {
   page: number;
   limit: number;
@@ -120,7 +576,6 @@ export const getSystemUsers = async (payload: {
   roleId?: string;
   country?: string;
 }) => {
-
   const params = new URLSearchParams();
 
   params.append("page", String(payload.page));
@@ -131,44 +586,44 @@ export const getSystemUsers = async (payload: {
   if (payload.roleId) params.append("roleId", payload.roleId);
   if (payload.country) params.append("country", payload.country);
 
-  const res = await apiClient(`rootadmin?${params.toString()}`, {
+  return apiClient(`rootadmin?${params.toString()}`, {
     method: "GET",
   });
-
-  return res;
 };
 
-// ----------------------------- Get Admin By ID -----------------------------
+// Get user by ID
 export const getAdminUserById = async (id: string) => {
-  const res = await apiClient(`rootadmin/${id}`, {
-    method: 'GET',
-  });
-
-  return res;
+  return apiClient(`rootadmin/${id}`, { method: "GET" });
 };
 
-// ----------------------------- Add system users -----------------------------
-export const createAdminUser = async (data: any) => {
+
+// Create user
+export const createAdminUser = async (data: FormData) => {
   const res = await apiClient("rootadmin", {
     method: "POST",
-    body: JSON.stringify(data),
+    body: data,
   });
 
   console.log("Create Admin User Response:", res);
   return res;
 };
 
-// ----------------------------- Edit system users -----------------------------
-export const editAdminUser = async (userId: string, data: any) => {
+export const editAdminUser = async (userId: string, data: FormData) => {
   const res = await apiClient(`rootadmin/${userId}`, {
     method: "PUT",
-    body: JSON.stringify(data),
+    body: data, // ✅ pass FormData directly
   });
+
   console.log("Edit Admin User Response:", res);
   return res;
 };
 
-// ----------------------------- Fetch Root/Affiliate Modules -----------------------------
+
+/* ==========================================================================
+   MODULES
+========================================================================== */
+
+// Get modules
 export const getModulePackages = async (
   moduleType: string,
   payload: {
@@ -185,14 +640,12 @@ export const getModulePackages = async (
   if (payload.search) params.append("search", payload.search);
   if (payload.status) params.append("status", payload.status);
 
-  const res = await apiClient(`${moduleType}?${params.toString()}`, {
+  return apiClient(`${moduleType}?${params.toString()}`, {
     method: "GET",
   });
-
-  return res;
 };
 
-// ----------------------------- Create Root Modules -----------------------------
+// Create root module
 export const createRootModules = async (data: any) => {
   const res = await apiClient("systemmodule/add", {
     method: "POST",
@@ -203,7 +656,7 @@ export const createRootModules = async (data: any) => {
   return res;
 };
 
-// ----------------------------- Create Tenat Modules -----------------------------
+// Create tenant module
 export const createTenantModules = async (data: any) => {
   const res = await apiClient("tenantmodule/add", {
     method: "POST",
@@ -214,29 +667,27 @@ export const createTenantModules = async (data: any) => {
   return res;
 };
 
-// ----------------------------- Create List All Plans -----------------------------
+
+/* ==========================================================================
+   PLANS
+========================================================================== */
+
+// Get plans
 export const getPlans = async (payload: {
   page?: number;
   limit?: number;
   search?: string;
-
 }) => {
-
   const params = new URLSearchParams();
 
   params.append("page", String(payload.page));
   params.append("limit", String(payload.limit));
-
   if (payload.search) params.append("search", payload.search);
 
-  const res = await apiClient(`plan?${params.toString()}`, {
-    method: "GET",
-  });
-
-  return res;
+  return apiClient(`plan?${params.toString()}`, { method: "GET" });
 };
 
-// ----------------------------- Create Plan -----------------------------
+// Create plan
 export const createPlan = async (data: any) => {
   const res = await apiClient("plan", {
     method: "POST",
@@ -247,44 +698,210 @@ export const createPlan = async (data: any) => {
   return res;
 };
 
-// ----------------------------- Get Plan By ID to Edit -----------------------------
+// Get plan by ID
 export const getPlantoEdit = async (id: string) => {
-  const res = await apiClient(`plan/fetch/${id}`, {
-    method: 'GET',
-  });
-  console.log("Plan Details Response:", JSON.stringify(res));
+  const res = await apiClient(`plan/fetch/${id}`, { method: "GET" });
 
+  console.log("Plan Details Response:", res);
   return res;
 };
 
-// ----------------------------- Edit Plan  -----------------------------
+// Update plan
 export const updatePlan = async (planId: string, data: any) => {
-  const res = await apiClient(`plan/${planId}`, {
-    method: 'PUT',
+  return apiClient(`plan/${planId}`, {
+    method: "PUT",
     body: JSON.stringify(data),
   });
-
-  return res;
 };
 
-// ----------------------------- Update Plan Permissin  -----------------------------
+// Update plan modules
 export const updatePlanModules = async (planId: string, data: any) => {
-  const res = await apiClient(`plan/${planId}/modules`, {
-    method: 'POST',
+  return apiClient(`plan/${planId}/modules`, {
+    method: "POST",
     body: JSON.stringify(data),
   });
-
-  return res;
 };
 
-// ----------------------------- Fetch Affiliates -----------------------------
+
+/* ==========================================================================
+   AFFILIATES
+========================================================================== */
+
+// Get affiliates
 export const getAffiliates = async (payload: {
   page?: number;
   limit?: number;
   search?: string;
   status?: string;
 }) => {
+  const params = new URLSearchParams();
 
+  params.append("page", String(payload.page));
+  params.append("limit", String(payload.limit));
+  if (payload.search) params.append("search", payload.search);
+  if (payload.status) params.append("status", payload.status);
+
+  return apiClient(`affiliate?${params.toString()}`, {
+    method: "GET",
+  });
+};
+
+// Create affiliate
+export const createAffiliate = async (data: any) => {
+  const res = await apiClient("affiliate", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+  console.log("Create Affiliate Response:", res);
+  return res;
+};
+
+// Get affiliate by ID
+export const getTenantById = async (id: string) => {
+  return apiClient(`affiliate/${id}`, { method: "GET" });
+};
+
+// Get affiliate (edit)
+export const getTenantByIdtoEdit = async (id: string) => {
+  return apiClient(`affiliate/fetch/${id}`, { method: "GET" });
+};
+
+// Update Affiliate (Tenant)
+export const updateAffiliate = async (
+  affiliateId: string,
+  data: any
+) => {
+  const res = await apiClient(`affiliate/${affiliateId}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+
+  console.log("Update Affiliate Response:", res);
+  return res;
+};
+
+export const updateLogo = async (tenantId: string, data: FormData) => {
+  const res = await apiClient(`affiliate/updateTenantLogo/${tenantId}`, {
+    method: "PUT",
+    body: data, // 
+  });
+
+  console.log("Update Logo Resonse", res);
+  return res;
+};
+
+
+/* ==========================================================================
+   KYB
+========================================================================== */
+
+// Get tenant KYB
+export const getTenantKYB = async (id: string) => {
+  return apiClient(`tenantkyb/${id}`, { method: "GET" });
+};
+
+// Get KYB doc types
+export const getKYBDocTypes = async () => {
+  return apiClient("kybdoc", { method: "GET" });
+};
+
+// Upload KYB
+export const uploadTenantKYB = async (data: FormData) => {
+  const res = await apiClient("tenantkyb/upload", {
+    method: "POST",
+    body: data,
+  });
+
+  console.log("Upload Tenant KYB Response:", res);
+  return res;
+};
+
+
+/* ==========================================================================
+   TENANT SUBSCRIPTIONS
+========================================================================== */
+
+// Assign plan
+export const assignTenantPlan = async (data: any) => {
+  const res = await apiClient("tenant-subscriptions/assign-plan", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+  console.log("Assign Plan Response:", res);
+  return res;
+};
+
+// Cancel plan
+export const cancelTenantPlan = async (data: any) => {
+  const res = await apiClient("tenant-subscriptions/cancel", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+  console.log("Cancel Plan Response:", res);
+  return res;
+};
+
+// Update plan
+export const updateTenantPlan = async (data: any) => {
+  const res = await apiClient("tenant-subscriptions/update-plan", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+  console.log("Update Plan Response:", res);
+  return res;
+};
+
+// Get tenant plan
+export const getTenantPlan = async (
+  tenantId: string
+) => {
+  const res = await apiClient(
+    `tenant-subscriptions/${tenantId}`,
+    {
+      method: 'GET',
+    }
+  );
+
+  console.log(
+    'Get Tenant Plan Response:',
+    res
+  );
+
+  return res;
+};
+
+// Get tenant plan historical data
+export const getTenantPlanHistory = async (
+  tenantId: string
+) => {
+  const res = await apiClient(
+    `tenant-subscriptions/history/${tenantId}`,
+    {
+      method: 'GET',
+    }
+  );
+
+  console.log(
+    'Get Tenant Plan History Response:',
+    res
+  );
+
+  return res;
+};
+
+// Get tenant plan historical data
+export const getKYBListtoVerify = async (payload: {
+  page: number;
+  limit: number;
+  search?: string;
+  status?: string;
+  roleId?: string;
+  country?: string;
+}) => {
   const params = new URLSearchParams();
 
   params.append("page", String(payload.page));
@@ -292,28 +909,20 @@ export const getAffiliates = async (payload: {
 
   if (payload.search) params.append("search", payload.search);
   if (payload.status) params.append("status", payload.status);
+  if (payload.roleId) params.append("roleId", payload.roleId);
+  if (payload.country) params.append("country", payload.country);
 
-  const res = await apiClient(`affiliate?${params.toString()}`, {
-    method: "GET",
-  });
+  const res = await apiClient(
+    `tenantkyb`,
+    {
+      method: 'GET',
+    }
+  );
 
-  return res;
-};
+  console.log(
+    'Get All KYBs List Response:',
+    res
+  );
 
-// ----------------------------- Create Affiliates -----------------------------
-export const createAffiliate = async (data: any) => {
-  const res = await apiClient("affiliate", {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
-  console.log("Create Affiliate Response:", res);
-  return res;
-};
-
-// ----------------------------- Get Affiliate By ID -----------------------------
-export const getAffiliateById = async (id: string) => {
-  const res = await apiClient(`affiliate/${id}`, {
-    method: 'GET',
-  });
   return res;
 };

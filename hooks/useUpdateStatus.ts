@@ -1,4 +1,3 @@
-// hooks/useUpdateStatus.ts
 'use client';
 import { useState } from 'react';
 import { updateStatus } from '@/services/auth.service';

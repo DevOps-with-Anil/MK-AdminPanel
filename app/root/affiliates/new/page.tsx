@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Save, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
@@ -22,29 +22,48 @@ import { MultiLangTabs } from '@/components/common/MultiLangTabs';
 import { MultiLangInput } from '@/components/common/MultiLangInput';
 import { MultiLangTextarea } from '@/components/common/MultiLangTextarea';
 
-
 import { createAffiliate } from '@/services/auth.service';
+
+import { AppMessage } from '@/components/common/AppMessage';
+import { useAppMessage } from '@/hooks/ui/useAppMessage';
+
 
 /* ================= TYPES ================= */
 
 type MultiLangText = Record<Language, string>;
 
+/* ================= TYPES ================= */
+
 interface TenantForm {
   companyName: MultiLangText;
   description: MultiLangText;
+
   contact_email: string;
   phoneCode: string;
   contact_phoneNumber: string;
+
   website: string;
   adminPanelUrl: string;
+
   apiDomains: string[];
+
   country: string;
   state: string;
   city: string;
+
   addressLine1: string;
-  addressLine2?: string; // optional
-  landmark?: string; // optional
+  addressLine2?: string;
+  landmark?: string;
+
   zipCode: string;
+
+  /* ================= ADMIN ================= */
+
+  adminName: string;
+  adminEmail: string;
+  adminPhoneCode: string;
+  adminPhoneNumber: string;
+  adminPassword: string;
 }
 
 type Option = {
@@ -60,29 +79,6 @@ interface DropdownProps {
   placeholder?: string;
 }
 
-/* ================= CONSTANTS ================= */
-
-// const PHONE_CODES: Option[] = [
-//   { code: '+91', label: 'India (+91)' },
-//   { code: '+1', label: 'USA (+1)' },
-// ];
-
-// const COUNTRIES: Option[] = [
-//   { value: 'India', label: 'India' },
-//   { value: 'USA', label: 'USA' },
-// ];
-
-// const STATES: Option[] = [
-//   { value: 'Madhya Pradesh', label: 'Madhya Pradesh' },
-//   { value: 'Maharashtra', label: 'Maharashtra' },
-//   { value: 'Delhi', label: 'Delhi' },
-// ]
-
-// const CITIES: Option[] = [
-//   { value: 'Bhopal', label: 'Bhopal' },
-//   { value: 'Indore', label: 'Indore' },
-//   { value: 'Mumbai', label: 'Mumbai' },
-// ];
 
 /* ================= HELPERS ================= */
 
@@ -115,16 +111,26 @@ function Dropdown({ options, value, onChange, placeholder = 'Select' }: Dropdown
 function NewTenantContent() {
 
   const { locale } = useContext(I18nContext);
-
   const [currentLang, setCurrentLang] = useState<Language>(locale);
+  
+  // const [success, setSuccess] = useState(false);
+  // const [successMessage, setSuccessMessage] = useState('');
+  // const [apiError, setApiError] = useState('');
+  
+  // Fields error states
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [success, setSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [apiError, setApiError] = useState('');
+  // APis Response states
+  const { message, type, visible, showMessage, clearMessage } = useAppMessage();
 
-    /* ================= New Affiliate Data Form ================= */
+  // Show/Hide Password icon state
+  const [showPassword, setShowPassword] = useState(false);
 
-   const [formData, setFormData] = useState<TenantForm>({
+
+  /* ================= New Affiliate Data Form ================= */
+
+  /* ================= INITIAL STATE ================= */
+
+  const [formData, setFormData] = useState<TenantForm>({
     companyName: createMultiLangObject(),
     description: createMultiLangObject(),
     contact_email: '',
@@ -140,10 +146,14 @@ function NewTenantContent() {
     addressLine2: '',
     landmark: '',
     zipCode: '',
-  })
-
+    adminName: '',
+    adminEmail: '',
+    adminPhoneCode: '',
+    adminPhoneNumber: '',
+    adminPassword: '',
+  });
   const countries = getCountries();
-  const states = getStates(formData.country); 
+  const states = getStates(formData.country);
   const cities = getCities(formData.country, formData.state);
 
   /* ================= HANDLERS ================= */
@@ -160,28 +170,28 @@ function NewTenantContent() {
   };
 
   const setField = (field: keyof TenantForm, value: string) => {
-  setFormData((prev) => {
-    if (field === 'country') {
+    setFormData((prev) => {
+      if (field === 'country') {
+        return {
+          ...prev,
+          country: value,
+          state: '', // ✅ reset state
+          city: '',  // ✅ reset city
+        };
+      }
+      if (field === 'state') {
+        return {
+          ...prev,
+          state: value,
+          city: '', // ✅ reset city
+        };
+      }
       return {
         ...prev,
-        country: value,
-        state: '', // ✅ reset state
-        city: '',  // ✅ reset city
+        [field]: value,
       };
-    }
-    if (field === 'state') {
-      return {
-        ...prev,
-        state: value,
-        city: '', // ✅ reset city
-      };
-    }
-    return {
-      ...prev,
-      [field]: value,
-    };
-  });
-};
+    });
+  };
 
   const setDomain = (i: number, value: string) => {
     const updated = [...formData.apiDomains];
@@ -199,39 +209,267 @@ function NewTenantContent() {
 
   /* ================= VALIDATION ================= */
 
+  /* ================= VALIDATION ================= */
+
   const validateForm = () => {
+
     const newErrors: Record<string, string> = {};
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^[0-9]{7,15}$/;
-    const urlRegex = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/\S*)?$/i;
 
-    if (!formData.companyName.en.trim()) newErrors.companyName = 'Company name (EN) is required';
-    if (!formData.description.en.trim()) newErrors.description = 'Description (EN) is required';
+    /* ================= REGEX ================= */
 
-    if (!formData.contact_email.trim()) newErrors.contact_email = 'Email is required';
-    else if (!emailRegex.test(formData.contact_email)) newErrors.contact_email = 'Invalid email format';
+    const emailRegex =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!formData.phoneCode.trim()) newErrors.phoneCode = 'Phone code is required';
+    const phoneRegex =
+      /^[0-9]{7,15}$/;
 
-    if (!formData.contact_phoneNumber.trim()) newErrors.contact_phoneNumber = 'Phone number is required';
-    else if (!phoneRegex.test(formData.contact_phoneNumber)) newErrors.contact_phoneNumber = 'Phone must be 7–15 digits only';
+    const urlRegex =
+      /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/\S*)?$/i;
 
-    if (!formData.website.trim()) newErrors.website = 'Website is required';
-    else if (!urlRegex.test(formData.website)) newErrors.website = 'Invalid website URL';
+    // Minimum 8 chars
+    // 1 uppercase
+    // 1 lowercase
+    // 1 number
+    // 1 special char
 
-    if (!formData.adminPanelUrl.trim()) newErrors.adminPanelUrl = 'Admin URL is required';
-    else if (!urlRegex.test(formData.adminPanelUrl)) newErrors.adminPanelUrl = 'Invalid admin URL';
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.#_-])[A-Za-z\d@$!%*?&.#_-]{8,}$/;
 
-    if (!formData.apiDomains.length) newErrors.apiDomains = 'At least one domain is required';
-    else if (formData.apiDomains.some(d => !d.trim() || !urlRegex.test(d))) newErrors.apiDomains = 'All domains must be valid URLs';
+    /* ================= COMPANY ================= */
 
-    if (!formData.country) newErrors.country = 'Country is required';
-    if (!formData.state) newErrors.state = 'State is required';
-    if (!formData.city) newErrors.city = 'City is required';
-    if (!formData.addressLine1.trim()) newErrors.addressLine1 = 'Address Line 1 is required';
-    if (!formData.zipCode.trim()) newErrors.pincode = 'Pincode is required';
+    if (!formData.companyName.en?.trim()) {
+      newErrors.companyName =
+        'Company name (EN) is required';
+    } else if (
+      formData.companyName.en.trim().length < 2
+    ) {
+      newErrors.companyName =
+        'Company name must be at least 2 characters';
+    }
+
+    if (!formData.description.en?.trim()) {
+      newErrors.description =
+        'Description (EN) is required';
+    } else if (
+      formData.description.en.trim().length < 10
+    ) {
+      newErrors.description =
+        'Description must be at least 10 characters';
+    }
+
+    /* ================= CONTACT ================= */
+
+    if (!formData.contact_email?.trim()) {
+
+      newErrors.contact_email =
+        'Email is required';
+
+    } else if (
+      !emailRegex.test(
+        formData.contact_email.trim()
+      )
+    ) {
+
+      newErrors.contact_email =
+        'Invalid email format';
+    }
+
+    if (!formData.phoneCode?.trim()) {
+
+      newErrors.phoneCode =
+        'Phone code is required';
+    }
+
+    if (!formData.contact_phoneNumber?.trim()) {
+
+      newErrors.contact_phoneNumber =
+        'Phone number is required';
+
+    } else if (
+      !phoneRegex.test(
+        formData.contact_phoneNumber
+      )
+    ) {
+
+      newErrors.contact_phoneNumber =
+        'Phone number must contain 7 to 15 digits';
+    }
+
+    /* ================= PLATFORM ================= */
+
+    if (!formData.website?.trim()) {
+
+      newErrors.website =
+        'Website is required';
+
+    } else if (
+      !urlRegex.test(
+        formData.website.trim()
+      )
+    ) {
+
+      newErrors.website =
+        'Invalid website URL';
+    }
+
+    if (!formData.adminPanelUrl?.trim()) {
+
+      newErrors.adminPanelUrl =
+        'Admin panel URL is required';
+
+    } else if (
+      !urlRegex.test(
+        formData.adminPanelUrl.trim()
+      )
+    ) {
+
+      newErrors.adminPanelUrl =
+        'Invalid admin panel URL';
+    }
+
+    /* ================= API DOMAINS ================= */
+
+    const validDomains =
+      formData.apiDomains.filter(
+        (d) => d.trim() !== ''
+      );
+
+    if (!validDomains.length) {
+
+      newErrors.apiDomains =
+        'At least one API domain is required';
+
+    } else {
+
+      const invalidDomain =
+        validDomains.some(
+          (domain) =>
+            !urlRegex.test(domain.trim())
+        );
+
+      if (invalidDomain) {
+
+        newErrors.apiDomains =
+          'All API domains must be valid URLs';
+      }
+    }
+
+    /* ================= ADDRESS ================= */
+
+    if (!formData.country?.trim()) {
+
+      newErrors.country =
+        'Country is required';
+    }
+
+    if (!formData.state?.trim()) {
+
+      newErrors.state =
+        'State is required';
+    }
+
+    if (!formData.city?.trim()) {
+
+      newErrors.city =
+        'City is required';
+    }
+
+    if (!formData.addressLine1?.trim()) {
+
+      newErrors.addressLine1 =
+        'Address Line 1 is required';
+
+    } else if (
+      formData.addressLine1.trim().length < 5
+    ) {
+
+      newErrors.addressLine1 =
+        'Address Line 1 is too short';
+    }
+
+    if (!formData.zipCode?.trim()) {
+
+      newErrors.zipCode =
+        'Zip code is required';
+
+    } else if (
+      formData.zipCode.trim().length < 4
+    ) {
+
+      newErrors.zipCode =
+        'Invalid zip code';
+    }
+
+    /* ================= ADMIN ================= */
+
+    if (!formData.adminName?.trim()) {
+
+      newErrors.adminName =
+        'Admin name is required';
+
+    } else if (
+      formData.adminName.trim().length < 2
+    ) {
+
+      newErrors.adminName =
+        'Admin name must be at least 2 characters';
+    }
+
+    if (!formData.adminEmail?.trim()) {
+
+      newErrors.adminEmail =
+        'Admin email is required';
+
+    } else if (
+      !emailRegex.test(
+        formData.adminEmail.trim()
+      )
+    ) {
+
+      newErrors.adminEmail =
+        'Invalid admin email format';
+    }
+
+    if (!formData.adminPhoneCode?.trim()) {
+
+      newErrors.adminPhoneCode =
+        'Admin phone code is required';
+    }
+
+    if (!formData.adminPhoneNumber?.trim()) {
+
+      newErrors.adminPhoneNumber =
+        'Admin phone number is required';
+
+    } else if (
+      !phoneRegex.test(
+        formData.adminPhoneNumber
+      )
+    ) {
+
+      newErrors.adminPhoneNumber =
+        'Admin phone number must contain 7 to 15 digits';
+    }
+
+    if (!formData.adminPassword?.trim()) {
+
+      newErrors.adminPassword =
+        'Admin password is required';
+
+    } else if (
+      !passwordRegex.test(
+        formData.adminPassword
+      )
+    ) {
+
+      newErrors.adminPassword =
+        'Password must contain uppercase, lowercase, number, special character and minimum 8 characters';
+    }
+
+    /* ================= SET ERRORS ================= */
 
     setErrors(newErrors);
+
     return Object.keys(newErrors).length === 0;
   };
 
@@ -240,7 +478,9 @@ function NewTenantContent() {
   function mapFormToPayload(formData: TenantForm) {
     return {
       companyName: formData.companyName,
+
       description: formData.description,
+
       contact: {
         email: formData.contact_email,
         phone: {
@@ -248,11 +488,14 @@ function NewTenantContent() {
           number: formData.contact_phoneNumber
         }
       },
+
       platform: {
         website: formData.website,
         adminPanelUrl: formData.adminPanelUrl
       },
+
       apiDomains: formData.apiDomains,
+
       address: {
         addressLine1: formData.addressLine1,
         addressLine2: formData.addressLine2,
@@ -261,6 +504,16 @@ function NewTenantContent() {
         state: formData.state,
         country: formData.country,
         zipCode: formData.zipCode
+      },
+
+      /* ================= ADMIN ================= */
+
+      admin: {
+        name: formData.adminName,
+        email: formData.adminEmail,
+        phoneCode: formData.adminPhoneCode,
+        phoneNumber: formData.adminPhoneNumber,
+        password: formData.adminPassword
       }
     };
   }
@@ -268,46 +521,69 @@ function NewTenantContent() {
   /* ================= SUBMIT HANDLER ================= */
 
   const handleSubmit = async () => {
-    setSuccessMessage('');
-    setApiError('');
+    // setSuccessMessage('');
+    // setApiError('');
 
-    setSuccess(false);
-
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      return;
+    }
 
     try {
       const payload = mapFormToPayload(formData);
       console.log('Payload ready to send:', JSON.stringify(payload));
 
-      await createAffiliate(payload);
-      setSuccess(true);
+     const res =  await createAffiliate(payload);
+
       setErrors({});
 
-      setSuccessMessage('Affiliate created successfully!');
-      setTimeout(() => {
-        setSuccess(false);
-        setSuccessMessage('');
-      }, 1000);
+      // setSuccessMessage('Affiliate created successfully!');
+
+      showMessage(res?.message ||
+        `Affiliate created successfully!`,
+        'success'
+      );
+      // setTimeout(() => {
+      //   setSuccess(false);
+      //   setSuccessMessage('');
+      // }, 1000);
+
+      /* ================= RESET FORM ================= */
 
       setFormData({
         companyName: createMultiLangObject(),
         description: createMultiLangObject(),
+
         contact_email: "",
         phoneCode: "",
         contact_phoneNumber: "",
+
         website: "",
         adminPanelUrl: "",
+
         apiDomains: [],
+
         country: "",
         state: "",
         city: "",
+
         addressLine1: "",
         addressLine2: "",
         landmark: "",
+
         zipCode: "",
+
+        adminName: "",
+        adminEmail: "",
+        adminPhoneCode: "",
+        adminPhoneNumber: "",
+        adminPassword: "",
       });
     } catch {
-      setApiError('Something went wrong. Please try again.');
+      // setApiError('Something went wrong. Please try again.');
+      showMessage(
+        `Something went wrong. Please try again.`,
+        'danger'
+      );
     } finally {
     }
   };
@@ -385,24 +661,24 @@ function NewTenantContent() {
               </div> */}
 
               <div className="grid grid-cols-3 gap-4">
-  <Dropdown
-    options={countries}
-    value={formData.country}
-    onChange={(v) => setField('country', v)}
-  />
+                <Dropdown
+                  options={countries}
+                  value={formData.country}
+                  onChange={(v) => setField('country', v)}
+                />
 
-  <Dropdown
-    options={states}
-    value={formData.state}
-    onChange={(v) => setField('state', v)}
-  />
+                <Dropdown
+                  options={states}
+                  value={formData.state}
+                  onChange={(v) => setField('state', v)}
+                />
 
-  <Dropdown
-    options={cities}
-    value={formData.city}
-    onChange={(v) => setField('city', v)}
-  />
-</div>
+                <Dropdown
+                  options={cities}
+                  value={formData.city}
+                  onChange={(v) => setField('city', v)}
+                />
+              </div>
 
 
               {errors.country && <p className="text-red-500 text-xs">{errors.country}</p>}
@@ -415,6 +691,117 @@ function NewTenantContent() {
         </div>
 
         <div className="space-y-6">
+
+          {/* ================= ADMIN CREDENTIALS ================= */}
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Admin Credentials</CardTitle>
+
+              <CardDescription>
+                Create default tenant admin account
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+
+              <Input
+                placeholder="Admin Name"
+                value={formData.adminName}
+                onChange={(e) =>
+                  setField('adminName', e.target.value)
+                }
+              />
+
+              {errors.adminName && (
+                <p className="text-red-500 text-xs">
+                  {errors.adminName}
+                </p>
+              )}
+
+              <Input
+                placeholder="Admin Email"
+                value={formData.adminEmail}
+                onChange={(e) =>
+                  setField('adminEmail', e.target.value)
+                }
+              />
+
+              {errors.adminEmail && (
+                <p className="text-red-500 text-xs">
+                  {errors.adminEmail}
+                </p>
+              )}
+
+              <div className="grid grid-cols-[150px_1fr] gap-2">
+
+                <Dropdown
+                  options={PHONE_CODES}
+                  value={formData.adminPhoneCode}
+                  onChange={(v) =>
+                    setField('adminPhoneCode', v)
+                  }
+                />
+
+                <Input
+                  placeholder="Admin Phone Number"
+                  value={formData.adminPhoneNumber}
+                  onChange={(e) =>
+                    setField(
+                      'adminPhoneNumber',
+                      e.target.value.replace(/\D/g, '')
+                    )
+                  }
+                />
+
+              </div>
+
+              {errors.adminPhoneCode && (
+                <p className="text-red-500 text-xs">
+                  {errors.adminPhoneCode}
+                </p>
+              )}
+
+              {errors.adminPhoneNumber && (
+                <p className="text-red-500 text-xs">
+                  {errors.adminPhoneNumber}
+                </p>
+              )}
+
+              <div className="relative">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Admin Password"
+                  value={formData.adminPassword}
+                  onChange={(e) =>
+                    setField('adminPassword', e.target.value)
+                  }
+                  className="pr-10"
+                />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowPassword(!showPassword)
+                  }
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+
+              {errors.adminPassword && (
+                <p className="text-red-500 text-xs">
+                  {errors.adminPassword}
+                </p>
+              )}
+
+            </CardContent>
+          </Card>
           <Card>
             <CardHeader>
               <CardTitle>Platform Config</CardTitle>
@@ -449,19 +836,7 @@ function NewTenantContent() {
         </div>
       </div>
 
-      {/* Success */}
-      {successMessage && (
-        <div className="p-3 rounded-md bg-green-100 text-green-700 border border-green-300">
-          {successMessage}
-        </div>
-      )}
 
-      {/* Error */}
-      {errors.global && (
-        <div className="p-3 rounded-md bg-red-100 text-red-700 border border-red-300">
-          {errors.global}
-        </div>
-      )}
       <div className="flex gap-3">
         <Button className="flex-1" onClick={handleSubmit}>
           <Save className="w-4 h-4 mr-2" />Create
@@ -471,6 +846,14 @@ function NewTenantContent() {
           <Button variant="outline" className="w-full">Cancel</Button>
         </Link>
       </div>
+
+      {/* RIGHT SIDE RESPONSE MESSAGE */}
+      <AppMessage
+        visible={visible}
+        message={message}
+        type={type}
+        onClose={clearMessage}
+      />
     </div>
   );
 }

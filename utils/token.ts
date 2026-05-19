@@ -1,8 +1,8 @@
-const TOKEN_KEY = "mk_token";
-const ROLE_KEY = "mk_roleType";
+const TOKEN_KEY = "r_token";
+const ROLE_KEY = "r_roleType";
 
 export const tokenStorage = {
-  set(token: string, roleType: "ROOT" | "ADMIN") {
+  set(token: string, roleType: string) {
     const expires = new Date();
     expires.setHours(expires.getHours() + 5);
     const isProd = process.env.NODE_ENV === "production";
@@ -19,14 +19,14 @@ export const tokenStorage = {
     return match ? match[2] : null;
   },
 
-  getRole(): "ROOT" | "ADMIN" | null {
+  getRole(): "ROOT" | null {
     if (typeof document === "undefined") return null;
 
     const match = document.cookie.match(
       new RegExp("(^| )" + ROLE_KEY + "=([^;]+)")
     );
 
-    return match ? (match[2] as "ROOT" | "ADMIN") : null;
+    return match ? (match[2] as "ROOT") : null;
   },
 
   clear() {

@@ -21,6 +21,7 @@ import {
   MoreVertical,
   Layers,
   CheckCircle,
+  ShieldCheck,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -397,65 +398,109 @@ function ModulesPageContent() {
         </div>
 
         {/* RIGHT */}
-        <div>
-          <Card className="sticky top-0">
-            <CardHeader>
-              <CardTitle>Module Actions</CardTitle>
-            </CardHeader>
+      <div>
+  <Card className="sticky top-4">
+    
+    <CardHeader>
+      <CardTitle>
+        Module Actions
+      </CardTitle>
 
-            <CardContent>
-              {selectedModule ? (
-                modules
-                  .filter((m) => m.id === selectedModule)
-                  .map((mod) => (
-                    <div key={mod.id} className="space-y-2">
-                      {mod.actions.map((action) => (
-                        <div
-                          key={action._id}
-                          className={`flex justify-between p-3 border rounded ${mod.status === 'inactive'
-                            ? 'opacity-50 pointer-events-none'
-                            : ''
-                            }`}
-                        >
-                          <div>
-                            <p className="text-sm font-medium">
-                              {action.actionName}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {action.key}
-                            </p>
-                          </div>
+      <CardDescription>
+        Detailed actions for selected module
+      </CardDescription>
+    </CardHeader>
 
-                          <Badge
-                            onClick={() =>
-                              handleToggleActionStatus(mod.id, action._id)
-                            }
-                            className={`cursor-pointer ${mod.status === 'inactive'
-                              ? 'bg-red-600 text-white cursor-not-allowed'
-                              : action.status
-                                ? 'bg-green-600 text-white'
-                                : 'bg-red-600 text-white'
-                              }`}
-                          >
-                            {mod.status === 'inactive'
-                              ? 'Disabled'
-                              : action.status
-                                ? 'Active'
-                                : 'Inactive'}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  ))
-              ) : (
-                <p className="text-center text-muted-foreground">
-                  Please select a module to view its actions
+    <CardContent>
 
-                </p>
-              )}
-            </CardContent>
-          </Card>
+      {!selectedModule ? (
+
+        <div className="py-10 text-center">
+          
+          <ShieldCheck className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+
+          <p className="text-muted-foreground">
+            Please select a module to view its actions
+          </p>
+
         </div>
+
+      ) : (
+
+        modules
+          .filter((m) => m.id === selectedModule)
+          .map((mod) => (
+
+            <div
+              key={mod.id}
+              className="space-y-3"
+            >
+
+              {/* MODULE INFO */}
+            
+              {/* ACTION LIST */}
+              {mod.actions.map((action) => (
+
+                <div
+                  key={action._id}
+                  className={`flex items-center justify-between border rounded-xl px-3 py-3 transition ${
+                    mod.status === 'inactive'
+                      ? 'opacity-50 pointer-events-none'
+                      : ''
+                  }`}
+                >
+
+                  {/* ACTION INFO */}
+                  <div className="pr-3">
+                    
+                    <p className="text-sm font-medium">
+                      {action.actionName}
+                    </p>
+
+                    <p className="text-xs text-muted-foreground">
+                      {action.key}
+                    </p>
+
+                  </div>
+
+                  {/* STATUS */}
+                  <Badge
+                    onClick={() =>
+                      handleToggleActionStatus(
+                        mod.id,
+                        action._id
+                      )
+                    }
+                    className={`cursor-pointer transition-colors ${
+                      mod.status === 'inactive'
+                        ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                        : action.status
+                          ? 'bg-green-100 text-green-800 border border-green-200 hover:bg-green-200'
+                          : 'bg-red-100 text-red-700 border border-red-200 hover:bg-red-200'
+                    }`}
+                  >
+                    {mod.status === 'inactive'
+                      ? 'Disabled'
+                      : action.status
+                        ? 'Active'
+                        : 'Inactive'}
+                  </Badge>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          ))
+
+      )}
+
+    </CardContent>
+
+  </Card>
+</div>
+        
       </div>
 
       {/* STATS */}

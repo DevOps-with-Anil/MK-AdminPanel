@@ -163,7 +163,7 @@ export default function Dashboard() {
             <h1 className="text-xl font-medium text-foreground">
               {t('translate.dashboard_overview')}
             </h1>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-muted-foreground">
               
               {t('translate.dashboard_welcome_message').replace('{name}', currentUser.name)}
             </p>
@@ -429,3 +429,4 @@ export default function Dashboard() {
 
   );
 }
+

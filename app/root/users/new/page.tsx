@@ -10,6 +10,9 @@ import { ArrowLeft, Save, Upload, ChevronDown, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link';
 import { createAdminUser, getSystemRoles } from '@/services/auth.service';
 
+import { AppMessage } from '@/components/common/AppMessage';
+import { useAppMessage } from '@/hooks/ui/useAppMessage';
+
 // ---------------------- Constants ----------------------
 
 // Country options for multi-select
@@ -149,7 +152,7 @@ function NewAdminContent() {
     role: '',
     allowedCountries: [] as string[],
     status: 'INACTIVE',
-    image: ''
+    photo: null as File | null
   });
 
   const [roles, setRoles] = useState<{ id: string; label: string }[]>([]);
@@ -157,6 +160,9 @@ function NewAdminContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const { message, type, visible, showMessage, clearMessage } = useAppMessage();
+
 
   // ---------------------- Handlers ----------------------
   // Handle input change for all fields
@@ -167,12 +173,20 @@ function NewAdminContent() {
 
   // Handle image upload
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const reader = new FileReader();
-      reader.onload = () => handleInputChange('image', reader.result as string);
-      reader.readAsDataURL(e.target.files[0]);
-    }
-  };
+  if (e.target.files && e.target.files[0]) {
+    const file = e.target.files[0];
+
+    // ✅ real file for backend
+    handleInputChange('photo', file);
+
+    // preview only
+    const reader = new FileReader();
+    reader.onload = () => {
+      handleInputChange('imagePreview', reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  }
+};
 
   // Validate form fields
   const validateForm = () => {
@@ -207,18 +221,31 @@ function NewAdminContent() {
     setErrors(prev => ({ ...prev, global: '' })); // clear global error
 
     try {
-      await createAdminUser({
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        phoneCode: formData.phoneCode,
-        phoneNumber: formData.phoneNumber,
-        role: formData.role,
-        allowedCountries: formData.allowedCountries,
-        status: formData.status as 'ACTIVE' | 'INACTIVE'
-      });
+      const payload = new FormData();
 
-      alert('Admin user created successfully!');
+      payload.append("name", formData.name);
+      payload.append("email", formData.email);
+      payload.append("password", formData.password);
+      payload.append("phoneCode", formData.phoneCode);
+      payload.append("phoneNumber", formData.phoneNumber);
+      payload.append("role", formData.role);
+      payload.append("status", formData.status);
+
+      formData.allowedCountries.forEach(c =>
+        payload.append("allowedCountries[]", c)
+      );
+
+      // ✅ IMAGE
+      if (formData.photo) {
+        payload.append("photo", formData.photo);
+      }
+
+      const res = await createAdminUser(payload);
+
+      showMessage(res?.message || 'User created successfully', 'success');
+
+
+      // alert('Admin user created successfully!');
 
       // Reset form after success
       setFormData({
@@ -230,7 +257,7 @@ function NewAdminContent() {
         role: roles[0]?.id || '',
         allowedCountries: [],
         status: 'INACTIVE',
-        image: ''
+        photo: null
       });
       setErrors({});
     } catch (err: any) {
@@ -355,7 +382,7 @@ function NewAdminContent() {
               <div>
                 <Label className="mb-2 block">Admin Image</Label>
                 <div className="flex items-center gap-4">
-                  {formData.image && <img src={formData.image} alt="Admin" className="w-20 h-20 rounded-full object-cover border" />}
+                  {formData.photo && <img src={formData.photo} alt="Admin" className="w-20 h-20 rounded-full object-cover border" />}
                   <label className="flex items-center gap-2 cursor-pointer px-3 py-2 border rounded-md">
                     <Upload className="w-4 h-4" /> Upload Image
                     <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
@@ -376,6 +403,14 @@ function NewAdminContent() {
           </Card>
         </div>
       </div>
+
+      {/* RIGHT SIDE RESPONSE MESSAGE */}
+      <AppMessage
+        visible={visible}
+        message={message}
+        type={type}
+        onClose={clearMessage}
+      />
     </div>
   );
 }

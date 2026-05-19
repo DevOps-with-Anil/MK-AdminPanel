@@ -68,16 +68,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  // Use a media query to determine if the screen is mobile
-  // const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  // const COUNTRIES: Record<Country, { label: string; flag: string }> = {
-  //   IN: { label: 'India', flag: '🇮🇳' },
-  //   FR: { label: 'France', flag: '🇫🇷' }
-  // };
 
   const savedLanguage = localStorage.getItem('lang') || 'en';
   const currentLanguageData = LANGUAGES[savedLanguage as Language];
-  console.log("current Language.  :  " + savedLanguage)
+  // console.log("current Language.  :  " + savedLanguage)
   // const currentLanguageData = LANGUAGES[locale];
   // const currentCountryData = COUNTRIES[currentCountry as Country] || COUNTRIES.IN;
 
@@ -87,34 +81,86 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // useEffect(() => {
+  //   // const savedLang = localStorage.getItem('lang') || 'en';
+  //   const fetchProfile = async () => {
+  //     setIsLoading(true);
+  //     try {
+  //       const token = tokenStorage.getToken(); // get token from cookie
+  //       if (!token) throw new Error("No token found");
+  //       const res = await profile(); // your API call
+  //       setProfileData(res);
+  //       // console.log("Profile Response on AdminLayout ::  " + JSON.stringify(res));
+  //     } catch (err: any) {
+  //       console.error(err);
+  //       setError(err.message || "Failed to load profile");
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
+  //   fetchProfile();
+  // }, []);
+
   useEffect(() => {
 
-    // const savedLang = localStorage.getItem('lang') || 'en';
     const fetchProfile = async () => {
       setIsLoading(true);
+
       try {
-        const token = tokenStorage.getToken(); // get token from cookie
-        if (!token) throw new Error("No token found");
-        const res = await profile(); // your API call
+        const token = tokenStorage.getToken();
+
+        if (!token) {
+          throw new Error("No token found");
+        }
+
+        const res = await profile();
+
         setProfileData(res);
-        // console.log("Profile Response on AdminLayout ::  " + JSON.stringify(res));
+
       } catch (err: any) {
+
         console.error(err);
+
         setError(err.message || "Failed to load profile");
+
       } finally {
+
         setIsLoading(false);
       }
     };
+
+    /**
+     * Initial fetch
+     */
     fetchProfile();
+
+    /**
+     * Listen profile updates
+     */
+    const handleProfileUpdated = () => {
+      fetchProfile();
+    };
+
+    window.addEventListener(
+      "profile-updated",
+      handleProfileUpdated
+    );
+
+    return () => {
+      window.removeEventListener(
+        "profile-updated",
+        handleProfileUpdated
+      );
+    };
+
   }, []);
+
 
   const handleLogout = () => {
     // Determine where to redirect based on current admin type
     tokenStorage.clear();
     if (currentAdminType.startsWith('root-admin')) {
-      router.push('/auth/root-login');
-    } else {
-      router.push('/auth/admin-login');
+      router.push('/auth/signin');
     }
   };
 
@@ -122,13 +168,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   const toggleItem = (label: string) => {
     setExpandedItems((prev) => ({
-      ...prev,
       [label]: !prev[label],
     }));
   };
 
-  
-    const generateBreadcrumbs = () => {
+
+  const generateBreadcrumbs = () => {
     const paths = pathname.split('/').filter(Boolean);
     // Filter out admin, dashboard, and 'modules' from clickable breadcrumb
     const filteredPaths = paths.filter(path => path !== 'root' && path !== 'dashboard');
@@ -194,7 +239,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           icon: CreditCard,
           children: [
             { label: t('translate.sidebar_plans_list'), href: '/root/plans' },
-            { label: t('translate.sidebar_subscribers'), href: '/root/plans/subscribers' },
+            { label: t('translate.sidebar_subscribers'), href: '/root/subscribers' },
           ],
         },
         {
@@ -500,7 +545,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             <Breadcrumb className="hidden md:flex">
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/admin/dashboard" className="flex items-center gap-1 hover:text-primary transition-colors">
+                  <BreadcrumbLink href="/root/dashboard" className="flex items-center gap-1 hover:text-primary transition-colors">
                     <Home size={18} />
                   </BreadcrumbLink>
                 </BreadcrumbItem>
@@ -643,19 +688,53 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-3 focus:outline-none group">
                   <div className="text-right hidden sm:block">
-                    <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{profileData?.data?.name}</p>
-                    <p className="text-xs text-muted-foreground">{profileData?.data?.role?.name}</p>
+                    <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+                      {profileData?.data?.name || "User"}
+                    </p>
+
+                    <p className="text-xs text-muted-foreground">
+                      {profileData?.data?.role?.name || ""}
+                    </p>
                   </div>
                   {/* <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold group-hover:bg-primary/20 transition-all border border-primary/20">
                     {currentUser.name.charAt(0)}
                   </div> */}
-                  <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold group-hover:bg-primary/20 transition-all border border-primary/20">
-                    {/* {currentUser?.name ? (
+                  {/* <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold group-hover:bg-primary/20 transition-all border border-primary/20 overflow-hidden">
+                    {profileData?.data?.photo ? (
+                      <img
+                        src={profileData?.data?.photo}
+                        alt={currentUser?.name || "User"}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : currentUser?.name ? (
                       currentUser.name.charAt(0).toUpperCase()
                     ) : (
                       <User className="w-4 h-4" />
-                    )} */}
-                    <User className="w-4 h-4" />
+                    )}
+                  </div> */}
+
+                  <div className="w-9 h-9 rounded-full overflow-hidden bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold group-hover:bg-primary/20 transition-all">
+
+                    {profileData?.data?.photo ? (
+
+                      <img
+                        src={profileData?.data?.photo}
+                        alt={profileData?.data?.name || "User"}
+                        className="w-full h-full object-cover"
+                      />
+
+                    ) : profileData?.data?.name ? (
+
+                      <span>
+                        {profileData.data.name.charAt(0).toUpperCase()}
+                      </span>
+
+                    ) : (
+
+                      <User className="w-4 h-4" />
+
+                    )}
+
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 p-0 overflow-hidden">

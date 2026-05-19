@@ -11,6 +11,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Save, Upload, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { getSystemRoles, editAdminUser, getAdminUserById } from '@/services/auth.service';
+import { AppMessage } from '@/components/common/AppMessage';
+import { useAppMessage } from '@/hooks/ui/useAppMessage';
 
 const COUNTRIES = [
   { code: 'IN', label: 'India' },
@@ -34,7 +36,9 @@ interface FormData {
   role: { id: string; label: string };
   allowedCountries: string[];
   status: StatusType;
-  image?: string;
+
+  photo?: File | null;     // new upload
+  photoUrl?: string;       // display (server OR preview)
 }
 
 interface DropdownOption {
@@ -148,7 +152,7 @@ function EditUserContent() {
     role: { id: '', label: '' },
     allowedCountries: [],
     status: 'INACTIVE',
-    image: '',
+    photo: null,
   });
 
   const [roles, setRoles] = useState<{ id: string; label: string }[]>([]);
@@ -157,17 +161,25 @@ function EditUserContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const { message, type, visible, showMessage, clearMessage } = useAppMessage();
+
+
 
   const handleInputChange = <K extends keyof FormData>(field: K, value: FormData[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const reader = new FileReader();
-      reader.onload = () => handleInputChange('image', reader.result as string);
-      reader.readAsDataURL(e.target.files[0]);
-    }
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      photo: file,
+
+      // 👇 override server image with preview
+      photoUrl: URL.createObjectURL(file),
+    }));
   };
 
 
@@ -183,23 +195,37 @@ function EditUserContent() {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  const handleSave = async () => {
 
+
+  const handleSave = async () => {
     if (!validateForm()) return;
-    console.log("Role ID is : " + formData.role.id);
 
     setIsLoading(true);
+
     try {
-      await editAdminUser(userId, {
-        name: formData.name,
-        email: formData.email,
-        phoneCode: formData.phoneCode.code,
-        phoneNumber: formData.phoneNumber,
-        role: formData.role.id,
-        allowedCountries: formData.allowedCountries,
-        status: formData.status as 'ACTIVE' | 'INACTIVE'
-      });
-      alert('User updated successfully!');
+      const payload = new FormData();
+
+      payload.append("name", formData.name);
+      payload.append("email", formData.email);
+      payload.append("phoneCode", formData.phoneCode.code);
+      payload.append("phoneNumber", formData.phoneNumber);
+      payload.append("role", formData.role.id);
+      payload.append("status", formData.status);
+      formData.allowedCountries.forEach((c) =>
+      payload.append("allowedCountries[]", c)
+      );
+
+      // ✅ IMPORTANT: only send file if user selected new image
+      if (formData.photo) {
+        payload.append("photo", formData.photo);
+      }
+
+      console.log("Update User Data : " + JSON.stringify(formData));
+
+      const res = await editAdminUser(userId, payload);
+
+      showMessage(res?.message || 'User updated successfully', 'success');
+
     } catch (err: any) {
       alert(err?.message || 'Failed to update user');
     } finally {
@@ -207,51 +233,52 @@ function EditUserContent() {
     }
   };
 
+
   // Fetch roles first
   useEffect(() => {
-  const fetchRoles = async () => {
-    try {
-      const response = await getSystemRoles({});
-      
-      // Check the actual data structure
-      console.log('Roles API response:', response);
+    const fetchRoles = async () => {
+      try {
+        const response = await getSystemRoles({});
 
-      // Adjust based on actual structure
-      const rolesData = response.data || response; // if response.data exists, use it; else use response itself
+        // Check the actual data structure
+        console.log('Roles API response:', response);
 
-      if (Array.isArray(rolesData)) {
-        const roleList = rolesData.map((role: any) => ({
-          id: role._id,   // map _id to id
-          label: role.name
-        }));
-        setRoles(roleList);
+        // Adjust based on actual structure
+        const rolesData = response.data || response; // if response.data exists, use it; else use response itself
 
-        // Set default selected role if available
-        if (roleList.length > 0) handleInputChange('role', roleList[0].id);
-      } else {
-        console.warn('Roles data is not an array:', rolesData);
+        if (Array.isArray(rolesData)) {
+          const roleList = rolesData.map((role: any) => ({
+            id: role._id,   // map _id to id
+            label: role.name
+          }));
+          setRoles(roleList);
+
+          // Set default selected role if available
+          if (roleList.length > 0) handleInputChange('role', roleList[0].id);
+        } else {
+          console.warn('Roles data is not an array:', rolesData);
+        }
+      } catch (err) {
+        console.error('Fetch roles error', err);
+      } finally {
+        setLoadingRoles(false);
       }
-    } catch (err) {
-      console.error('Fetch roles error', err);
-    } finally {
-      setLoadingRoles(false);
-    }
-  };
+    };
 
-  fetchRoles();
-}, []);
+    fetchRoles();
+  }, []);
 
   // Fetch user after roles loaded
   useEffect(() => {
     if (roles.length === 0) return; // wait for roles
 
-   
+
     const fetchUser = async () => {
       try {
         const res = await getAdminUserById(userId);
         const user = res.data;
 
-                console.log("User data is  : "+JSON.stringify(user))
+        console.log("User data is  : " + JSON.stringify(user))
 
 
         // Match role object from roles array
@@ -262,18 +289,20 @@ function EditUserContent() {
           matchedRole = roles[0] || { id: '', label: '' };
         }
 
-        console.log(user.role._id + "Matched Role is : "+matchedRole.label)
+        console.log(user.role._id + "Matched Role is : " + matchedRole.label)
 
         setFormData((prev) => ({
           ...prev,
-          name: user.name || '',
-          email: user.email || '',
-          phoneCode: PHONE_CODES.find((p) => p.code === user.phoneCode) || PHONE_CODES[0],
-          phoneNumber: user.phoneNumber || '',
-          role: matchedRole, // ✅ exact object from roles
-          allowedCountries: user.allowedCountries || [],
-          status: user.status || 'INACTIVE',
-          image: user.image || '',
+          name: user.name,
+          email: user.email,
+          phoneNumber: user.phoneNumber,
+          role: matchedRole,
+          allowedCountries: user.allowedCountries,
+          status: user.status,
+
+          // 👇 server image URL
+          photoUrl: user.photo || '',
+          photo: null,
         }));
       } catch (err) {
         console.error('Fetch user error', err);
@@ -384,10 +413,29 @@ function EditUserContent() {
               <div>
                 <Label>Admin Image</Label>
                 <div className="flex items-center gap-4">
-                  {formData.image && <img src={formData.image} className="w-20 h-20 rounded-full object-cover border" />}
+
+                  {/* IMAGE PREVIEW */}
+                  {formData.photoUrl ? (
+                    <img
+                      src={formData.photoUrl}
+                      className="w-20 h-20 rounded-full object-cover border"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full border flex items-center justify-center text-sm text-gray-500">
+                      No Image
+                    </div>
+                  )}
+
+                  {/* UPLOAD */}
                   <label className="flex items-center gap-2 cursor-pointer px-3 py-2 border rounded-md">
-                    <Upload className="w-4 h-4" /> Upload Image
-                    <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                    <Upload className="w-4 h-4" />
+                    Upload Image
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageChange}
+                    />
                   </label>
                 </div>
               </div>
@@ -404,6 +452,14 @@ function EditUserContent() {
           </Card>
         </div>
       </div>
+
+      {/* RIGHT SIDE RESPONSE MESSAGE */}
+      <AppMessage
+        visible={visible}
+        message={message}
+        type={type}
+        onClose={clearMessage}
+      />
     </div>
   );
 }

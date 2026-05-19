@@ -1,10 +1,9 @@
 'use client';
 
-import { AdminProvider } from '@/contexts/AdminContext';
-import { useAdmin } from '@/contexts/AdminContext';
-import { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
 
+import { AdminProvider, useAdmin } from '@/contexts/AdminContext';
+import { useState, useEffect, useContext, useCallback } from 'react';
+import Link from 'next/link';
 import {
   Card,
   CardContent,
@@ -12,11 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-
 import {
   Plus,
   Search,
@@ -27,49 +24,57 @@ import {
   CheckCircle,
   Eye,
 } from 'lucide-react';
-
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
 import { getAffiliates } from '@/services/auth.service';
 import { useDeleteEntity } from '@/hooks/useDeleteEntity';
+import { getConsistentBadgeColor } from '@/utils/getDynamicBadgeColor';
+import { I18nContext } from '@/i18n/provider';
+import { usePagination } from '@/hooks/ui/usePagination';
+
 
 interface Affiliate {
   id: string;
-  tenantId : string;
+  tenantId: string;
   companyName: string;
-  contact: { 
+  contact: {
     email: string;
-    phone: { 
-      code: string; 
-      number: string; 
+    phone: {
+      code: string;
+      number: string;
     };
   };
+  kybStatus: string;
   plan: string;
   isVerified: boolean;
-  // revenue: number;
-  status: 'active' | 'inactive' | 'suspended';
+  status: 'ACTIVE' | 'INACTIVE' | 'REJECTED' | 'SUSPENDED';
+  photo: null
 }
 
 export default function AffiliatesPage() {
+
+  // Contexts & State
   const { t } = useAdmin();
-
-  const [affiliates, setAffiliates] = useState<Affiliate[]>([]);
+  // Loading state
   const [loading, setLoading] = useState(true);
-
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState<number | 'All'>(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const PAGE_LIMIT_OPTIONS = [10, 25, 50, 'All'];
-
+  // Search state and debounce  
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-
   const { deleteEntity } = useDeleteEntity();
+  // Pagination
+  const PAGE_LIMIT_OPTIONS = [10, 25, 50, 'All'];
+  const { page, setPage, limit, setLimit } = usePagination(10);
+  // Total pages state
+  const [totalPages, setTotalPages] = useState(1);
+
+
+  // Affiliates data
+  const [affiliates, setAffiliates] = useState<Affiliate[]>([]);
+
 
   // debounce
   useEffect(() => {
@@ -79,7 +84,7 @@ export default function AffiliatesPage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // fetch (same pattern as plans)
+  // Fetch Tenants List
   const fetchAffiliates = useCallback(async () => {
     try {
       setLoading(true);
@@ -92,30 +97,40 @@ export default function AffiliatesPage() {
         search: debouncedSearch,
       });
 
-      // console.log("Affiliated data   :  " +JSON.stringify(res.data));
+      console.log("Affiliated data   :  " +JSON.stringify(res.data));
 
       const formatted: Affiliate[] =
-        res?.data?.map((r: any, index: number) => ({
+        res?.data?.map((r: any) => ({
           id: r._id,
-          tenantId:r.tenantId,
+          tenantId: r.tenantId,
+
           companyName: r.companyName || '',
+
           contact: {
-            email: r.contact?.email || r.email || '',
-            phone:{
-            code: r.contact?.phone.code || '0000',
-            number: r.contact?.phone.number || '000000',
+            email: r.contact?.email || '',
+            phone: {
+              code: r.contact?.phone?.code || '',
+              number: r.contact?.phone?.number || '',
             },
-            
           },
-          plan: r.plan ?? 'Free',
-          isVerified: r.isVerified ?? false,
-          // revenue: r.revenue ?? 0,
+
+          kybStatus: r.kybStatus || 'PENDING',
+
+          // ✅ Correct path
+          plan: r.currentSubscriptionId?.planName || 'Free',
+
+          // ✅ Correct path
+          isVerified: r.address?.isVerified ?? false,
+
           status:
             r.status === 'ACTIVE'
-              ? 'active'
+              ? 'ACTIVE'
               : r.status === 'SUSPENDED'
-                ? 'suspended'
-                : 'inactive',
+                ? 'SUSPENDED'
+                : r.status === 'REJECTED'
+                  ? 'REJECTED'
+                  : 'INACTIVE',
+                  photo: r.logo
         })) || [];
 
       setAffiliates(formatted);
@@ -137,11 +152,9 @@ export default function AffiliatesPage() {
   // delete
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Delete "${name}" affiliate?`)) return;
-
     try {
       await deleteEntity('affiliate', id);
       setAffiliates((prev) => prev.filter((a) => a.id !== id));
-      
     } catch (err) {
       console.error(err);
       alert('Failed to delete affiliate');
@@ -159,15 +172,6 @@ export default function AffiliatesPage() {
     );
   });
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      active: 'bg-primary',
-      inactive: 'bg-secondary',
-      suspended: 'bg-destructive',
-    };
-    return colors[status] || 'bg-gray-100';
-  };
-
   return (
     <AdminProvider>
       <div className="space-y-6">
@@ -177,9 +181,9 @@ export default function AffiliatesPage() {
           <div className="flex items-start gap-4">
             <Handshake className="text-primary w-7 h-7 mt-1" />
             <div>
-              <h1 className="text-xl font-medium text-foreground">Affiliates</h1>
+              <h1 className="text-xl font-medium text-foreground">Tenants</h1>
               <p className="text-muted-foreground">
-                Manage affiliate partners and their performance
+                Manage tenant partners and their performance
               </p>
             </div>
           </div>
@@ -199,7 +203,7 @@ export default function AffiliatesPage() {
             <Link href="/root/affiliates/new">
               <Button className="gap-2 bg-primary hover:bg-primary/90 w-full md:w-auto">
                 <Plus className="w-4 h-4" />
-                New Affiliate
+                New Tenant
               </Button>
             </Link>
           </div>
@@ -209,38 +213,47 @@ export default function AffiliatesPage() {
         <Card>
           <CardHeader className="flex items-center justify-between">
             <div>
-              <CardTitle>Affiliate Partners</CardTitle>
+              <CardTitle>{t('translate.sidebar_tenants')}</CardTitle>
               <CardDescription>
                 {loading
                   ? 'Loading...'
-                  : `${affiliates.length} affiliate(s)`}
+                  : `${affiliates.length} Tenant(s)`}
               </CardDescription>
             </div>
 
             {/* LIMIT DROPDOWN */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                >
                   Show: {limit}
                 </Button>
               </DropdownMenuTrigger>
 
               <DropdownMenuContent align="end">
-                {PAGE_LIMIT_OPTIONS.map((option) => (
-                  <DropdownMenuItem
-                    key={option}
-                    onClick={() => {
-                      const newLimit =
-                        option === 'All' ? 'All' : Number(option);
-                      setLimit(newLimit);
-                      setPage(1);
-                    }}
-                  >
-                    {option}
-                  </DropdownMenuItem>
-                ))}
+                {PAGE_LIMIT_OPTIONS.map(
+                  (option) => (
+                    <DropdownMenuItem
+                      key={option}
+                      onClick={() => {
+                        setLimit(
+                          option === 'All'
+                            ? 'All'
+                            : Number(option)
+                        );
+
+                        setPage(1);
+                      }}
+                    >
+                      {option}
+                    </DropdownMenuItem>
+                  )
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
+
           </CardHeader>
 
           <CardContent>
@@ -248,11 +261,11 @@ export default function AffiliatesPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left py-3 px-4">Affiliate Code</th>
-                    <th className="text-left py-3 px-4">Name</th>
-                    <th className="text-left py-3 px-4">Email</th>
-                    <th className="text-left py-3 px-4">Plan</th>
-                    {/* <th className="text-left py-3 px-4">Revenue</th> */}
+                    <th className="text-left py-3 px-4">Logo</th>
+                    <th className="text-left py-3 px-4">Tenant Name</th>
+                    <th className="text-left py-3 px-4">Contact</th>
+                    <th className="text-left py-3 px-4">Membership</th>
+                    <th className="text-left py-3 px-4">KYB</th>
                     <th className="text-left py-3 px-4">Status</th>
                     <th className="text-right py-3 px-4">Actions</th>
                   </tr>
@@ -268,35 +281,73 @@ export default function AffiliatesPage() {
                   ) : (
                     filteredAffiliates.map((aff) => (
                       <tr key={aff.id} className="border-b border-border hover:bg-muted/50">
-                        <td className="py-4 px-4 font-medium text-md">{aff.tenantId}</td>
+                        {/* IMAGE COLUMN */}
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          {aff.photo ? (
+                            <img
+                              src={aff.photo}
+                              alt={aff.companyName}
+                              className="w-14 h-14 rounded-full object-cover border"
+                            />
+                          ) : (
+                            <div className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center text-3xl font-bold">
+                              {aff.companyName?.charAt(0)?.toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                      </td>
 
                         <td className="py-4 px-4 font-medium">
                           <p>{aff.companyName}</p>
                           {/* {aff.isVerified && ( */}
-                          <p className="text-sm text-primary flex items-center gap-1 mt-1">
+                          {/* <p className="text-sm text-primary flex items-center gap-1 mt-1">
                             <CheckCircle className="w-4 h-4" />
                             Verified
-                          </p>
+                          </p> */}
+                          <p className="text-sm text-primary flex items-center gap-1 mt-1">{aff.tenantId}</p>
                           {/* )} */}
                         </td>
 
-                        <td className="py-4 px-4 text-sm text-muted-foreground">
-                          
+                        <td className="py-4 px-4 text-sm">
+
                           <p>{aff.contact?.email}</p>
                           <p>{aff.contact?.phone?.code}  {aff.contact?.phone?.number}</p>
                         </td>
 
                         <td className="py-4 px-4">
-                          <Badge variant="secondary">{aff.plan}</Badge>
+                          <Badge
+                            className={getConsistentBadgeColor(
+                              aff.plan
+                            )}
+                          >
+                            <span className="text-xs">
+                              {aff.plan}
+                            </span>
+                          </Badge>
                         </td>
 
-                        {/* <td className="py-4 px-4 font-medium">
-                          ${aff.revenue.toLocaleString()}
-                        </td> */}
+                        <td className="py-4 px-4">
+                          <Badge
+                            className={getConsistentBadgeColor(
+                              aff.kybStatus
+                            )}
+                          >
+                            <span className="text-xs">
+                              {aff.kybStatus}
+                            </span>
+                          </Badge>
+                        </td>
 
                         <td className="py-4 px-4">
-                          <Badge className={getStatusColor(aff.status)}>
-                            {aff.status}
+                          <Badge
+                            className={getConsistentBadgeColor(
+                              aff.status
+                            )}
+                          >
+                            <span className="text-xs">
+                              {aff.status}
+                            </span>
                           </Badge>
                         </td>
 
@@ -309,9 +360,9 @@ export default function AffiliatesPage() {
                             </DropdownMenuTrigger>
 
                             <DropdownMenuContent align="end">
-                           
-                           <DropdownMenuItem asChild>
-                                <Link href={`/root/affiliates/details/${aff.id}`}>
+
+                              <DropdownMenuItem asChild>
+                                <Link href={`/root/affiliates/${aff.id}`}>
                                   <Eye className="w-4 h-4 mr-2" />
                                   Detail
                                 </Link>
@@ -376,36 +427,6 @@ export default function AffiliatesPage() {
             </div>
           </CardContent>
         </Card>
-
-        {/* STATS (UNCHANGED) */}
-
-        {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <p className="text-3xl font-bold text-primary">{affiliates.length}</p>
-              <p className="text-sm text-muted-foreground mt-1">Total Affiliates</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <p className="text-3xl font-bold text-secondary">
-                ${affiliates.reduce((sum, a) => sum + a.revenue, 0).toLocaleString()}
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">Total Revenue</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6 text-center">
-              <p className="text-3xl font-bold text-accent">
-                {affiliates.filter((a) => a.status === 'active').length}
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">Active Affiliates</p>
-            </CardContent>
-          </Card>
-        </div> */}
-
       </div>
     </AdminProvider>
   );

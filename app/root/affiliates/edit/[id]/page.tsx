@@ -14,14 +14,14 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select';
 
-import { LANGUAGES, Language } from '@/i18n/languages';
+import { LANGUAGES, DEFAULT_LANGUAGE, Language } from '@/i18n/languages';
 import { I18nContext } from '@/i18n/provider';
 
 import { MultiLangTabs } from '@/components/common/MultiLangTabs';
 import { MultiLangInput } from '@/components/common/MultiLangInput';
 import { MultiLangTextarea } from '@/components/common/MultiLangTextarea';
 
-import { getAffiliateById } from '@/services/auth.service';
+import { getTenantByIdtoEdit, updateAffiliate} from '@/services/auth.service';
 
 /* ================= TYPES ================= */
 
@@ -43,6 +43,45 @@ interface TenantForm {
   addressLine2?: string;
   landmark?: string;
   zipCode: string;
+}
+
+export interface UpdateAffiliatePayload {
+  companyName: {
+    en: string;
+    fr?: string;
+  };
+
+  description: {
+    en: string;
+    fr?: string;
+  };
+
+  contact: {
+    email: string;
+    phone: {
+      code: string;
+      number: string;
+    };
+  };
+
+  platform: {
+    website: string;
+    adminPanelUrl: string;
+  };
+
+  apiDomains: string[];
+
+  address: {
+    addressLine1: string;
+    addressLine2?: string;
+    landmark?: string;
+    zipCode: string;
+    city: string;
+    state: string;
+    country: string;
+    latitude: string;
+    longitude: string;
+  };
 }
 
 type Option = {
@@ -100,10 +139,13 @@ const normalizeMultiLang = (value: any): MultiLangText => {
       ...value,
     };
   }
-  return createMultiLangObject();
+  return {
+    ...createMultiLangObject(),
+    [DEFAULT_LANGUAGE]: value || ''
+  };
 };
 
- const normalizeValue = (value?: string) =>
+const normalizeValue = (value?: string) =>
   value ? value.toLowerCase().trim() : '';
 
 
@@ -189,7 +231,7 @@ function UpdateTenantContent() {
 
   const [formData, setFormData] = useState<TenantForm>(initialState);
 
- 
+
   const handleInputChange = (
     field: 'companyName' | 'description',
     value: string,
@@ -228,11 +270,11 @@ function UpdateTenantContent() {
       try {
         setIsLoading(true);
 
-        const res = await getAffiliateById(AffiliateId);
+        const res = await getTenantByIdtoEdit(AffiliateId);
 
         const data = res?.data;
 
-        console.log("dasdasdas. :  "+ JSON.stringify(data));
+        console.log("dasdasdas. :  " + JSON.stringify(data));
 
         setFormData(mapAffiliateToForm(data));
 
@@ -246,7 +288,64 @@ function UpdateTenantContent() {
     fetchAffiliate();
   }, [AffiliateId]);
 
- 
+
+const mapFormToAffiliatePayload = (formData: TenantForm): UpdateAffiliatePayload => {
+  return {
+    companyName: formData.companyName,
+    description: formData.description,
+
+    contact: {
+      email: formData.contact_email,
+      phone: {
+        code: formData.phoneCode,
+        number: formData.contact_phoneNumber,
+      },
+    },
+
+    platform: {
+      website: formData.website,
+      adminPanelUrl: formData.adminPanelUrl,
+    },
+
+    apiDomains: formData.apiDomains.filter(Boolean),
+
+    address: {
+      addressLine1: formData.addressLine1,
+      addressLine2: formData.addressLine2 || "",
+      landmark: formData.landmark || "",
+      zipCode: formData.zipCode,
+      city: formData.city,
+      state: formData.state,
+      country: formData.country,
+      latitude: "",
+      longitude: "",
+    },
+  };
+};
+
+  const updateAffiliateData = async () => {
+  try {
+    setIsLoading(true);
+
+    const payload = mapFormToAffiliatePayload(formData);
+
+    const res = await updateAffiliate(AffiliateId, payload);
+
+    console.log("Update Success:", res);
+
+    // optionally refresh data
+    const refreshed = await getTenantByIdtoEdit(AffiliateId);
+    setFormData(mapAffiliateToForm(refreshed?.data));
+
+  } catch (err) {
+    console.error(err);
+    setErrors({ global: "Failed to update affiliate" });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
   /* ================= UI ================= */
 
   return (
@@ -374,9 +473,14 @@ function UpdateTenantContent() {
         </div>
       )}
       <div className="flex gap-3">
-        <Button className="flex-1">
-          <Save className="w-4 h-4 mr-2" />Create
-        </Button>
+       <Button
+  className="flex-1 flex items-center justify-center gap-2"
+  disabled={isLoading}
+  onClick={updateAffiliateData}
+>
+  <Save className="w-4 h-4" />
+  {isLoading ? "Updating..." : "Update"}
+</Button>
 
         <Link href="/root/affiliates" className="flex-1">
           <Button variant="outline" className="w-full">Cancel</Button>

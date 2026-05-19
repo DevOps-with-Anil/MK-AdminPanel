@@ -18,6 +18,8 @@ import {
   getRoleById,
   updateRoleModules
 } from '@/services/auth.service';
+import { AppMessage } from '@/components/common/AppMessage';
+import { useAppMessage } from '@/hooks/ui/useAppMessage';
 
 /* ================= TYPES ================= */
 
@@ -52,8 +54,11 @@ function PlanPermissionsContent({ roleId }: { roleId: string }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
    const [isLoading, setIsLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  // const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+
+  const { message, type, visible, showMessage, clearMessage } = useAppMessage();
+
 
   /* ================= FETCH ================= */
 
@@ -188,7 +193,7 @@ function PlanPermissionsContent({ roleId }: { roleId: string }) {
   // };
   const handleSave = async () => {
     setError('');
-    setSuccess(false);
+   // setSuccess(false);
     try {
       const modulesPayload = modules
         // ✅ only active modules
@@ -208,12 +213,18 @@ function PlanPermissionsContent({ roleId }: { roleId: string }) {
         // ✅ remove modules with no actions (optional but recommended)
         .filter(mod => mod.actions.length > 0);
 
-      await updateRoleModules(roleId, { modules: modulesPayload });
+    const res =   await updateRoleModules(roleId, { modules: modulesPayload });
+
+    showMessage(
+        res?.message || "Permission updated successfully!",
+        "success"
+      );
+
 
       // Success
-      setSuccess(true);
+     // setSuccess(true);
       setTimeout(() => {
-      setSuccess(false);  
+      //setSuccess(false);  
       }, 2000);
 
     } catch (err: any) {
@@ -278,12 +289,12 @@ function PlanPermissionsContent({ roleId }: { roleId: string }) {
               </div>
             )}
 
-            {success && (
+            {/* {success && (
               <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 px-4 py-3 rounded-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-1">
                 <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
                 <p className="text-sm font-medium">Permissions updated successfully!</p>
               </div>
-            )}
+            )} */}
 
       {/* GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -399,6 +410,15 @@ function PlanPermissionsContent({ roleId }: { roleId: string }) {
           </Card>
         </div>
       </div>
+
+
+            {/* RIGHT SIDE RESPONSE MESSAGE */}
+            <AppMessage
+              visible={visible}
+              message={message}
+              type={type}
+              onClose={clearMessage}
+            />
     </div>
   );
 }

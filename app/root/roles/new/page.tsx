@@ -22,6 +22,8 @@ import { MultiLangInput } from '@/components/common/MultiLangInput';
 import { MultiLangTextarea } from '@/components/common/MultiLangTextarea';
 
 import { createRole } from '@/services/auth.service';
+import { AppMessage } from '@/components/common/AppMessage';
+import { useAppMessage } from '@/hooks/ui/useAppMessage';
 
 /* ================= TYPES ================= */
 
@@ -46,12 +48,6 @@ type FieldErrors = {
 
 const languageKeys = Object.keys(LANGUAGES) as Language[];
 
-const languageList = languageKeys.map(lang => ({
-  key: lang,
-  label: LANGUAGES[lang].label,
-  flag: LANGUAGES[lang].flag,
-}));
-
 const STATUS_OPTIONS = [
   { label: 'Active', value: 'ACTIVE' },
   { label: 'Inactive', value: 'INACTIVE' },
@@ -69,9 +65,9 @@ const createMultiLangObject = (): MultiLangText =>
 
 function NewRoleContent() {
   const { locale } = useContext(I18nContext);
-  
+
   const [currentLang, setCurrentLang] = useState<Language>(locale);
-  
+
   const [formData, setFormData] = useState<NewRoleForm>({
     name: createMultiLangObject(),
     description: createMultiLangObject(),
@@ -79,10 +75,13 @@ function NewRoleContent() {
   });
 
   const [errors, setErrors] = useState<FieldErrors>({});
- 
+
   const [isLoading, setIsLoading] = useState(false);
- 
-  const [success, setSuccess] = useState(false);
+
+  const { message, type, visible, showMessage, clearMessage } = useAppMessage();
+
+
+  // const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     setCurrentLang(locale);
@@ -140,7 +139,7 @@ function NewRoleContent() {
   };
 
   const handleSubmit = async () => {
-    setSuccess(false);
+    // setSuccess(false);
 
     const validationErrors = validate();
 
@@ -156,9 +155,15 @@ function NewRoleContent() {
     setIsLoading(true);
 
     try {
-      await createRole(formData);
+      const res = await createRole(formData);
 
-      setSuccess(true);
+      // setSuccess(true);
+
+      showMessage(
+        res?.message || "Role created successfully!",
+        "success"
+      );
+
       setErrors({});
 
       setFormData({
@@ -287,18 +292,18 @@ function NewRoleContent() {
                   </Button>
                 </Link>
               </div>
-
-              {/* Success Feedback */}
-              {success && (
-                <p className="text-green-600 text-sm">
-                  Role created successfully!
-                </p>
-              )}
-
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* RIGHT SIDE RESPONSE MESSAGE */}
+      <AppMessage
+        visible={visible}
+        message={message}
+        type={type}
+        onClose={clearMessage}
+      />
     </div>
   );
 }
