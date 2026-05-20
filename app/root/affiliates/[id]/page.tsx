@@ -117,6 +117,7 @@ interface KYBDocument {
         url: string;
     }[];
     required?: boolean;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
 }
 
 interface KYBRequest {
@@ -275,8 +276,15 @@ function ViewTenantContent() {
 
     const [dynamicKYB, setDynamicKYB] = useState<any[]>([]);
 
-    const isKYBLocked =
-        tenant?.kybStatus === 'UPLOADED';
+    // const isKYBLocked =
+    // tenant?.kybStatus === "UPLOADED" ||
+    // tenant?.kybStatus === "APPROVED" ||
+    // tenant?.kybStatus === "UNDER_REVIEW";
+    const isKYBLocked = [
+        "UPLOADED",
+        "APPROVED",
+        "UNDER_REVIEW",
+    ].includes(tenant?.kybStatus || "");
 
     const [previewOpen, setPreviewOpen] = useState(false);
 
@@ -582,7 +590,6 @@ function ViewTenantContent() {
                     description: docType.description,
                     documentNumber: existing.documentNumber,
                     status: existing.status,
-
                     issueDate: existing.issueDate
                         ? new Date(existing.issueDate)
                             .toISOString()
@@ -887,7 +894,6 @@ function ViewTenantContent() {
             </div>
         );
 
-
     const handleIssueDateChange = (
         value: string,
         index: number,
@@ -1075,18 +1081,16 @@ function ViewTenantContent() {
                         <CardHeader className="border-b pb-4">
                             <div className="flex items-center justify-between gap-4">
                                 <div className="space-y-1">
-                                    <CardTitle>Upload Verification Documents</CardTitle>
+                                    <CardTitle>
+                                        Business Verification Documents
+                                    </CardTitle>
+
                                     <CardDescription>
-                                        Upload all required business verification documents
-                                        for KYB approval.
+                                        View all submitted KYB business verification documents.
                                     </CardDescription>
-                                    {/* OPTIONAL LOCK MESSAGE */}
-                                    {isKYBLocked && (
-                                        <div className="mt-4 rounded-xl border border-red-200 bg-red-100 px-4 py-3 text-sm text-yellow-900">
-                                            KYB request has already been submitted.
-                                            Document fields and uploads are locked until review is completed.
-                                        </div>
-                                    )}
+
+
+
                                 </div>
                                 {/* SUBMIT BUTTON */}
                                 {!isKYBLocked && (
@@ -1108,6 +1112,34 @@ function ViewTenantContent() {
                                     </Button>
                                 )}
                             </div>
+                            {/* STATUS MESSAGE */}
+                            {tenant?.kybStatus === "PENDING" && (
+                                <div className="mt-4 rounded-xl border border-yellow-200 bg-yellow-100 px-4 py-3 text-sm text-yellow-900">
+                                    KYB verification is pending. Please upload all required documents
+                                    to complete business verification.
+                                </div>
+                            )}
+
+                            {tenant?.kybStatus === "UPLOADED" && (
+                                <div className="mt-4 rounded-xl border border-blue-200 bg-blue-100 px-4 py-3 text-sm text-blue-900">
+                                    KYB request has already been submitted. Document fields and uploads
+                                    are locked until the review process is completed.
+                                </div>
+                            )}
+
+                            {tenant?.kybStatus === "REJECTED" && (
+                                <div className="mt-4 rounded-xl border border-red-200 bg-red-100 px-4 py-3 text-sm text-red-900">
+                                    KYB verification was rejected. Please review and re-upload the
+                                    required documents.
+                                </div>
+                            )}
+
+                            {tenant?.kybStatus === "UNDER_REVIEW" && (
+                                <div className="mt-4 rounded-xl border border-blue-200 bg-blue-100 px-4 py-3 text-sm text-blue-900">
+                                    Your KYB documents are currently under review. You will be notified
+                                    once the verification process is completed.
+                                </div>
+                            )}
                         </CardHeader>
 
                         <CardContent className="space-y-6">
@@ -1162,7 +1194,7 @@ function ViewTenantContent() {
                                                         </Label>
 
                                                         <Input
-                                                            disabled={isKYBLocked}
+                                                            disabled={isKYBLocked || doc.status == 'APPROVED' || doc.status == 'UNDER_REVIEW' || doc.status == 'UPLOADED'}
                                                             value={doc.documentNumber || ''}
                                                             placeholder="Enter document number"
                                                             onChange={(e) =>
@@ -1180,7 +1212,7 @@ function ViewTenantContent() {
                                                         <Label>Valid From</Label>
 
                                                         <DateTimePicker
-                                                            disabled={isKYBLocked}
+                                                            disabled={isKYBLocked || doc.status == 'APPROVED' || doc.status == 'UNDER_REVIEW' || doc.status == 'UPLOADED'}
                                                             value={doc.issueDate}
                                                             max={new Date().toISOString().slice(0, 16)} // disable future date & time
                                                             onChange={(value) =>
@@ -1194,7 +1226,7 @@ function ViewTenantContent() {
                                                         <Label>Valid To</Label>
 
                                                         <DateTimePicker
-                                                            disabled={isKYBLocked}
+                                                            disabled={isKYBLocked || doc.status == 'APPROVED' || doc.status == 'UNDER_REVIEW' || doc.status == 'UPLOADED'}
                                                             value={doc.expiryDate}
                                                             min={new Date().toISOString().slice(0, 16)} // disable past date & time
                                                             onChange={(value) =>
@@ -1299,6 +1331,21 @@ function ViewTenantContent() {
                                                                 >
                                                                     <Download className="w-4 h-4" />
                                                                 </Button>
+
+                                                                {!isKYBLocked && (doc.status === 'REJECTED' || doc.status === 'SUSPENDED') && (
+                                                                    <Button
+                                                                        size="icon"
+                                                                        variant="destructive"
+                                                                        onClick={() =>
+                                                                            handleRemoveLocalFile(
+                                                                                index,
+                                                                                fileIndex
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4" />
+                                                                    </Button>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1401,7 +1448,7 @@ function ViewTenantContent() {
                                                                         <Download className="w-4 h-4" />
                                                                     </Button>
 
-                                                                    {!isKYBLocked && (
+                                                                    {!isKYBLocked && (doc.status === 'REJECTED' || doc.status === 'SUSPENDED') && (
                                                                         <Button
                                                                             size="icon"
                                                                             variant="destructive"
@@ -1427,7 +1474,7 @@ function ViewTenantContent() {
                                             )}
 
                                             {/* UPLOAD CARD */}
-                                            {!isKYBLocked && (
+                                            {!isKYBLocked && (doc.status === 'REJECTED' || doc.status === 'SUSPENDED') && (
                                                 <label className="group cursor-pointer w-[180px] shrink-0 rounded-xl border-2 border-dashed bg-background hover:bg-muted/40 transition-all duration-300 flex flex-col items-center justify-center aspect-square">
 
                                                     <input
@@ -1585,112 +1632,76 @@ function ViewTenantContent() {
                         </CardContent>
                     </Card>
 
+                    {/* ADMIN DETAILS */}
                     <Card>
-
                         <CardHeader className="border-b pb-2">
-
                             <div className="flex items-center justify-between gap-4">
-
                                 <div className="space-y-1">
-
                                     <CardTitle>
                                         Account Admin Details
                                     </CardTitle>
-
                                     <CardDescription>
                                         Primary administrator and tenant account management information
                                     </CardDescription>
-
                                 </div>
-
                                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
                                     <User className="w-6 h-6 text-primary" />
                                 </div>
-
                             </div>
-
                         </CardHeader>
-
                         <CardContent className="p-6 space-y-5">
-
                             {/* ADMIN PROFILE */}
                             <div className="rounded-2xl border p-5 bg-muted/10">
-
                                 <div className="flex items-start gap-4">
-
                                     <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
                                         <User className="w-6 h-6 text-primary" />
                                     </div>
-
                                     <div className="space-y-1">
-
                                         <div className="text-lg font-semibold">
                                             John Anderson
                                         </div>
-
                                         <div className="text-sm text-muted-foreground">
                                             Super Administrator
                                         </div>
-
                                         <Badge className={getConsistentBadgeColor('ACTIVE')}>
                                             ACTIVE
                                         </Badge>
-
                                     </div>
-
                                 </div>
-
                             </div>
-
                             {/* EMAIL */}
                             <div className="rounded-2xl border p-5 bg-muted/10 space-y-3">
-
                                 <div>
                                     <div className="text-xs text-muted-foreground mb-1">
                                         Email Address
                                     </div>
-
                                     <div className="font-medium">
                                         admin@veltrixlabs.com
                                     </div>
                                 </div>
-
-
                                 {/* PHONE */}
-
                                 <div className="text-xs text-muted-foreground mb-1">
                                     Contact Number
                                 </div>
-
                                 <div className="font-medium">
                                     +91 9876543210
                                 </div>
-
-
                                 {/* ROLE */}
-
                                 <div className="text-xs text-muted-foreground mb-1">
                                     Access Role
                                 </div>
-
                                 <div className="font-medium">
                                     Enterprise Tenant Administrator
                                 </div>
-
-
                                 {/* LAST LOGIN */}
-
                                 <div className="text-xs text-muted-foreground mb-1">
                                     Last Login Activity
                                 </div>
-
                                 <div className="font-medium">
                                     14 May 2026, 09:42 AM
                                 </div>
-
                             </div>
-
-                            <div className="flex flex-col gap-3 pt-2">
+                            {/* <div className="flex flex-col gap-3 pt-2">
 
                                 <Button className="w-full rounded-xl">
                                     <Mail className="w-4 h-4 mr-2" />
@@ -1705,10 +1716,8 @@ function ViewTenantContent() {
                                     Reset Password
                                 </Button>
 
-                            </div>
-
+                            </div> */}
                         </CardContent>
-
                     </Card>
 
                     {/* PLATFORM */}
