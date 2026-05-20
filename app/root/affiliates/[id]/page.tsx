@@ -517,7 +517,7 @@ function ViewTenantContent() {
                 JSON.stringify(documentsPayload)
             );
 
-            console.log("R. D. :   " + JSON.stringify(documentsPayload))
+            // console.log("R. D. :   " + JSON.stringify(documentsPayload))
 
             /* ================= API ================= */
 
@@ -551,7 +551,6 @@ function ViewTenantContent() {
                     kybStatus: "UPLOADED",
                 }));
 
-
             } else {
                 showMessage(
                     res?.message || 'Failed to submit KYB',
@@ -570,7 +569,6 @@ function ViewTenantContent() {
         }
     };
 
-
     const mergeKYB = (docTypes: any[], tenantDocs: any[]) => {
         const merged = docTypes.map((docType) => {
             const existing = tenantDocs.find(
@@ -584,8 +582,19 @@ function ViewTenantContent() {
                     description: docType.description,
                     documentNumber: existing.documentNumber,
                     status: existing.status,
-                    issueDate: existing.issueDate,
-                    expiryDate: existing.expiryDate,
+
+                    issueDate: existing.issueDate
+                        ? new Date(existing.issueDate)
+                            .toISOString()
+                            .slice(0, 16)
+                        : '',
+
+                    expiryDate: existing.expiryDate
+                        ? new Date(existing.expiryDate)
+                            .toISOString()
+                            .slice(0, 16)
+                        : '',
+
                     files: existing.files || [],
                     isRequired: docType.isRequired,
                 };
@@ -649,6 +658,8 @@ function ViewTenantContent() {
 
 
     /* ================= API CALL ================= */
+
+    // ================= FETCH Tenant Details =================
     useEffect(() => {
         if (!AffiliateId) return;
 
@@ -2087,8 +2098,8 @@ function ViewTenantContent() {
                                 /* IMAGE */
                                 <div
                                     className={`w-full h-full overflow-auto ${zoom > 1
-                                            ? "cursor-grab active:cursor-grabbing"
-                                            : "cursor-default"
+                                        ? "cursor-grab active:cursor-grabbing"
+                                        : "cursor-default"
                                         }`}
                                 >
                                     <div
@@ -2176,8 +2187,8 @@ function ViewTenantContent() {
                                                     });
                                                 }}
                                                 className={`relative w-24 h-20 rounded-xl overflow-hidden border transition-all duration-200 shrink-0 ${activeIndex === index
-                                                        ? "border-primary ring-2 ring-primary/30 scale-105"
-                                                        : "border-white/10 hover:border-white/30"
+                                                    ? "border-primary ring-2 ring-primary/30 scale-105"
+                                                    : "border-white/10 hover:border-white/30"
                                                     }`}
                                             >
                                                 {isPDF ? (
