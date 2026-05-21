@@ -1,13 +1,14 @@
 'use client';
 
 import { AdminProvider } from '@/contexts/AdminContext';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
     useEffect,
     useState,
     useContext,
     useCallback,
-} from 'react'; import {
+} from 'react';
+import {
     Card,
     CardContent,
     CardHeader,
@@ -47,6 +48,13 @@ import {
     KeyRound,
     Upload,
     ImageIcon,
+    Cross,
+    CrossIcon,
+    RemoveFormattingIcon,
+    Delete,
+    DeleteIcon,
+    CircleFadingArrowUp,
+    File,
 } from 'lucide-react';
 import Link from 'next/link';
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -61,7 +69,9 @@ import {
     updateTenantPlan,
     assignTenantPlan,
     uploadTenantKYB,
-    updateLogo
+    updateLogo,
+    deleteEntity,
+    DeleteKYBDocFile
 } from '@/services/auth.service';
 // import { useFeedbackMessage } from '@/hooks/ui/useResponseMessage';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
@@ -79,6 +89,7 @@ import {
     ChevronRight,
     X,
 } from "lucide-react";
+import { Cancel } from '@radix-ui/react-alert-dialog';
 
 
 type Props = {
@@ -89,35 +100,30 @@ type Props = {
     max?: string;
 };
 
-export const DateTimePicker = ({
-    value,
-    onChange,
-    disabled,
-    min,
-    max,
-}: Props) => {
-    return (
-        <Input
-            type="datetime-local"
-            disabled={disabled}
-            value={value || ""}
-            min={min}
-            max={max}
-            onChange={(e) => onChange(e.target.value)}
-        />
-    );
-};
-
+// interface KYBDocument {
+//     id: string;
+//     type: string;
+//     files: {
+//         name: string;
+//         url: string;
+//     }[];
+//     required?: boolean;
+//     status: 'PENDING' | 'APPROVED' | 'REJECTED';
+// }
 
 
 interface KYBDocument {
+    documentId: string;
     type: string;
-    files: {
-        name: string;
-        url: string;
-    }[];
-    required?: boolean;
-    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    label: string;
+    description: string;
+    documentNumber: string;
+    status: string;
+    issueDate: string;
+    expiryDate: string;
+    files: string[];
+    createdAt: string;
+    updatedAt: string;
 }
 
 interface KYBRequest {
@@ -136,9 +142,6 @@ interface LogoForm {
     photo?: File | null;     // new upload
     photoUrl?: string;       // display (server OR preview)
 }
-
-
-/* ================= TYPES ================= */
 
 interface TenantPayload {
     _id: string;
@@ -202,89 +205,102 @@ interface SubscriptionPlan {
 
 function ViewTenantContent() {
     const params = useParams();
-    // const { message, type, showMessage, clearMessage } = useFeedbackMessage(3000);
+    const router = useRouter();
     const { message, type, visible, showMessage, clearMessage } = useAppMessage();
     const AffiliateId = params.id as string;
-
     const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
     const [plansLoading, setPlansLoading] = useState(false);
-
-    const [subscriptionModalOpen, setSubscriptionModalOpen] =
-        useState(false);
-
-    const [cancelDialogOpen, setCancelDialogOpen] =
-        useState(false);
-
-    const [cancelLoading, setCancelLoading] =
-        useState(false);
-
-    const [updatePlanLoading, setUpdatePlanLoading] =
-        useState(false);
-
-
-    const [uploadDialogOpen, setUploadDialogOpen] =
-        useState(false);
-
-    const [selectedDoc, setSelectedDoc] =
-        useState<any>(null);
-
-    const [uploadLoading, setUploadLoading] =
-        useState(false);
-
-    const [uploadForm, setUploadForm] =
-        useState({
-            documentNumber: '',
-            issueDate: '',
-            expiryDate: '',
-            files: [] as File[],
-        });
-
+    const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
+    const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+    const [cancelLoading, setCancelLoading] = useState(false);
+    const [updatePlanLoading, setUpdatePlanLoading] = useState(false);
+    const [uploadLoading, setUploadLoading] = useState(false);
     const [previewFiles, setPreviewFiles] = useState<string[]>([]);
     const [activeIndex, setActiveIndex] = useState(0);
-
     const [zoom, setZoom] = useState(1);
-
-
     const [position, setPosition] = useState({
         x: 0,
         y: 0,
     });
-
     const [dragging, setDragging] = useState(false);
-
     const [dragStart, setDragStart] = useState({
         x: 0,
         y: 0,
     });
-
     const [logoForm, setLogoForm] = useState<LogoForm>({
         photo: null,
     });
-
     const [cropOpen, setCropOpen] = useState(false);
     const [tempImage, setTempImage] = useState<string | null>(null);
-
     const { locale } = useContext(I18nContext);
-
     const [tenant, setTenant] = useState<TenantPayload | null>(null);
     const [loading, setLoading] = useState(true);
-
     const [kybDocuments, setKybDocuments] = useState<any[]>([]);
     const [kybStatus, setKybStatus] = useState<string>('PENDING');
+    const [confirmDialog, setConfirmDialog] = useState({
+        open: false,
+        title: "",
+        description: "",
+        confirmText: "",
+        loading: false,
+        onConfirm: () => { },
+    });
+
+
+    const DateTimePicker = ({
+        value,
+        onChange,
+        disabled,
+        min,
+        max,
+    }: Props) => {
+        return (
+            <Input
+                type="datetime-local"
+                disabled={disabled}
+                value={value || ""}
+                min={min}
+                max={max}
+                onChange={(e) => onChange(e.target.value)}
+            />
+        );
+    };
+
+    const openCancelSubscriptionDialog = () => {
+        setConfirmDialog({
+            open: true,
+            title: "Cancel Subscription",
+            description:
+                "Are you sure you want to cancel this subscription? This action cannot be undone.",
+            confirmText: "Confirm Cancel Subscription",
+            loading: false,
+            onConfirm: handleCancelPlan,
+        });
+    };
+
+
+    const openDeleteAccountDialog = () => {
+        setConfirmDialog({
+            open: true,
+            title: "Delete Account",
+            description:
+                "Are you sure you want to delete this account? This action cannot be undone.",
+            confirmText: "Confirm Delete Account",
+            loading: false,
+            onConfirm: handleDeleteAccount,
+        });
+    };
 
     // ================= DYNAMIC KYB STATE =================
 
     const [dynamicKYB, setDynamicKYB] = useState<any[]>([]);
 
-    // const isKYBLocked =
-    // tenant?.kybStatus === "UPLOADED" ||
-    // tenant?.kybStatus === "APPROVED" ||
-    // tenant?.kybStatus === "UNDER_REVIEW";
     const isKYBLocked = [
         "UPLOADED",
         "APPROVED",
         "UNDER_REVIEW",
     ].includes(tenant?.kybStatus || "");
+    const editableStatuses = ["REJECTED", "SUSPENDED", "PENDING"];
 
     const [previewOpen, setPreviewOpen] = useState(false);
 
@@ -351,7 +367,7 @@ function ViewTenantContent() {
         );
     };
 
-    /* ================= REMOVE LOCAL FILE ================= */
+    /* ================= REMOVE LOCAL AND SERVER FILE ================= */
 
     const handleRemoveLocalFile = (
         docIndex: number,
@@ -370,6 +386,77 @@ function ViewTenantContent() {
             })
         );
     };
+
+    // const handleRemoveServerFile = async (
+    //     docId: number,
+    //     fileIndex: number
+    // ) => {
+    //     try {
+    //         const res = await DeleteKYBDocFile({
+    //             tenantId: AffiliateId,
+    //             documentId: docId,
+    //             fileId: fileIndex
+    //         });
+
+    //         console.log("Delete Response:", JSON.stringify(res));
+    //         showMessage(res.message ||"Delete Successfully",'success')
+    //         setDynamicKYB((prev) =>
+    //         prev.map((doc, index) => {
+    //             if (index !== docId) return doc;
+
+    //             return {
+    //                 ...doc,
+    //                 localFiles: doc.localFiles.filter(
+    //                     (_: any, i: number) => i !== fileIndex
+    //                 ),
+    //             };
+    //         })
+    //     );
+
+    //     } catch (error) {
+    //         console.error("Error deleting file:", error);
+    //         showMessage("Failed to delete file",'danger')
+    //     }
+    // };
+
+    const handleRemoveServerFile = async (
+        docId: number,
+        fileIndex: number
+    ) => {
+
+        try {
+            const res = await DeleteKYBDocFile({
+                tenantId: AffiliateId,
+                documentId: docId,
+                fileId: fileIndex
+            });
+
+            console.log("Delete Response:", JSON.stringify(res));
+
+            showMessage(
+                res.message || "Delete Successfully",
+                "success"
+            );
+
+            setDynamicKYB((prev) =>
+                prev.map((doc) => {
+                    if (doc.documentId !== docId) return doc;
+
+                    return {
+                        ...doc,
+                        files: doc.files.filter(
+                            (_: any, i: number) => i !== fileIndex
+                        ),
+                    };
+                })
+            );
+
+        } catch (error) {
+            console.error("Error deleting file:", error);
+            showMessage("Failed to delete file", "danger");
+        }
+    };
+
     /* ================= VALIDATE + SUBMIT DYNAMIC KYB ================= */
 
     const handleSubmitDynamicKYB = async () => {
@@ -585,6 +672,7 @@ function ViewTenantContent() {
 
             if (existing) {
                 return {
+                    documentId: existing.documentId,
                     type: docType.label,
                     docKey: docType.type,
                     description: docType.description,
@@ -608,6 +696,7 @@ function ViewTenantContent() {
             }
 
             return {
+                id: '',
                 type: docType.label,
                 docKey: docType.type,
                 description: docType.description,
@@ -635,7 +724,7 @@ function ViewTenantContent() {
     };
 
 
-    const handleSave = async (file?: File) => {
+    const handleSaveLogo = async (file?: File) => {
         try {
             const payload = new FormData();
 
@@ -690,6 +779,7 @@ function ViewTenantContent() {
                     docTypeRes?.data || [],
                     kybRes?.data?.documents || []
                 );
+                console.log(JSON.stringify(kybRes) + "        KYB Data. :  " + JSON.stringify(tenantRes))
 
                 setKybDocuments(mergedDocs);
 
@@ -806,13 +896,49 @@ function ViewTenantContent() {
         }
     };
 
-    const handleCancelPlan = () => {
-        setCancelDialogOpen(true);
+    const handleDeleteAccount = async () => {
+        try {
+            // setCancelLoading(true);
+
+            const res = await deleteEntity('affiliate', AffiliateId);
+
+            const isSuccess = res?.status === 201 || 200;
+
+            if (isSuccess) {
+                setCancelDialogOpen(false);
+
+                showMessage(
+                    res?.message || "Account deleted successfully",
+                    "success"
+                );
+                setTimeout(() => {
+                    router.replace("/root/affiliates")
+                }, 1000);
+
+
+            } else {
+                showMessage(
+                    res?.message || "Failed to delete account",
+                    "danger"
+                );
+            }
+        } catch (err) {
+            console.error("Delete account error", err);
+
+            showMessage("Failed to delete account", "danger");
+        } finally {
+            setCancelLoading(false);
+            setConfirmDialog((prev) => ({
+                ...prev,
+                open: false,
+            }));
+        }
     };
 
-    const handleConfirmCancel = async () => {
+
+    const handleCancelPlan = async () => {
         try {
-            setCancelLoading(true);
+            // setCancelLoading(true);
 
             const res = await cancelTenantPlan({
                 tenantId: AffiliateId,
@@ -831,6 +957,7 @@ function ViewTenantContent() {
                 // refresh tenant details
                 const tenantRes = await getTenantById(AffiliateId);
                 setTenant(tenantRes?.data);
+
             } else {
                 showMessage(
                     res?.message || "Failed to cancel subscription",
@@ -843,6 +970,10 @@ function ViewTenantContent() {
             showMessage("Failed to cancel subscription", "danger");
         } finally {
             setCancelLoading(false);
+            setConfirmDialog((prev) => ({
+                ...prev,
+                open: false,
+            }));
         }
     };
 
@@ -881,9 +1012,6 @@ function ViewTenantContent() {
 
 
     /* ================= COMMON HELPERS ================= */
-
-
-    /* ================= STATES ================= */
 
     if (loading) return <div className="text-center py-10">Loading...</div>;
 
@@ -1021,7 +1149,7 @@ function ViewTenantContent() {
                                     <p>
                                         {tenant.address?.addressLine1},{' '}
                                         {tenant.address?.addressLine2},{' '}
-                                        {tenant.address?.landmark}
+                                        {tenant.address?.landmark},{' '}
                                         {tenant.address?.city},{' '}
                                         {tenant.address?.state},{' '}
                                         {tenant.address?.country} -{' '}
@@ -1244,6 +1372,7 @@ function ViewTenantContent() {
                                     {/* FILE GRID */}
                                     <div className="overflow-x-auto">
                                         <div className="p-3 flex items-start gap-3 min-w-max">
+
                                             {/* EXISTING SERVER FILES */}
                                             {doc.files?.map((file: string, fileIndex: number) => {
                                                 const extension =
@@ -1259,6 +1388,8 @@ function ViewTenantContent() {
 
                                                 const isPDF = extension === "pdf";
 
+                                                const isDoc = ["doc", "docx"].includes(extension);
+
                                                 return (
                                                     <div
                                                         key={fileIndex}
@@ -1270,18 +1401,18 @@ function ViewTenantContent() {
                                                             <button
                                                                 type="button"
                                                                 className="w-full h-full"
-                                                                onClick={() => {
-                                                                    const allFiles = [
-                                                                        ...(doc.files || []),
-                                                                        ...(doc.localFiles || []).map(
-                                                                            (f: any) => f.url
-                                                                        ),
-                                                                    ];
+                                                            // onClick={() => {
+                                                            //     const allFiles = [
+                                                            //         ...(doc.files || []),
+                                                            //         ...(doc.localFiles || []).map(
+                                                            //             (f: any) => f.url
+                                                            //         ),
+                                                            //     ];
 
-                                                                    setPreviewFiles(allFiles);
-                                                                    setActiveIndex(fileIndex);
-                                                                    setPreviewOpen(true);
-                                                                }}
+                                                            //     setPreviewFiles(allFiles);
+                                                            //     setActiveIndex(fileIndex);
+                                                            //     setPreviewOpen(true);
+                                                            // }}
                                                             >
                                                                 {isImage ? (
                                                                     <img
@@ -1293,12 +1424,30 @@ function ViewTenantContent() {
                                                                         <FileText className="w-10 h-10 text-red-500" />
                                                                         <span className="text-xs mt-2">PDF</span>
                                                                     </div>
-                                                                ) : (
-                                                                    <div className="w-full h-full flex items-center justify-center">
-                                                                        <FileText className="w-10 h-10" />
-                                                                    </div>
-                                                                )}
+                                                                ) :
+                                                                    isPDF ? (
+                                                                        <div className="w-full h-full flex flex-col items-center justify-center bg-red-50 dark:bg-red-950/20">
+                                                                            <FileText className="w-10 h-10 text-red-500" />
+                                                                            <span className="text-xs mt-2">PDF</span>
+                                                                        </div>
+                                                                    ) : isDoc ? (
+                                                                        <div className="w-full h-full flex flex-col items-center justify-center bg-blue-50 dark:bg-blue-950/20">
+                                                                            <File className="w-10 h-10 text-red-500" />
+                                                                            <span className="text-xs mt-2">DOC</span>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="w-full h-full flex items-center justify-center">
+                                                                            <FileText className="w-10 h-10" />
+                                                                        </div>
+                                                                    )}
                                                             </button>
+
+                                                            {/* FILE TYPE */}
+                                                            <div className="absolute top-2 right-2 z-10">
+                                                                <div className="px-1.5 py-0.5 rounded bg-black/70 text-white text-[9px] uppercase tracking-wide">
+                                                                    {extension}
+                                                                </div>
+                                                            </div>
 
                                                             {/* HOVER ACTION */}
                                                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
@@ -1337,8 +1486,8 @@ function ViewTenantContent() {
                                                                         size="icon"
                                                                         variant="destructive"
                                                                         onClick={() =>
-                                                                            handleRemoveLocalFile(
-                                                                                index,
+                                                                            handleRemoveServerFile(
+                                                                                doc.documentId,
                                                                                 fileIndex
                                                                             )
                                                                         }
@@ -1351,7 +1500,6 @@ function ViewTenantContent() {
                                                     </div>
                                                 );
                                             })}
-
 
                                             {/* LOCAL FILES */}
                                             {doc.localFiles?.map(
@@ -1378,23 +1526,21 @@ function ViewTenantContent() {
                                                                 <button
                                                                     type="button"
                                                                     className="w-full h-full"
-                                                                    onClick={() => {
-                                                                        const allFiles = [
-                                                                            ...(doc.files || []),
-                                                                            ...(doc.localFiles || []).map(
-                                                                                (f: any) => f.url
-                                                                            ),
-                                                                        ];
+                                                                // onClick={() => {
+                                                                //     const allFiles = [
+                                                                //         ...(doc.files || []),
+                                                                //         ...(doc.localFiles || []).map(
+                                                                //             (f: any) => f.url
+                                                                //         ),
+                                                                //     ];
 
-                                                                        setPreviewFiles(allFiles);
-
-                                                                        setActiveIndex(
-                                                                            (doc.files?.length || 0) +
-                                                                            fileIndex
-                                                                        );
-
-                                                                        setPreviewOpen(true);
-                                                                    }}
+                                                                //     setPreviewFiles(allFiles);
+                                                                //     setActiveIndex(
+                                                                //         (doc.files?.length || 0) +
+                                                                //         fileIndex
+                                                                //     );
+                                                                //     setPreviewOpen(true);
+                                                                // }}
                                                                 >
                                                                     {isImage ? (
                                                                         <img
@@ -1408,8 +1554,16 @@ function ViewTenantContent() {
                                                                     )}
                                                                 </button>
 
+                                                                {/* FILE TYPE */}
+                                                                <div className="absolute top-2 right-2 z-10">
+                                                                    <div className="px-1.5 py-0.5 rounded bg-black/70 text-white text-[9px] uppercase tracking-wide">
+                                                                        {extension}
+                                                                    </div>
+                                                                </div>
+
                                                                 {/* ACTIONS */}
                                                                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
+                                                                    {/* Preview */}
                                                                     <Button
                                                                         size="icon"
                                                                         variant="secondary"
@@ -1448,6 +1602,7 @@ function ViewTenantContent() {
                                                                         <Download className="w-4 h-4" />
                                                                     </Button>
 
+                                                                    {/* Remove */}
                                                                     {!isKYBLocked && (doc.status === 'REJECTED' || doc.status === 'SUSPENDED') && (
                                                                         <Button
                                                                             size="icon"
@@ -1474,7 +1629,7 @@ function ViewTenantContent() {
                                             )}
 
                                             {/* UPLOAD CARD */}
-                                            {!isKYBLocked && (doc.status === 'REJECTED' || doc.status === 'SUSPENDED') && (
+                                            {!isKYBLocked && editableStatuses.includes(doc.status || "") && (
                                                 <label className="group cursor-pointer w-[180px] shrink-0 rounded-xl border-2 border-dashed bg-background hover:bg-muted/40 transition-all duration-300 flex flex-col items-center justify-center aspect-square">
 
                                                     <input
@@ -1600,15 +1755,16 @@ function ViewTenantContent() {
                                             className="w-full"
                                             onClick={handleUpdateSubscription}
                                         >
-                                            <UploadCloud className="w-4 h-4 mr-2" />
+                                            <CircleFadingArrowUp className="w-4 h-4 mr-2" />
                                             Update Membership
                                         </Button>
 
                                         <Button
-                                            variant="destructive"
+                                            variant="secondary"
                                             className="w-full"
-                                            onClick={handleCancelPlan}
+                                            onClick={openCancelSubscriptionDialog}
                                         >
+                                            <X className="w-4 h-4 mr-2" />
                                             Cancel Plan
                                         </Button>
                                     </div>
@@ -1629,6 +1785,15 @@ function ViewTenantContent() {
                                     </Button>
                                 </div>
                             )}
+
+                            <Button
+                                variant="destructive"
+                                className="w-full"
+                                onClick={openDeleteAccountDialog}
+                            >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete Account
+                            </Button>
                         </CardContent>
                     </Card>
 
@@ -1876,7 +2041,7 @@ function ViewTenantContent() {
                 </Dialog>
 
                 {/*Confirm Cancel Subscription Dialog */}
-                <ConfirmDialog
+                {/* <ConfirmDialog
                     open={cancelDialogOpen}
                     title="Cancel Subscription"
                     description="Are you sure you want to cancel this subscription? This action cannot be undone."
@@ -1885,6 +2050,22 @@ function ViewTenantContent() {
                     variant="destructive"
                     onCancel={() => setCancelDialogOpen(false)}
                     onConfirm={handleConfirmCancel}
+                /> */}
+
+                <ConfirmDialog
+                    open={confirmDialog.open}
+                    title={confirmDialog.title}
+                    description={confirmDialog.description}
+                    confirmText={confirmDialog.confirmText}
+                    loading={confirmDialog.loading}
+                    variant="destructive"
+                    onCancel={() =>
+                        setConfirmDialog((prev) => ({
+                            ...prev,
+                            open: false,
+                        }))
+                    }
+                    onConfirm={confirmDialog.onConfirm}
                 />
 
                 {/* RIGHT SIDE RESPONSE MESSAGE */}
@@ -1895,7 +2076,7 @@ function ViewTenantContent() {
                     onClose={clearMessage}
                 />
             </div>
-
+            {/* Image crop model */}
             <ImageCropModal
                 open={cropOpen}
                 image={tempImage}
@@ -1914,10 +2095,11 @@ function ViewTenantContent() {
                     setCropOpen(false);
                     setTempImage(null);
 
-                    handleSave(file);
+                    handleSaveLogo(file);
                 }}
             />
 
+            {/* Documets preview */}
             <Dialog
                 open={previewOpen}
                 onOpenChange={(open) => {

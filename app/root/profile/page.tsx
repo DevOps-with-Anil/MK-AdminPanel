@@ -318,6 +318,7 @@ function ProfileContent() {
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
 
                 <Input
+                  required
                   disabled={!isEditing}
                   value={formData.name}
                   onChange={(e) =>
@@ -351,6 +352,7 @@ function ProfileContent() {
 
                 {/* Phone Code */}
                 <Select
+                required
                   disabled={!isEditing}
                   value={formData.phoneCode}
                   onValueChange={(value) =>
@@ -378,6 +380,7 @@ function ProfileContent() {
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
 
                   <Input
+                  required
                     disabled={!isEditing}
                     value={formData.phoneNumber}
                     onChange={(e) =>

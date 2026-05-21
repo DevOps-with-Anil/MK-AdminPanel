@@ -1,7 +1,9 @@
 
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { AdminProvider, useAdmin } from '@/contexts/AdminContext';
 import {
   Card,
@@ -22,8 +24,10 @@ import {
   Phone,
   Calendar,
   MoreVertical,
+  User,
+  User2,
 } from 'lucide-react';
-
+import Link from "next/link";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,40 +43,30 @@ import { formatDate } from "@/utils/dateFormatter";
 
 
 
-
 interface ApiKYBRequest {
+
   KYBID: string;
-
   createdAt: string;
-
   status:
   | 'UPLOADED'
   | 'APPROVED'
   | 'REJECTED'
   | 'INREVIEW';
-
   submittedByUserType: string;
-
   submittedByModel: string;
-
   submittedBY?: {
     _id: string;
     name: string;
     email: string;
   } | null;
-
   verifiedBy?: {
     name?: string;
   } | null;
-
   tenantId: {
     _id: string;
-
     companyName: string;
-
     contact?: {
       email?: string;
-
       phone?: {
         code?: string;
         number?: string;
@@ -82,6 +76,7 @@ interface ApiKYBRequest {
 }
 
 interface KYBRequest {
+  KYBID: string;
   id: string;
   companyName: string;
   email: string;
@@ -95,86 +90,152 @@ interface KYBRequest {
 
 function VerificationPageContent() {
   const { t } = useAdmin();
-
-  // Loading state
+  const params = useParams();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
-
-  // API Data
   const [requests, setRequests] = useState<KYBRequest[]>([]);
-
-  // Search state
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Pagination
   const PAGE_LIMIT_OPTIONS = [10, 25, 50, 'All'];
-
   const { page, setPage, limit, setLimit } = usePagination(10);
-
   const [totalPages, setTotalPages] = useState(1);
-
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
 
   /* ================= FETCH DATA ================= */
 
   useEffect(() => {
-    const fetchKYBRequests = async () => {
-      try {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // useEffect(() => {
+  //   const fetchKYBRequests = async () => {
+  //     try {
+  //       setLoading(true);
+  //       const res = await getKYBListtoVerify({
+  //         page,
+  //         limit: limit === 'All' ? 1000000 : limit,
+  //         search: debouncedSearch,
+  //       });
+
+
+  //       console.log(JSON.stringify(res))
+
+  //       if (res.status === 201) {
+  //         const transformedData: KYBRequest[] = res.data.map(
+  //           (item: ApiKYBRequest) => ({
+  //             id: item.tenantId?._id,
+  //             KYBID: item.KYBID,
+  //             companyName: item?.tenantId?.companyName || '-',
+  //             email: item?.tenantId?.contact?.email || '-',
+  //             phone: `${item?.tenantId?.contact?.phone?.code || ''} ${item?.tenantId?.contact?.phone?.number || ''}`,
+  //             submittedAt: item.createdAt,
+  //             status: item.status,
+  //             submittedBy: item?.submittedBY?.name || '-',
+  //             approvedBy: item?.verifiedBy?.name || null,
+  //           })
+  //         );
+
+  //         setRequests(transformedData);
+
+  //         console.log("List Data.  :   " + JSON.stringify(requests))
+  //       }
+  //     } catch (error) {
+  //       console.error(
+  //         'Failed to fetch KYB requests:',
+  //         error
+  //       );
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchKYBRequests();
+  // }, []);
+
+  // Fetch KYB Requests
+
+  const fetchKYBRequests = useCallback(async () => {
+    try {
+
+      // ONLY show full loader first time
+      if (requests.length === 0) {
         setLoading(true);
-
-        // Replace with your actual API endpoint
-        const res = await getKYBListtoVerify({
-          page,
-          limit: limit === 'All' ? 1000000 : limit,
-          search: debouncedSearch,
-        });
-
-
-        console.log(JSON.stringify(res))
-
-        if (res.status === 201) {
-          const transformedData: KYBRequest[] = res.data.map(
-            (item: ApiKYBRequest) => ({
-              id: item.KYBID,
-
-              companyName:
-                item?.tenantId?.companyName || '-',
-
-              email:
-                item?.tenantId?.contact?.email || '-',
-
-              phone: `${item?.tenantId?.contact?.phone?.code || ''
-                } ${item?.tenantId?.contact?.phone?.number || ''}`,
-
-              submittedAt: item.createdAt,
-
-              status: item.status,
-
-              submittedBy:
-                item?.submittedBY?.name || '-',
-
-              approvedBy:
-                item?.verifiedBy?.name || null,
-
-            })
-          );
-
-          setRequests(transformedData);
-
-          console.log("List Data.  :   " + JSON.stringify(requests))
-        }
-      } catch (error) {
-        console.error(
-          'Failed to fetch KYB requests:',
-          error
-        );
-      } finally {
-        setLoading(false);
       }
-    };
 
+      const fetchLimit =
+        limit === 'All' ? 0 : limit;
+
+      const res = await getKYBListtoVerify({
+        page,
+        limit: fetchLimit,
+        search: debouncedSearch,
+      });
+
+      const formatted: KYBRequest[] =
+        res?.data?.map(
+          (item: ApiKYBRequest) => ({
+            id: item?.tenantId?._id,
+
+            KYBID:
+              item?.KYBID || '',
+
+            companyName:
+              item?.tenantId?.companyName || '-',
+
+            email:
+              item?.tenantId?.contact?.email || '-',
+
+            phone: `${item?.tenantId?.contact?.phone?.code || ''
+              } ${item?.tenantId?.contact?.phone?.number || ''
+              }`,
+
+            submittedAt:
+              item?.createdAt,
+
+            status:
+              item?.status,
+
+            submittedBy:
+              item?.submittedBY?.name || '-',
+
+            approvedBy:
+              item?.verifiedBy?.name || null,
+          })
+        ) || [];
+
+      // REPLACE DATA AFTER FETCH
+      setRequests(formatted);
+
+      setTotalPages(
+        res?.meta?.totalPages ?? 1
+      );
+
+    } catch (err) {
+
+      console.error(
+        'Failed to fetch KYB requests:',
+        err
+      );
+
+    } finally {
+
+      setLoading(false);
+    }
+
+  }, [
+    page,
+    limit,
+    debouncedSearch,
+    requests.length
+  ]);
+
+  useEffect(() => {
     fetchKYBRequests();
-  }, []);
+  }, [fetchKYBRequests]);
+
 
   /* ================= COMMON HELPERS ================= */
 
@@ -298,7 +359,7 @@ function VerificationPageContent() {
                     Approved By
                   </th> */}
 
-                  <th className="text-right py-3 px-4">
+                  <th className="text-left py-3 px-4">
                     Actions
                   </th>
                 </tr>
@@ -307,13 +368,13 @@ function VerificationPageContent() {
               <tbody>
                 {filteredRequests.map((request) => (
                   <tr
-                    key={request.id}
+                    key={request.KYBID}
                     className="border-b hover:bg-muted/20 transition-colors"
                   >
                     {/* KYB ID */}
                     <td className="p-4 align-top">
                       <div className="font-medium text-foreground">
-                        {request.id}
+                        {request.KYBID}
                       </div>
                     </td>
 
@@ -337,7 +398,8 @@ function VerificationPageContent() {
 
                     {/* SUBMITTED BY */}
                     <td className="p-4 align-top">
-                      <div className="text-sm font-medium text-muted-foreground">
+                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                        <User2 className="w-4 h-4" />
                         {request.submittedBy}
                       </div>
                     </td>
@@ -371,52 +433,22 @@ function VerificationPageContent() {
                     </td> */}
 
                     {/* ACTIONS */}
+
                     <td className="p-4 align-top">
-                      <div className="flex items-center justify-end">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-9 w-9"
-                            >
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-
-                          <DropdownMenuContent
-                            align="end"
-                            className="w-44"
+                      <div className="flex items-center justify-left">
+                        <Link href={`/root/verification/${request.id}`}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-2"
                           >
-                            <DropdownMenuItem
-                              onClick={() =>
-                                (window.location.href = `/root/verification/${request.id}`)
-                              }
-                              className="cursor-pointer"
-                            >
-                              <Eye className="w-4 h-4 mr-2" />
-                              Review Request
-                            </DropdownMenuItem>
-
-                            {request.status ===
-                              'UPLOADED' && (
-                                <DropdownMenuItem className="cursor-pointer text-green-600 focus:text-green-600">
-                                  <CheckCheck className="w-4 h-4 mr-2" />
-                                  Approve
-                                </DropdownMenuItem>
-                              )}
-
-                            {request.status ===
-                              'UPLOADED' && (
-                                <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600">
-                                  <XCircle className="w-4 h-4 mr-2" />
-                                  Reject
-                                </DropdownMenuItem>
-                              )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                            <Eye className="w-4 h-4" />
+                            Review KYB
+                          </Button>
+                        </Link>
                       </div>
                     </td>
+
                   </tr>
                 ))}
               </tbody>
@@ -437,6 +469,40 @@ function VerificationPageContent() {
           </div>
         </CardContent>
       </Card>
+
+      {/* PAGINATION */}
+      <div className="flex justify-end gap-2 p-4">
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={page === 1}
+          onClick={() => setPage((p) => p - 1)}
+        >
+          Prev
+        </Button>
+
+        {[...Array(totalPages)].map((_, i) => (
+          <Button
+            key={i}
+            size="sm"
+            variant={page === i + 1 ? 'default' : 'outline'}
+            onClick={() => setPage(i + 1)}
+          >
+            {i + 1}
+          </Button>
+        ))}
+
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={page === totalPages}
+          onClick={() => setPage((p) => p + 1)}
+        >
+          Next
+        </Button>
+      </div>
+
+
     </div>
   );
 }

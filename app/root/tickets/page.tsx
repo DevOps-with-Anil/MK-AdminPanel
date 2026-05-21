@@ -261,7 +261,7 @@ function SupportTicketContent() {
                       {formatDate(ticket.createdAt)}
                     </td> */}
 
-                    <td className="p-4 align-top">
+                    <td className="p-4">
                       <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                         <Calendar className="w-4 h-4" />
                         {formatDate(ticket.createdAt)}

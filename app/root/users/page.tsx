@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit2, Trash2, MoreVertical, Search, Users } from 'lucide-react';
 import Link from 'next/link';
-import { useDeleteEntity } from '@/hooks/useDeleteEntity';
+// import { useDeleteEntity } from '@/hooks/useDeleteEntity';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAdmin } from '@/contexts/AdminContext';
-import { getSystemUsers, updateStatus } from '@/services/auth.service';
+import { getSystemUsers, updateStatus, deleteEntity } from '@/services/auth.service';
 import { formatDate } from "@/utils/dateFormatter";
 
 
@@ -44,7 +44,7 @@ function UsersPageContent() {
   const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const { deleteEntity, loadingId } = useDeleteEntity();
+  // const { deleteEntity, loadingId } = useDeleteEntity();
 
   // Debounced search
   useEffect(() => {

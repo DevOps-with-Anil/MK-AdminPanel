@@ -23,6 +23,8 @@ import {
   Handshake,
   CheckCircle,
   Eye,
+  Mail,
+  Phone,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -30,8 +32,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { getAffiliates } from '@/services/auth.service';
-import { useDeleteEntity } from '@/hooks/useDeleteEntity';
+import { getAffiliates, deleteEntity } from '@/services/auth.service';
+// import { useDeleteEntity } from '@/hooks/useDeleteEntity';
 import { getConsistentBadgeColor } from '@/utils/getDynamicBadgeColor';
 import { I18nContext } from '@/i18n/provider';
 import { usePagination } from '@/hooks/ui/usePagination';
@@ -64,7 +66,7 @@ export default function AffiliatesPage() {
   // Search state and debounce  
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const { deleteEntity } = useDeleteEntity();
+  // const { deleteEntity } = useDeleteEntity();
   // Pagination
   const PAGE_LIMIT_OPTIONS = [10, 25, 50, 'All'];
   const { page, setPage, limit, setLimit } = usePagination(10);
@@ -88,17 +90,13 @@ export default function AffiliatesPage() {
   const fetchAffiliates = useCallback(async () => {
     try {
       setLoading(true);
-
       const fetchLimit = limit === 'All' ? 0 : limit;
-
       const res = await getAffiliates({
         page,
         limit: fetchLimit,
         search: debouncedSearch,
       });
-
-      console.log("Affiliated data   :  " +JSON.stringify(res.data));
-
+      // console.log("Affiliated data   :  " + JSON.stringify(res.data));
       const formatted: Affiliate[] =
         res?.data?.map((r: any) => ({
           id: r._id,
@@ -113,15 +111,9 @@ export default function AffiliatesPage() {
               number: r.contact?.phone?.number || '',
             },
           },
-
           kybStatus: r.kybStatus || 'PENDING',
-
-          // ✅ Correct path
           plan: r.currentSubscriptionId?.planName || 'Free',
-
-          // ✅ Correct path
           isVerified: r.address?.isVerified ?? false,
-
           status:
             r.status === 'ACTIVE'
               ? 'ACTIVE'
@@ -130,7 +122,7 @@ export default function AffiliatesPage() {
                 : r.status === 'REJECTED'
                   ? 'REJECTED'
                   : 'INACTIVE',
-                  photo: r.logo
+          photo: r.logo
         })) || [];
 
       setAffiliates(formatted);
@@ -150,16 +142,16 @@ export default function AffiliatesPage() {
   }, [fetchAffiliates]);
 
   // delete
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Delete "${name}" affiliate?`)) return;
-    try {
-      await deleteEntity('affiliate', id);
-      setAffiliates((prev) => prev.filter((a) => a.id !== id));
-    } catch (err) {
-      console.error(err);
-      alert('Failed to delete affiliate');
-    }
-  };
+  // const handleDelete = async (id: string, name: string) => {
+  //   if (!confirm(`Delete "${name}" affiliate?`)) return;
+  //   try {
+  //     await deleteEntity('affiliate', id);
+  //     setAffiliates((prev) => prev.filter((a) => a.id !== id));
+  //   } catch (err) {
+  //     console.error(err);
+  //     alert('Failed to delete affiliate');
+  //   }
+  // };
 
   // filter (SAFE)
   const filteredAffiliates = affiliates.filter((aff) => {
@@ -282,21 +274,21 @@ export default function AffiliatesPage() {
                     filteredAffiliates.map((aff) => (
                       <tr key={aff.id} className="border-b border-border hover:bg-muted/50">
                         {/* IMAGE COLUMN */}
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          {aff.photo ? (
-                            <img
-                              src={aff.photo}
-                              alt={aff.companyName}
-                              className="w-14 h-14 rounded-full object-cover border"
-                            />
-                          ) : (
-                            <div className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center text-3xl font-bold">
-                              {aff.companyName?.charAt(0)?.toUpperCase()}
-                            </div>
-                          )}
-                        </div>
-                      </td>
+                        <td className="py-4 px-4">
+                          <div className="flex items-center gap-3">
+                            {aff.photo ? (
+                              <img
+                                src={aff.photo}
+                                alt={aff.companyName}
+                                className="w-14 h-14 rounded-full object-cover border"
+                              />
+                            ) : (
+                              <div className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center text-3xl font-bold">
+                                {aff.companyName?.charAt(0)?.toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                        </td>
 
                         <td className="py-4 px-4 font-medium">
                           <p>{aff.companyName}</p>
@@ -309,10 +301,19 @@ export default function AffiliatesPage() {
                           {/* )} */}
                         </td>
 
-                        <td className="py-4 px-4 text-sm">
+                        <td className="py-4 px-4 text-sm text-muted-foreground">
 
-                          <p>{aff.contact?.email}</p>
-                          <p>{aff.contact?.phone?.code}  {aff.contact?.phone?.number}</p>
+                          {/* <p>{aff.contact?.email}</p>
+                          <p>{aff.contact?.phone?.code}  {aff.contact?.phone?.number}</p> */}
+
+                          <div className="flex items-center gap-2 text-xm font-medium text-muted-foreground">
+                            <Mail className="w-4 h-4" />
+                            {aff.contact?.email}
+                          </div>
+                          <div className="flex items-center gap-2 text-xm font-medium text-muted-foreground">
+                            <Phone className="w-4 h-4" />
+                            {aff.contact?.phone?.code}  {aff.contact?.phone?.number}
+                          </div>
                         </td>
 
                         <td className="py-4 px-4">
@@ -375,7 +376,7 @@ export default function AffiliatesPage() {
                                 </Link>
                               </DropdownMenuItem>
 
-                              <DropdownMenuItem
+                              {/* <DropdownMenuItem
                                 className="text-destructive"
                                 onClick={() =>
                                   handleDelete(aff.id, aff.companyName)
@@ -383,7 +384,7 @@ export default function AffiliatesPage() {
                               >
                                 <Trash2 className="w-4 h-4 mr-2" />
                                 Remove
-                              </DropdownMenuItem>
+                              </DropdownMenuItem> */}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </td>
@@ -424,6 +425,7 @@ export default function AffiliatesPage() {
                   Next
                 </Button>
               </div>
+              
             </div>
           </CardContent>
         </Card>

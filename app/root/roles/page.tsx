@@ -30,8 +30,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { getSystemRoles, updateStatus } from '@/services/auth.service';
-import { useDeleteEntity } from '@/hooks/useDeleteEntity';
+import { getSystemRoles, updateStatus, deleteEntity } from '@/services/auth.service';
+// import { useDeleteEntity } from '@/hooks/useDeleteEntity';
 import { useRouter } from 'next/navigation';
 import { ACTIONS } from '@/lib/mock-data';
 import { Action } from '@radix-ui/react-toast';
@@ -63,7 +63,7 @@ function RolesPageContent() {
   const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const { deleteEntity, loadingId } = useDeleteEntity();
+  // const { deleteEntity, loadingId } = useDeleteEntity();
 
 
   /* ================= SEARCH ROLE ================= */
@@ -386,9 +386,7 @@ function RolesPageContent() {
 
 
                             <DropdownMenuItem
-                              disabled={
-                                loadingId === role.id
-                              }
+                              
                               onClick={() =>
                                 handleDelete(
                                   role.id,
@@ -398,9 +396,7 @@ function RolesPageContent() {
                               className="text-destructive"
                             >
                               <Trash2 className="w-4 h-4 mr-2" />
-                              {loadingId === role.id
-                                ? 'Deleting...'
-                                : 'Delete Role'}
+                              Delete Role
                             </DropdownMenuItem>
 
                           </DropdownMenuContent>

@@ -33,7 +33,7 @@ import {
 
 import { getPlans } from '@/services/auth.service';
 
-import { useDeleteEntity } from '@/hooks/useDeleteEntity';
+import { deleteEntity } from '@/services/auth.service';
 
 
 interface Plan {
@@ -61,7 +61,7 @@ export default function PlansPage() {
 
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const { deleteEntity, loadingId } = useDeleteEntity();
+  // const { deleteEntity, loadingId } = useDeleteEntity();
 
 
   // debounce
