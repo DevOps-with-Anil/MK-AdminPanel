@@ -20,8 +20,6 @@ import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
-    DialogFooter,
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
@@ -55,6 +53,7 @@ import {
     DeleteIcon,
     CircleFadingArrowUp,
     File,
+    FileSpreadsheet,
 } from 'lucide-react';
 import Link from 'next/link';
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -175,6 +174,22 @@ interface TenantPayload {
         expiryDate: string;
         status: string;
     } | null;
+
+    admin?: {
+        _id: string;
+        name: string;
+        email: string;
+        phoneCode: string;
+        phoneNumber: string;
+        photo: string;
+        lastLoginAt: string;
+        userType: "ROOT" | "TENANT";
+        role?: {
+            _id: string;
+            name: string;
+        } | null;
+        status: "ACTIVE" | "INACTIVE" | "SUSPENDED";
+    } | null;
     status: string;
     tenantId: string;
     createdAt: string;
@@ -211,7 +226,6 @@ function ViewTenantContent() {
     const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
     const [plansLoading, setPlansLoading] = useState(false);
     const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
-    const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
     const [cancelLoading, setCancelLoading] = useState(false);
     const [updatePlanLoading, setUpdatePlanLoading] = useState(false);
     const [uploadLoading, setUploadLoading] = useState(false);
@@ -300,6 +314,7 @@ function ViewTenantContent() {
         "APPROVED",
         "UNDER_REVIEW",
     ].includes(tenant?.kybStatus || "");
+
     const editableStatuses = ["REJECTED", "SUSPENDED", "PENDING"];
 
     const [previewOpen, setPreviewOpen] = useState(false);
@@ -462,9 +477,7 @@ function ViewTenantContent() {
     const handleSubmitDynamicKYB = async () => {
         try {
             clearMessage();
-
             /* ================= VALIDATION ================= */
-
             for (const doc of dynamicKYB) {
                 const hasServerFiles =
                     Array.isArray(doc.files) && doc.files.length > 0;
@@ -547,27 +560,18 @@ function ViewTenantContent() {
                     }
                 }
             }
-
             /* ================= FORM DATA ================= */
-
             setUploadLoading(true);
-
             const formData = new FormData();
-
             formData.append('tenantId', AffiliateId);
-
             const documentsPayload: any[] = [];
-
             let fileIndexCounter = 0;
-
             dynamicKYB.forEach((doc) => {
                 const localFiles = doc.localFiles || [];
-
                 /* skip optional empty docs */
                 const hasExistingFiles =
                     Array.isArray(doc.files) &&
                     doc.files.length > 0;
-
                 if (
                     !doc.isRequired &&
                     localFiles.length === 0 &&
@@ -575,11 +579,9 @@ function ViewTenantContent() {
                 ) {
                     return;
                 }
-
                 const fileIndexes = localFiles.map(
                     (_: any, index: number) => fileIndexCounter + index
                 );
-
                 documentsPayload.push({
                     type: doc.docKey,
                     documentNumber: doc.documentNumber,
@@ -779,7 +781,7 @@ function ViewTenantContent() {
                     docTypeRes?.data || [],
                     kybRes?.data?.documents || []
                 );
-                console.log(JSON.stringify(kybRes) + "        KYB Data. :  " + JSON.stringify(tenantRes))
+                console.log(JSON.stringify(kybRes) + "        KYB Data. :  " + JSON.stringify(tenantRes.data))
 
                 setKybDocuments(mergedDocs);
 
@@ -869,7 +871,6 @@ function ViewTenantContent() {
 
             if (res?.status === 201) {
                 setSubscriptionModalOpen(false);
-                setCancelDialogOpen(false);
 
                 showMessage(
                     res?.message ||
@@ -905,7 +906,6 @@ function ViewTenantContent() {
             const isSuccess = res?.status === 201 || 200;
 
             if (isSuccess) {
-                setCancelDialogOpen(false);
 
                 showMessage(
                     res?.message || "Account deleted successfully",
@@ -947,7 +947,6 @@ function ViewTenantContent() {
             const isSuccess = res?.status === 201;
 
             if (isSuccess) {
-                setCancelDialogOpen(false);
 
                 showMessage(
                     res?.message || "Subscription cancelled successfully",
@@ -1054,7 +1053,6 @@ function ViewTenantContent() {
             );
             return;
         }
-
         handleKYBInputChange(index, "issueDate", value);
     };
 
@@ -1147,13 +1145,19 @@ function ViewTenantContent() {
                                 <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
                                 <div className="space-y-1">
                                     <p>
-                                        {tenant.address?.addressLine1},{' '}
-                                        {tenant.address?.addressLine2},{' '}
-                                        {tenant.address?.landmark},{' '}
-                                        {tenant.address?.city},{' '}
-                                        {tenant.address?.state},{' '}
-                                        {tenant.address?.country} -{' '}
-                                        {tenant.address?.zipCode}
+                                        {[
+                                            tenant.address?.addressLine1,
+                                            tenant.address?.addressLine2,
+                                            tenant.address?.landmark,
+                                            tenant.address?.city,
+                                            tenant.address?.state,
+                                            tenant.address?.country
+                                        ]
+                                            .filter(Boolean)
+                                            .join(', ')
+                                            .concat(
+                                                tenant.address?.zipCode ? ` - ${tenant.address.zipCode}` : ''
+                                            )}
                                     </p>
                                 </div>
                             </div>
@@ -1172,7 +1176,6 @@ function ViewTenantContent() {
                                 ) : (
                                     <Building2 className="w-14 h-14 text-muted-foreground" />
                                 )}
-
                             </div>
 
                             {/* UPLOAD BUTTON */}
@@ -1183,16 +1186,6 @@ function ViewTenantContent() {
                                     type="file"
                                     accept="image/*"
                                     className="hidden"
-                                    // onChange={(e) => {
-                                    //     const file = e.target.files?.[0];
-                                    //     if (!file) return;
-                                    //     const previewUrl = URL.createObjectURL(file);
-                                    //     setLogoForm((prev) => ({
-                                    //         ...prev,
-                                    //         photoUrl: previewUrl,
-                                    //         file,
-                                    //     }));
-                                    // }}
                                     onChange={handleImageChange}
                                 />
                             </label>
@@ -1217,8 +1210,6 @@ function ViewTenantContent() {
                                         View all submitted KYB business verification documents.
                                     </CardDescription>
 
-
-
                                 </div>
                                 {/* SUBMIT BUTTON */}
                                 {!isKYBLocked && (
@@ -1240,28 +1231,26 @@ function ViewTenantContent() {
                                     </Button>
                                 )}
                             </div>
-                            {/* STATUS MESSAGE */}
+
+                            {/* KYB Current STATUS MESSAGE */}
                             {tenant?.kybStatus === "PENDING" && (
                                 <div className="mt-4 rounded-xl border border-yellow-200 bg-yellow-100 px-4 py-3 text-sm text-yellow-900">
                                     KYB verification is pending. Please upload all required documents
                                     to complete business verification.
                                 </div>
                             )}
-
                             {tenant?.kybStatus === "UPLOADED" && (
                                 <div className="mt-4 rounded-xl border border-blue-200 bg-blue-100 px-4 py-3 text-sm text-blue-900">
                                     KYB request has already been submitted. Document fields and uploads
                                     are locked until the review process is completed.
                                 </div>
                             )}
-
                             {tenant?.kybStatus === "REJECTED" && (
                                 <div className="mt-4 rounded-xl border border-red-200 bg-red-100 px-4 py-3 text-sm text-red-900">
                                     KYB verification was rejected. Please review and re-upload the
                                     required documents.
                                 </div>
                             )}
-
                             {tenant?.kybStatus === "UNDER_REVIEW" && (
                                 <div className="mt-4 rounded-xl border border-blue-200 bg-blue-100 px-4 py-3 text-sm text-blue-900">
                                     Your KYB documents are currently under review. You will be notified
@@ -1377,7 +1366,6 @@ function ViewTenantContent() {
                                             {doc.files?.map((file: string, fileIndex: number) => {
                                                 const extension =
                                                     file.split(".").pop()?.toLowerCase() || "";
-
                                                 const isImage = [
                                                     "png",
                                                     "jpg",
@@ -1385,11 +1373,8 @@ function ViewTenantContent() {
                                                     "webp",
                                                     "gif",
                                                 ].includes(extension);
-
                                                 const isPDF = extension === "pdf";
-
                                                 const isDoc = ["doc", "docx"].includes(extension);
-
                                                 return (
                                                     <div
                                                         key={fileIndex}
@@ -1401,18 +1386,6 @@ function ViewTenantContent() {
                                                             <button
                                                                 type="button"
                                                                 className="w-full h-full"
-                                                            // onClick={() => {
-                                                            //     const allFiles = [
-                                                            //         ...(doc.files || []),
-                                                            //         ...(doc.localFiles || []).map(
-                                                            //             (f: any) => f.url
-                                                            //         ),
-                                                            //     ];
-
-                                                            //     setPreviewFiles(allFiles);
-                                                            //     setActiveIndex(fileIndex);
-                                                            //     setPreviewOpen(true);
-                                                            // }}
                                                             >
                                                                 {isImage ? (
                                                                     <img
@@ -1424,22 +1397,16 @@ function ViewTenantContent() {
                                                                         <FileText className="w-10 h-10 text-red-500" />
                                                                         <span className="text-xs mt-2">PDF</span>
                                                                     </div>
-                                                                ) :
-                                                                    isPDF ? (
-                                                                        <div className="w-full h-full flex flex-col items-center justify-center bg-red-50 dark:bg-red-950/20">
-                                                                            <FileText className="w-10 h-10 text-red-500" />
-                                                                            <span className="text-xs mt-2">PDF</span>
-                                                                        </div>
-                                                                    ) : isDoc ? (
-                                                                        <div className="w-full h-full flex flex-col items-center justify-center bg-blue-50 dark:bg-blue-950/20">
-                                                                            <File className="w-10 h-10 text-red-500" />
-                                                                            <span className="text-xs mt-2">DOC</span>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <div className="w-full h-full flex items-center justify-center">
-                                                                            <FileText className="w-10 h-10" />
-                                                                        </div>
-                                                                    )}
+                                                                ) : isDoc ? (
+                                                                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-blue-100">
+                                                                        <File className="w-10 h-10 text-blue-500" />
+                                                                        <span className="text-xs mt-2">DOC</span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="w-full h-full flex items-center justify-center">
+                                                                        <FileText className="w-10 h-10" />
+                                                                    </div>
+                                                                )}
                                                             </button>
 
                                                             {/* FILE TYPE */}
@@ -1461,7 +1428,6 @@ function ViewTenantContent() {
                                                                                 (f: any) => f.url
                                                                             ),
                                                                         ];
-
                                                                         setPreviewFiles(allFiles);
                                                                         setActiveIndex(fileIndex);
                                                                         setPreviewOpen(true);
@@ -1506,7 +1472,6 @@ function ViewTenantContent() {
                                                 (file: any, fileIndex: number) => {
                                                     const extension =
                                                         file.name.split(".").pop()?.toLowerCase() || "";
-
                                                     const isImage = [
                                                         "png",
                                                         "jpg",
@@ -1514,6 +1479,8 @@ function ViewTenantContent() {
                                                         "webp",
                                                         "gif",
                                                     ].includes(extension);
+                                                    const isPDF = extension === "pdf";
+                                                    const isDoc = ["doc", "docx"].includes(extension);
 
                                                     return (
                                                         <div
@@ -1526,27 +1493,23 @@ function ViewTenantContent() {
                                                                 <button
                                                                     type="button"
                                                                     className="w-full h-full"
-                                                                // onClick={() => {
-                                                                //     const allFiles = [
-                                                                //         ...(doc.files || []),
-                                                                //         ...(doc.localFiles || []).map(
-                                                                //             (f: any) => f.url
-                                                                //         ),
-                                                                //     ];
-
-                                                                //     setPreviewFiles(allFiles);
-                                                                //     setActiveIndex(
-                                                                //         (doc.files?.length || 0) +
-                                                                //         fileIndex
-                                                                //     );
-                                                                //     setPreviewOpen(true);
-                                                                // }}
                                                                 >
                                                                     {isImage ? (
                                                                         <img
                                                                             src={file.url}
+                                                                            alt={file.name}
                                                                             className="w-full h-full object-cover"
                                                                         />
+                                                                    ) : isPDF ? (
+                                                                        <div className="w-full h-full flex flex-col items-center justify-center bg-red-50 dark:bg-red-950/20">
+                                                                            <FileText className="w-10 h-10 text-red-500" />
+                                                                            <span className="text-xs mt-2">PDF</span>
+                                                                        </div>
+                                                                    ) : isDoc ? (
+                                                                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-blue-100">
+                                                                            <File className="w-10 h-10 text-blue-500" />
+                                                                            <span className="text-xs mt-2">DOC</span>
+                                                                        </div>
                                                                     ) : (
                                                                         <div className="w-full h-full flex items-center justify-center">
                                                                             <FileText className="w-10 h-10" />
@@ -1574,14 +1537,11 @@ function ViewTenantContent() {
                                                                                     (f: any) => f.url
                                                                                 ),
                                                                             ];
-
                                                                             setPreviewFiles(allFiles);
-
                                                                             setActiveIndex(
                                                                                 (doc.files?.length || 0) +
                                                                                 fileIndex
                                                                             );
-
                                                                             setPreviewOpen(true);
                                                                         }}
                                                                     >
@@ -1603,7 +1563,7 @@ function ViewTenantContent() {
                                                                     </Button>
 
                                                                     {/* Remove */}
-                                                                    {!isKYBLocked && (doc.status === 'REJECTED' || doc.status === 'SUSPENDED') && (
+                                                                    {!isKYBLocked && (doc.status === 'REJECTED' || doc.status === 'SUSPENDED' || doc.status === 'PENDING') && (
                                                                         <Button
                                                                             size="icon"
                                                                             variant="destructive"
@@ -1663,40 +1623,31 @@ function ViewTenantContent() {
                                 </div>
                             ))}
                         </CardContent>
-
                     </Card>
-
                 </div>
 
-                {/* RIGHT SIDE */}
+                {/* RIGHT SIDE PANEL */}
                 <div className="space-y-2">
 
-                    {/* ACCOUNT OVERVIEW DETAILS */}
-
+                    {/* ACCOUNT SUMMARY CARD */}
                     <Card>
                         <CardHeader className="border-b pb-4">
-
                             <div className="flex items-center justify-between gap-4">
-
                                 <div className="space-y-1">
-
                                     <CardTitle>
                                         Account Summary
                                     </CardTitle>
-
                                     <CardDescription>
                                         Overview of tenant account, subscription, and platform status
                                     </CardDescription>
-
                                 </div>
-
                                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
                                     <Settings className="w-6 h-6 text-primary" />
                                 </div>
-
                             </div>
-
                         </CardHeader>
+
+                        {/* ACCOUNT SUMMARY CONTENT */}
                         <CardContent className="space-y-3 text-sm">
                             <div className="flex justify-between">
                                 <span>Account Status:</span>
@@ -1704,27 +1655,32 @@ function ViewTenantContent() {
                                     {tenant.status}
                                 </Badge>
                             </div>
-
                             <div className="flex justify-between">
                                 <span>KYB Status:</span>
+
                                 <Badge className={getConsistentBadgeColor(tenant.kybStatus)}>
                                     {tenant.kybStatus}
                                 </Badge>
                             </div>
 
+                            {/* ACTIVE SUBSCRIPTION DETAILS */}
                             {tenant.currentSubscriptionId ? (
                                 <>
                                     <div className="flex justify-between">
                                         <span>Current Plan:</span>
+
                                         <span className="font-medium">
                                             {tenant.currentSubscriptionId.planName}
                                         </span>
                                     </div>
-
                                     <div className="flex justify-between">
                                         <span>Plan Status:</span>
 
-                                        <Badge className={getConsistentBadgeColor(tenant.currentSubscriptionId.status)}>
+                                        <Badge
+                                            className={getConsistentBadgeColor(
+                                                tenant.currentSubscriptionId.status
+                                            )}
+                                        >
                                             {tenant.currentSubscriptionId.status}
                                         </Badge>
                                     </div>
@@ -1732,16 +1688,13 @@ function ViewTenantContent() {
                                         <span>Start Date:</span>
 
                                         <span>
-
                                             {formatDate(
                                                 tenant.currentSubscriptionId.startDate
                                             )}
                                         </span>
                                     </div>
-
                                     <div className="flex justify-between">
                                         <span>Expiry Date:</span>
-
                                         <span>
                                             {formatDate(
                                                 tenant.currentSubscriptionId.expiryDate
@@ -1750,7 +1703,6 @@ function ViewTenantContent() {
                                     </div>
 
                                     <div className="flex flex-col gap-2 pt-2">
-
                                         <Button
                                             className="w-full"
                                             onClick={handleUpdateSubscription}
@@ -1767,15 +1719,14 @@ function ViewTenantContent() {
                                             <X className="w-4 h-4 mr-2" />
                                             Cancel Plan
                                         </Button>
+
                                     </div>
                                 </>
                             ) : (
                                 <div className="space-y-4">
-
                                     <div className="text-red-500 text-center">
                                         No active subscription found
                                     </div>
-
                                     <Button
                                         className="w-full"
                                         onClick={handleUpdateSubscription}
@@ -1783,9 +1734,9 @@ function ViewTenantContent() {
                                         <UploadCloud className="w-4 h-4 mr-2" />
                                         Add Subscription
                                     </Button>
+
                                 </div>
                             )}
-
                             <Button
                                 variant="destructive"
                                 className="w-full"
@@ -1794,98 +1745,91 @@ function ViewTenantContent() {
                                 <Trash2 className="w-4 h-4 mr-2" />
                                 Delete Account
                             </Button>
+
                         </CardContent>
                     </Card>
 
-                    {/* ADMIN DETAILS */}
+                    {/* ADMIN DETAILS CARD */}
                     <Card>
                         <CardHeader className="border-b pb-2">
                             <div className="flex items-center justify-between gap-4">
                                 <div className="space-y-1">
                                     <CardTitle>
-                                        Account Admin Details
+                                        Admin Details
                                     </CardTitle>
                                     <CardDescription>
                                         Primary administrator and tenant account management information
                                     </CardDescription>
+
                                 </div>
                                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
                                     <User className="w-6 h-6 text-primary" />
                                 </div>
+
                             </div>
+
                         </CardHeader>
-                        <CardContent className="p-6 space-y-5">
-                            {/* ADMIN PROFILE */}
+
+                        {/* ADMIN DETAILS CONTENT */}
+                        <CardContent className="p-2 space-y-5">
                             <div className="rounded-2xl border p-5 bg-muted/10">
                                 <div className="flex items-start gap-4">
-                                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
-                                        <User className="w-6 h-6 text-primary" />
+                                    <div className="w-18 h-18 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                                        {tenant?.admin?.photo ? (
+                                            <img
+                                                src={tenant?.admin?.photo}
+                                                alt={tenant.admin.name}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            /* FALLBACK INITIAL */
+                                            <span className="text-primary font-semibold text-lg">
+                                                {tenant.admin?.name?.charAt(0)?.toUpperCase()}
+                                            </span>
+                                        )}
+
                                     </div>
+
+                                    {/* ADMIN BASIC DETAILS */}
                                     <div className="space-y-1">
                                         <div className="text-lg font-semibold">
-                                            John Anderson
+                                            {tenant.admin?.name}
                                         </div>
-                                        <div className="text-sm text-muted-foreground">
-                                            Super Administrator
+                                        <div className="text-xs text-muted-foreground">
+                                            {formatDate(tenant.admin?.lastLoginAt)}
                                         </div>
                                         <Badge className={getConsistentBadgeColor('ACTIVE')}>
                                             ACTIVE
                                         </Badge>
                                     </div>
                                 </div>
-                            </div>
-                            {/* EMAIL */}
-                            <div className="rounded-2xl border p-5 bg-muted/10 space-y-3">
                                 <div>
-                                    <div className="text-xs text-muted-foreground mb-1">
+                                    <div className="text-xs text-muted-foreground mb-1 pt-6">
                                         Email Address
                                     </div>
                                     <div className="font-medium">
-                                        admin@veltrixlabs.com
+                                        {tenant.admin?.email}
                                     </div>
                                 </div>
-                                {/* PHONE */}
-                                <div className="text-xs text-muted-foreground mb-1">
+                                <div className="text-xs text-muted-foreground mb-1 pt-2">
                                     Contact Number
                                 </div>
                                 <div className="font-medium">
-                                    +91 9876543210
+                                    {tenant.admin?.phoneCode} {tenant.admin?.phoneNumber}
                                 </div>
-                                {/* ROLE */}
-                                <div className="text-xs text-muted-foreground mb-1">
+                                <div className="text-xs text-muted-foreground mb-1 pt-2">
                                     Access Role
                                 </div>
                                 <div className="font-medium">
-                                    Enterprise Tenant Administrator
+                                    {tenant.admin?.role?.name}
                                 </div>
-                                {/* LAST LOGIN */}
-                                <div className="text-xs text-muted-foreground mb-1">
-                                    Last Login Activity
-                                </div>
-                                <div className="font-medium">
-                                    14 May 2026, 09:42 AM
-                                </div>
+
                             </div>
-                            {/* <div className="flex flex-col gap-3 pt-2">
 
-                                <Button className="w-full rounded-xl">
-                                    <Mail className="w-4 h-4 mr-2" />
-                                    Contact Admin
-                                </Button>
-
-                                <Button
-                                    variant="outline"
-                                    className="w-full rounded-xl"
-                                >
-                                    <KeyRound className="w-4 h-4 mr-2" />
-                                    Reset Password
-                                </Button>
-
-                            </div> */}
                         </CardContent>
                     </Card>
 
-                    {/* PLATFORM */}
+                    {/* PLATFORM INFORMATION CARD */}
                     <Card>
                         <CardHeader className="border-b pb-4">
                             <div className="flex items-center justify-between">
@@ -1896,15 +1840,19 @@ function ViewTenantContent() {
                                     <CardDescription>
                                         Connected platform endpoints and service domains
                                     </CardDescription>
+
                                 </div>
+
                                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
                                     <Building2 className="w-6 h-6 text-primary" />
                                 </div>
                             </div>
+
                         </CardHeader>
+
+                        {/* PLATFORM CONTENT */}
                         <CardContent className="space-y-2 text-sm">
                             <div className="grid gap-y-2 text-sm">
-                                {/* Admin Panel */}
                                 <span>Admin Panel:</span>
                                 <a
                                     href={tenant.platform?.adminPanelUrl || '#'}
@@ -1915,10 +1863,11 @@ function ViewTenantContent() {
                                     <ExternalLink className="w-4 h-4" />
                                 </a>
 
-                                {/* API Domains */}
                                 <span>API Domains:</span>
                                 <div className="flex flex-col gap-1">
-                                    {Array.isArray(tenant.apiDomains) && tenant.apiDomains.length > 0 ? (
+                                    {Array.isArray(tenant.apiDomains) &&
+                                        tenant.apiDomains.length > 0 ? (
+
                                         tenant.apiDomains.map((domain, index) => (
                                             <a
                                                 key={index}
@@ -1928,9 +1877,11 @@ function ViewTenantContent() {
                                                 className="text-primary underline flex items-center gap-1 break-all"
                                             >
                                                 {domain}
+
                                                 <ExternalLink className="w-4 h-4" />
                                             </a>
                                         ))
+
                                     ) : (
                                         <span>N/A</span>
                                     )}
@@ -1938,11 +1889,9 @@ function ViewTenantContent() {
                             </div>
                         </CardContent>
                     </Card>
-
                 </div>
 
-                {/* COMMON UI LIKE MODEL, CONFIRMATION DIALOG, APIS RESPONSE ETC... */}
-                {/* MODEL TO UPDATE SUBSCRIPTION PLAN */}
+                {/* ================= MODEL TO UPDATE SUBSCRIPTION PLAN ================= */}
                 <Dialog
                     open={subscriptionModalOpen}
                     onOpenChange={setSubscriptionModalOpen}
@@ -2034,24 +1983,13 @@ function ViewTenantContent() {
                                     );
                                 })
                             )}
-
                         </div>
 
                     </DialogContent>
                 </Dialog>
 
-                {/*Confirm Cancel Subscription Dialog */}
-                {/* <ConfirmDialog
-                    open={cancelDialogOpen}
-                    title="Cancel Subscription"
-                    description="Are you sure you want to cancel this subscription? This action cannot be undone."
-                    confirmText="Confirm Cancel Subscription"
-                    loading={cancelLoading}
-                    variant="destructive"
-                    onCancel={() => setCancelDialogOpen(false)}
-                    onConfirm={handleConfirmCancel}
-                /> */}
 
+                {/* ================= Confirm Cancel Subscription Dialog ================= */}
                 <ConfirmDialog
                     open={confirmDialog.open}
                     title={confirmDialog.title}
@@ -2068,15 +2006,9 @@ function ViewTenantContent() {
                     onConfirm={confirmDialog.onConfirm}
                 />
 
-                {/* RIGHT SIDE RESPONSE MESSAGE */}
-                <AppMessage
-                    visible={visible}
-                    message={message}
-                    type={type}
-                    onClose={clearMessage}
-                />
             </div>
-            {/* Image crop model */}
+
+            {/* ================= IMAGE CROP MODAL ================= */}
             <ImageCropModal
                 open={cropOpen}
                 image={tempImage}
@@ -2099,73 +2031,82 @@ function ViewTenantContent() {
                 }}
             />
 
-            {/* Documets preview */}
+            {/* ================= DOCUMENT PREVIEW MODAL ================= */}
             <Dialog
                 open={previewOpen}
                 onOpenChange={(open) => {
                     setPreviewOpen(open);
-
+                    // Reset preview state when modal closes
                     if (!open) {
                         setZoom(1);
-
                         setPosition({
                             x: 0,
                             y: 0,
                         });
-
                         setDragging(false);
                     }
                 }}
             >
                 <DialogContent className="!max-w-none w-screen h-screen p-0 m-0 border-0 rounded-none bg-black overflow-hidden">
 
+                    {/* Accessibility Title */}
                     <DialogTitle asChild>
                         <VisuallyHidden>
                             <span>File Preview</span>
                         </VisuallyHidden>
                     </DialogTitle>
 
-                    <div className="relative w-full h-full bg-black flex flex-col overflow-hidden">
+                    <div className="relative flex h-full w-full flex-col overflow-hidden bg-black">
 
-                        {/* HEADER */}
-                        <div className="h-16 border-b border-white/10 bg-black/80 backdrop-blur-xl flex items-center justify-between px-5 shrink-0 z-50">
+                        {/* ================= HEADER ================= */}
+                        <div className="z-50 flex h-16 shrink-0 items-center justify-between border-b border-white/10 bg-black/80 px-5 backdrop-blur-xl">
 
-                            {/* LEFT */}
+                            {/* LEFT SECTION */}
                             <div className="flex items-center gap-4">
 
-                                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/10">
-                                    {previewFiles?.[activeIndex]
-                                        ?.toLowerCase()
-                                        ?.includes(".pdf") ? (
-                                        <FileText className="w-5 h-5 text-red-400" />
-                                    ) : (
-                                        <ImageIcon className="w-5 h-5 text-white" />
-                                    )}
+                                {/* FILE TYPE ICON */}
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/10">
+                                    {(() => {
+                                        const file = previewFiles?.[activeIndex]?.toLowerCase();
+                                        if (file?.includes('.pdf')) {
+                                            return <FileText className="h-5 w-5 text-red-400" />;
+                                        }
+                                        if (file?.includes('.doc') || file?.includes('.docx')) {
+                                            return <File className="h-5 w-5 text-blue-400" />;
+                                        }
+                                        return <ImageIcon className="h-5 w-5 text-white" />;
+                                    })()}
                                 </div>
 
+                                {/* FILE INFO */}
                                 <div>
-                                    <div className="text-sm font-medium text-white">
-                                        Preview File
+                                    {/* FILE NAME */}
+                                    <div className="max-w-[220px] truncate text-sm font-medium text-white">
+                                        {previewFiles?.[activeIndex]
+                                            ?.split('/')
+                                            ?.pop()}
                                     </div>
 
+                                    {/* FILE COUNT */}
                                     <div className="text-xs text-zinc-400">
                                         {activeIndex + 1} of {previewFiles.length}
                                     </div>
                                 </div>
+
                             </div>
 
-                            {/* RIGHT */}
+                            {/* RIGHT SECTION */}
                             <div className="flex items-center gap-2">
-
-                                {/* IMAGE CONTROLS ONLY */}
+                                {/* IMAGE CONTROLS */}
                                 {!previewFiles?.[activeIndex]
                                     ?.toLowerCase()
-                                    ?.includes(".pdf") && (
+                                    ?.includes('.pdf') && (
                                         <>
+                                            {/* Zoom Out */}
                                             <Button
                                                 size="icon"
                                                 variant="secondary"
-                                                className="bg-white/10 border-white/10 hover:bg-white/20 text-white"
+                                                className="border-white/10 bg-white/10 text-white hover:bg-white/20"
                                                 disabled={zoom <= 0.5}
                                                 onClick={() =>
                                                     setZoom((prev) =>
@@ -2173,17 +2114,19 @@ function ViewTenantContent() {
                                                     )
                                                 }
                                             >
-                                                <ZoomOut className="w-4 h-4" />
+                                                <ZoomOut className="h-4 w-4" />
                                             </Button>
 
-                                            <div className="min-w-[70px] text-center text-sm text-white font-medium">
+                                            {/* Zoom Percentage */}
+                                            <div className="min-w-[70px] text-center text-sm font-medium text-white">
                                                 {Math.round(zoom * 100)}%
                                             </div>
 
+                                            {/* Zoom In */}
                                             <Button
                                                 size="icon"
                                                 variant="secondary"
-                                                className="bg-white/10 border-white/10 hover:bg-white/20 text-white"
+                                                className="border-white/10 bg-white/10 text-white hover:bg-white/20"
                                                 disabled={zoom >= 6}
                                                 onClick={() =>
                                                     setZoom((prev) =>
@@ -2191,12 +2134,13 @@ function ViewTenantContent() {
                                                     )
                                                 }
                                             >
-                                                <ZoomIn className="w-4 h-4" />
+                                                <ZoomIn className="h-4 w-4" />
                                             </Button>
 
+                                            {/* Reset Zoom */}
                                             <Button
                                                 variant="secondary"
-                                                className="bg-white/10 border-white/10 hover:bg-white/20 text-white"
+                                                className="border-white/10 bg-white/10 text-white hover:bg-white/20"
                                                 onClick={() => {
                                                     setZoom(1);
 
@@ -2211,35 +2155,35 @@ function ViewTenantContent() {
                                         </>
                                     )}
 
-                                {/* DOWNLOAD */}
+                                {/* DOWNLOAD BUTTON */}
                                 <Button
                                     variant="secondary"
-                                    className="bg-white/10 border-white/10 hover:bg-white/20 text-white"
+                                    className="border-white/10 bg-white/10 text-white hover:bg-white/20"
                                     onClick={() =>
                                         handleDownloadFile(
                                             previewFiles[activeIndex]
                                         )
                                     }
                                 >
-                                    <Download className="w-4 h-4 mr-2" />
+                                    <Download className="mr-2 h-4 w-4" />
                                     Download
                                 </Button>
 
-                                {/* CLOSE */}
+                                {/* CLOSE BUTTON */}
                                 <Button
                                     size="icon"
                                     variant="destructive"
                                     onClick={() => setPreviewOpen(false)}
                                 >
-                                    <X className="w-4 h-4" />
+                                    <X className="h-4 w-4" />
                                 </Button>
                             </div>
                         </div>
 
-                        {/* BODY */}
+                        {/* ================= BODY ================= */}
                         <div className="relative flex-1 overflow-hidden bg-[#050505]">
 
-                            {/* LEFT NAV */}
+                            {/* LEFT NAVIGATION */}
                             {activeIndex > 0 && (
                                 <button
                                     onClick={() => {
@@ -2252,13 +2196,13 @@ function ViewTenantContent() {
                                             y: 0,
                                         });
                                     }}
-                                    className="absolute left-5 top-1/2 -translate-y-1/2 z-40 w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 border border-white/10 flex items-center justify-center transition"
+                                    className="absolute left-5 top-1/2 z-40 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-black/60 transition hover:bg-black/80"
                                 >
-                                    <ChevronLeft className="w-6 h-6 text-white" />
+                                    <ChevronLeft className="h-6 w-6 text-white" />
                                 </button>
                             )}
 
-                            {/* RIGHT NAV */}
+                            {/* RIGHT NAVIGATION */}
                             {activeIndex < previewFiles.length - 1 && (
                                 <button
                                     onClick={() => {
@@ -2271,98 +2215,178 @@ function ViewTenantContent() {
                                             y: 0,
                                         });
                                     }}
-                                    className="absolute right-5 top-1/2 -translate-y-1/2 z-40 w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 border border-white/10 flex items-center justify-center transition"
+                                    className="absolute right-5 top-1/2 z-40 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-black/60 transition hover:bg-black/80"
                                 >
-                                    <ChevronRight className="w-6 h-6 text-white" />
+                                    <ChevronRight className="h-6 w-6 text-white" />
                                 </button>
                             )}
 
-                            {/* PDF */}
-                            {previewFiles?.[activeIndex]
-                                ?.toLowerCase()
-                                ?.includes(".pdf") ? (
-                                <iframe
-                                    src={`${previewFiles[activeIndex]}#toolbar=0`}
-                                    className="w-full h-full bg-white"
-                                />
-                            ) : (
-                                /* IMAGE */
-                                <div
-                                    className={`w-full h-full overflow-auto ${zoom > 1
-                                        ? "cursor-grab active:cursor-grabbing"
-                                        : "cursor-default"
-                                        }`}
-                                >
-                                    <div
-                                        className="min-w-full min-h-full flex items-center justify-center p-10"
-                                        onMouseDown={(e) => {
-                                            if (zoom <= 1) return;
 
-                                            setDragging(true);
+                            {/* ================= FILE PREVIEW ================= */}
 
-                                            setDragStart({
-                                                x:
-                                                    e.clientX +
-                                                    e.currentTarget.scrollLeft,
-                                                y:
-                                                    e.clientY +
-                                                    e.currentTarget.scrollTop,
-                                            });
-                                        }}
-                                        onMouseMove={(e) => {
-                                            if (!dragging || zoom <= 1)
-                                                return;
+                            {(() => {
+                                // ACTIVE FILE
+                                const activeFile = previewFiles?.[activeIndex] || '';
+                                // LOWERCASE FILE
+                                const lowerFile = activeFile.toLowerCase();
 
-                                            const container =
-                                                e.currentTarget;
+                                // FILE TYPES
+                                const isPDF = lowerFile.includes('.pdf');
+                                const isDOC = lowerFile.includes('.doc') || lowerFile.includes('.docx');
+                                const isImage = [
+                                    '.png',
+                                    '.jpg',
+                                    '.jpeg',
+                                    '.webp',
+                                    '.gif',
+                                ].some((ext) =>
+                                    lowerFile.includes(ext)
+                                );
 
-                                            container.scrollLeft =
-                                                dragStart.x - e.clientX;
-
-                                            container.scrollTop =
-                                                dragStart.y - e.clientY;
-                                        }}
-                                        onMouseUp={() => setDragging(false)}
-                                        onMouseLeave={() =>
-                                            setDragging(false)
-                                        }
-                                    >
-                                        <img
-                                            src={previewFiles?.[activeIndex]}
-                                            draggable={false}
-                                            className="select-none object-contain transition-transform duration-150 ease-out shadow-2xl rounded-xl"
-                                            style={{
-                                                transform: `scale(${zoom})`,
-                                                transformOrigin:
-                                                    "center center",
-                                                maxWidth: "unset",
-                                                maxHeight: "unset",
-                                                width:
-                                                    zoom > 1
-                                                        ? "auto"
-                                                        : "80%",
-                                                height:
-                                                    zoom > 1
-                                                        ? "auto"
-                                                        : "80%",
-                                            }}
+                                // PDF PREVIEW
+                                if (isPDF) {
+                                    return (
+                                        <iframe
+                                            src={activeFile}
+                                            className="h-full w-full bg-white"
                                         />
+                                    );
+                                }
+
+                                // DOC / DOCX PREVIEW
+                                if (isDOC) {
+                                    return (
+                                        <iframe
+                                            src={`https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(
+                                                activeFile
+                                            )}`}
+                                            className="h-full w-full bg-white"
+                                        />
+                                    );
+                                }
+
+                                // IMAGE PREVIEW
+                                if (isImage) {
+                                    return (
+                                        <div
+                                            className={`h-full w-full overflow-auto ${zoom > 1
+                                                ? 'cursor-grab active:cursor-grabbing'
+                                                : 'cursor-default'
+                                                }`}
+                                        >
+                                            <div
+                                                className="flex min-h-full min-w-full items-center justify-center p-10"
+
+                                                // START DRAG
+                                                onMouseDown={(e) => {
+
+                                                    if (zoom <= 1) return;
+
+                                                    setDragging(true);
+
+                                                    setDragStart({
+                                                        x:
+                                                            e.clientX +
+                                                            e.currentTarget.scrollLeft,
+                                                        y:
+                                                            e.clientY +
+                                                            e.currentTarget.scrollTop,
+                                                    });
+                                                }}
+
+                                                // DRAG MOVE
+                                                onMouseMove={(e) => {
+
+                                                    if (!dragging || zoom <= 1)
+                                                        return;
+
+                                                    const container =
+                                                        e.currentTarget;
+
+                                                    container.scrollLeft =
+                                                        dragStart.x - e.clientX;
+
+                                                    container.scrollTop =
+                                                        dragStart.y - e.clientY;
+                                                }}
+
+                                                // STOP DRAG
+                                                onMouseUp={() =>
+                                                    setDragging(false)
+                                                }
+
+                                                // STOP DRAG ON LEAVE
+                                                onMouseLeave={() =>
+                                                    setDragging(false)
+                                                }
+                                            >
+                                                {/* PREVIEW IMAGE */}
+                                                <img
+                                                    src={activeFile}
+                                                    draggable={false}
+                                                    className="select-none rounded-xl object-contain shadow-2xl transition-transform duration-150 ease-out"
+                                                    style={{
+                                                        transform: `scale(${zoom})`,
+                                                        transformOrigin: 'center center',
+                                                        maxWidth: 'unset',
+                                                        maxHeight: 'unset',
+                                                        width:
+                                                            zoom > 1
+                                                                ? 'auto'
+                                                                : '80%',
+                                                        height:
+                                                            zoom > 1
+                                                                ? 'auto'
+                                                                : '80%',
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                }
+
+                                // FALLBACK PREVIEW
+                                return (
+                                    <div className="flex h-full w-full flex-col items-center justify-center text-white">
+                                        <FileText className="mb-4 w-16 h-16 text-zinc-400" />
+
+                                        <div className="text-lg font-medium">
+                                            Preview not available
+                                        </div>
+
+                                        <div className="mt-1 text-sm text-zinc-500">
+                                            This file type cannot be previewed.
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                );
+                            })()}
+
+
                         </div>
 
-                        {/* THUMBNAILS */}
+                        {/* ================= THUMBNAILS ================= */}
                         {previewFiles.length > 1 && (
-                            <div className="h-28 border-t border-white/10 bg-black/40 backdrop-blur-xl overflow-x-auto shrink-0">
+                            <div className="h-28 shrink-0 overflow-x-auto border-t border-white/10 bg-black/40 backdrop-blur-xl">
 
-                                <div className="flex items-center gap-3 px-5 py-3 min-w-max">
+                                <div className="flex min-w-max items-center gap-3 px-5 py-3">
 
                                     {previewFiles.map((file, index) => {
+                                        const lowerFile = file?.toLowerCase();
+
                                         const isPDF =
-                                            file
-                                                ?.toLowerCase()
-                                                ?.includes(".pdf");
+                                            lowerFile?.includes('.pdf');
+
+                                        const isDOC =
+                                            lowerFile?.includes('.doc') ||
+                                            lowerFile?.includes('.docx');
+
+                                        const isEXCEL =
+                                            lowerFile?.includes('.xls') ||
+                                            lowerFile?.includes('.xlsx');
+
+                                        const isPPT =
+                                            lowerFile?.includes('.ppt') ||
+                                            lowerFile?.includes('.pptx');
 
                                         return (
                                             <button
@@ -2377,28 +2401,53 @@ function ViewTenantContent() {
                                                         y: 0,
                                                     });
                                                 }}
-                                                className={`relative w-24 h-20 rounded-xl overflow-hidden border transition-all duration-200 shrink-0 ${activeIndex === index
-                                                    ? "border-primary ring-2 ring-primary/30 scale-105"
-                                                    : "border-white/10 hover:border-white/30"
+                                                className={`relative h-20 w-24 shrink-0 overflow-hidden rounded-xl border transition-all duration-200 ${activeIndex === index
+                                                    ? 'scale-105 border-primary ring-2 ring-primary/30'
+                                                    : 'border-white/10 hover:border-white/30'
                                                     }`}
                                             >
                                                 {isPDF ? (
-                                                    <div className="w-full h-full bg-zinc-900 flex flex-col items-center justify-center">
-                                                        <FileText className="w-7 h-7 text-red-400" />
+                                                    <div className="flex h-full w-full flex-col items-center justify-center bg-zinc-900">
+                                                        <FileText className="h-7 w-7 text-red-400" />
 
-                                                        <span className="text-[10px] text-white mt-1">
+                                                        <span className="mt-1 text-[10px] text-white">
                                                             PDF
+                                                        </span>
+                                                    </div>
+                                                ) : isDOC ? (
+                                                    <div className="flex h-full w-full flex-col items-center justify-center bg-zinc-900">
+                                                        <File className="h-7 w-7 text-blue-400" />
+
+                                                        <span className="mt-1 text-[10px] text-white">
+                                                            DOC
+                                                        </span>
+                                                    </div>
+                                                ) : isEXCEL ? (
+                                                    <div className="flex h-full w-full flex-col items-center justify-center bg-zinc-900">
+                                                        <FileSpreadsheet className="h-7 w-7 text-green-400" />
+
+                                                        <span className="mt-1 text-[10px] text-white">
+                                                            Sheet
+                                                        </span>
+                                                    </div>
+                                                ) : isPPT ? (
+                                                    <div className="flex h-full w-full flex-col items-center justify-center bg-zinc-900">
+                                                        <FileSpreadsheet className="h-7 w-7 text-green-400" />
+
+                                                        <span className="mt-1 text-[10px] text-white">
+                                                            PPT
                                                         </span>
                                                     </div>
                                                 ) : (
                                                     <img
                                                         src={file}
-                                                        className="w-full h-full object-cover"
+                                                        className="h-full w-full object-cover"
                                                     />
                                                 )}
 
+                                                {/* Active Thumbnail Overlay */}
                                                 {activeIndex === index && (
-                                                    <div className="absolute inset-0 bg-primary/10 border border-primary rounded-xl" />
+                                                    <div className="absolute inset-0 rounded-xl border border-primary bg-primary/10" />
                                                 )}
                                             </button>
                                         );
@@ -2410,6 +2459,13 @@ function ViewTenantContent() {
                 </DialogContent>
             </Dialog>
 
+            {/* ================= RESPONSE MESSAGE ================= */}
+            <AppMessage
+                visible={visible}
+                message={message}
+                type={type}
+                onClose={clearMessage}
+            />
         </div>
     );
 }

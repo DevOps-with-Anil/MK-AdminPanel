@@ -19,6 +19,9 @@ import {
   updatePlanModules
 } from '@/services/auth.service';
 
+import { AppMessage } from '@/components/common/AppMessage';
+import { useAppMessage } from '@/hooks/ui/useAppMessage';
+
 /* ================= TYPES ================= */
 
 type ModuleStatus = 'active' | 'inactive';
@@ -52,6 +55,9 @@ function PlanPermissionsContent({ planId }: { planId: string }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
+  const { message, type, visible, showMessage, clearMessage } = useAppMessage();
+
+
   /* ================= FETCH ================= */
 
   useEffect(() => {
@@ -63,7 +69,7 @@ function PlanPermissionsContent({ planId }: { planId: string }) {
       setLoading(true);
 
       const [modRes, planRes] = await Promise.all([
-        getModulePackages('tenantmodule', { }),
+        getModulePackages('tenantmodule', {}),
         getPlantoEdit(planId)
       ]);
 
@@ -163,35 +169,147 @@ function PlanPermissionsContent({ planId }: { planId: string }) {
 
   /* ================= SAVE ================= */
 
- const handleSave = async () => {
-  try {
-    // ✅ Filter only active modules
-    const modulesPayload = modules
-      .filter(mod => mod.status === 'active') // only active modules
-      .map(mod => ({
-        moduleKey: mod.key,
-        status: 'ACTIVE', // all modules sent are active
+  //  const handleSave = async () => {
+  //   try {
+  //     // ✅ Filter only active modules
+  //     const modulesPayload = modules
+  //       .filter(mod => mod.status === 'active') // only active modules
+  //       .map(mod => ({
+  //         moduleKey: mod.key,
+  //         status: 'ACTIVE', // all modules sent are active
 
-        // ✅ Only actions with allowed = true
-        actions: mod.actions
-          .filter(a => a.status === true) // only allowed actions
-          .map(a => ({
-            actionKey: a.key,
-            allowed: true
-          }))
-      }))
-      // ✅ Remove modules that end up with no actions
-      .filter(mod => mod.actions.length > 0);
+  //         // ✅ Only actions with allowed = true
+  //         actions: mod.actions
+  //           .filter(a => a.status === true) // only allowed actions
+  //           .map(a => ({
+  //             actionKey: a.key,
+  //             allowed: true
+  //           }))
+  //       }))
+  //       // ✅ Remove modules that end up with no actions
+  //       .filter(mod => mod.actions.length > 0);
 
-    await updatePlanModules(planId, { modules: modulesPayload });
+  //     await updatePlanModules(planId, { modules: modulesPayload });
 
-    console.log("Filtered Modules Payload:", JSON.stringify(modulesPayload, null, 2));
+  //     // console.log("Filtered Modules Payload:", JSON.stringify(modulesPayload, null, 2));
 
-    alert('Plan permissions updated');
-  } catch (err) {
-    console.error(err);
-  }
-};
+  //     // alert('Plan permissions updated');
+  //   } catch (err) {
+  //     console.error(err);
+  //   }
+  // };
+
+
+  const handleSave = async () => {
+    try {
+
+      /* =================================================
+         FILTER ACTIVE MODULES & ACTIONS
+      ================================================== */
+
+      const modulesPayload = modules
+
+        /**
+         * Keep only active modules
+         */
+        .filter(
+          (mod) => mod.status === 'active'
+        )
+
+        /**
+         * Transform module payload
+         */
+        .map((mod) => ({
+
+          /**
+           * Module identifier
+           */
+          moduleKey: mod.key,
+
+          /**
+           * All selected modules are active
+           */
+          status: 'ACTIVE',
+
+          /**
+           * Keep only allowed actions
+           */
+          actions: mod.actions
+
+            .filter(
+              (action) =>
+                action.status === true
+            )
+
+            .map((action) => ({
+              actionKey: action.key,
+              allowed: true
+            }))
+        }))
+
+        /**
+         * Remove empty modules
+         */
+        .filter(
+          (mod) => mod.actions.length > 0
+        );
+
+      /* =================================================
+         UPDATE PLAN MODULE PERMISSIONS
+      ================================================== */
+
+      const res = await updatePlanModules(
+        planId,
+        {
+          modules: modulesPayload
+        }
+      );
+
+      const isSuccess =
+        res?.status === 200;
+
+      /* =================================================
+         SUCCESS
+      ================================================== */
+
+      if (isSuccess) {
+
+        showMessage(
+          res?.message ||
+          'Plan permissions updated successfully',
+          'success'
+        );
+
+        return;
+      }
+
+      /* =================================================
+         FAILURE
+      ================================================== */
+
+      showMessage(
+        res?.message ||
+        'Failed to update plan permissions',
+        'danger'
+      );
+
+    } catch (err) {
+
+      console.error(
+        'Update plan modules error:',
+        err
+      );
+
+      showMessage(
+        'Something went wrong while updating permissions',
+        'danger'
+      );
+
+    } finally {
+    }
+  };
+
+
 
   /* ================= FILTER ================= */
 
@@ -254,8 +372,8 @@ function PlanPermissionsContent({ planId }: { planId: string }) {
                   key={mod.id}
                   onClick={() => setSelectedModule(mod.id)}
                   className={`p-4 border rounded-lg cursor-pointer ${selectedModule === mod.id
-                      ? 'border-primary bg-primary/5'
-                      : ''
+                    ? 'border-primary bg-primary/5'
+                    : ''
                     }`}
                 >
                   <div className="flex justify-between">
@@ -278,8 +396,8 @@ function PlanPermissionsContent({ planId }: { planId: string }) {
                         toggleModule(mod.id);
                       }}
                       className={`cursor-pointer ${mod.status === 'active'
-                          ? 'bg-green-600 text-white'
-                          : 'bg-gray-400 text-white'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-400 text-white'
                         }`}
                     >
                       {mod.status.toUpperCase()}
@@ -298,9 +416,9 @@ function PlanPermissionsContent({ planId }: { planId: string }) {
           <Card className="sticky top-0">
             <CardHeader>
               <CardTitle>Module Actions</CardTitle>
-               <p className="text-sm font-regular text-muted-foreground">
-                  Select atleast one action to enable this module
-                </p>
+              <p className="text-sm font-regular text-muted-foreground">
+                Select atleast one action to enable this module
+              </p>
             </CardHeader>
 
             <CardContent>
@@ -313,8 +431,8 @@ function PlanPermissionsContent({ planId }: { planId: string }) {
                         <div
                           key={action._id}
                           className={`flex justify-between p-3 border rounded ${mod.status === 'inactive'
-                              ? 'opacity-50 pointer-events-none'
-                              : ''
+                            ? 'opacity-50 pointer-events-none'
+                            : ''
                             }`
                           }
                         >
@@ -332,8 +450,8 @@ function PlanPermissionsContent({ planId }: { planId: string }) {
                               toggleAction(mod.id, action._id)
                             }
                             className={`cursor-pointer ${action.status
-                                ? 'bg-green-600 text-white'
-                                : 'bg-gray-400 text-white'
+                              ? 'bg-green-600 text-white'
+                              : 'bg-gray-400 text-white'
                               }`}
                           >
                             {action.status ? 'ACTIVE' : 'INACTIVE'}
@@ -351,6 +469,17 @@ function PlanPermissionsContent({ planId }: { planId: string }) {
           </Card>
         </div>
       </div>
+
+      {/* =================================================
+                GLOBAL MESSAGE
+            ================================================== */}
+
+      <AppMessage
+        visible={visible}
+        message={message}
+        type={type}
+        onClose={clearMessage}
+      />
     </div>
   );
 }

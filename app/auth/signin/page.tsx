@@ -14,10 +14,11 @@ import {
 import { LANGUAGES, Language } from '@/i18n/languages';
 import { useAdmin } from '@/contexts/AdminContext';
 import Image from 'next/image';
-import { login } from '@/services/auth.service';
-import { tokenStorage } from '@/utils/token';
+import { login, profile } from '@/services/auth.service';
 import { useTranslation } from '@/hooks/useTranslation';
 import { I18nContext } from '@/i18n/provider';
+// import { tokenStorage } from '@/utils/token';
+
 
 export default function RootLoginPage() {
   const { t } = useTranslation();
@@ -32,7 +33,6 @@ export default function RootLoginPage() {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [checkingAuth, setCheckingAuth] = useState(true);
 
   // Language dropdown state
   const [openLang, setOpenLang] = useState(false);
@@ -52,17 +52,20 @@ export default function RootLoginPage() {
   // Check auth
   useEffect(() => {
 
+    const checkAuth = async () => {
 
-    const token = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('mk_token='))
-      ?.split('=')[1];
+      try {
 
-    if (token) {
-      router.replace('/root/dashboard');
-    } else {
-      setCheckingAuth(false);
-    }
+        await profile(); // hits /auth/me or /profile route
+
+        router.replace("/root/dashboard");
+
+      } catch (err) {
+      }
+    };
+
+    checkAuth();
+
   }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -73,24 +76,14 @@ export default function RootLoginPage() {
 
     try {
       const res = await login({ email, password });
-      const { token, user } = res.data;
-
-      // ✅ Use userType directly
-      const roleType = user.userType;
-
-      // Save in cookie
-      tokenStorage.set(token, roleType);
-
+      const { user } = res.data;
       setCurrentUser(user);
-
       console.log("Login Response ::", res);
-
       setSuccessMsg(t('translate.success'));
 
       setTimeout(() => {
-      router.replace("/root/dashboard");  
+        router.replace("/root/dashboard");
       }, 1500);
-
     } catch (err: any) {
       setError(err?.message || t('translate.error'));
     } finally {
@@ -98,13 +91,6 @@ export default function RootLoginPage() {
     }
   };
 
-  if (checkingAuth) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950">
-        <Loader2 className="animate-spin w-8 h-8 text-white" />
-      </div>
-    );
-  }
 
   return (
     <div className="relative min-h-screen bg-slate-950 flex items-center justify-center p-4">

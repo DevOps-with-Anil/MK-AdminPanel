@@ -28,7 +28,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 
-
+import { getConsistentBadgeColor } from '@/utils/getDynamicBadgeColor';
 import { I18nContext } from '@/i18n/provider';
 import { LANGUAGES, DEFAULT_LANGUAGE, Language } from '@/i18n/languages';
 import { Button } from '@/components/ui/button';
@@ -65,6 +65,7 @@ import {
   File,
   MoveRight,
   CheckCircle,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { getTenantKYB, updateKYBStatus } from '@/services/auth.service';
@@ -73,7 +74,11 @@ import { formatDate } from "@/utils/dateFormatter";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import Document from 'next/document';
 
-
+import {
+  createMultiLangObject,
+  normalizeMultiLang,
+  MultiLangText
+} from "@/utils/multilang";
 
 interface KYBDocument {
   documentId: string;
@@ -85,6 +90,7 @@ interface KYBDocument {
   issueDate: string;
   expiryDate: string;
   files: string[];
+  isRequired: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -120,24 +126,13 @@ interface KYBResponse {
   documents: KYBDocument[];
 }
 
-interface KYBInternalReviewNote {
-  description: MultiLangText;
-}
+// interface KYBInternalReviewNote {
+//   description: MultiLangText;
+// }
 
-interface KYBTenantReviewNote {
-  description: MultiLangText;
-}
-
-type MultiLang<T> = Record<Language, T>;
-type MultiLangText = MultiLang<string>;
-
-const languageKeys = Object.keys(LANGUAGES) as Language[];
-
-const createMultiLangObject = (): MultiLangText =>
-  languageKeys.reduce((acc, lang) => {
-    acc[lang] = '';
-    return acc;
-  }, {} as MultiLangText);
+// interface KYBTenantReviewNote {
+//   description: MultiLangText;
+// }
 
 export default function VerificationDetailsPage() {
 
@@ -175,28 +170,10 @@ export default function VerificationDetailsPage() {
   });
 
   useEffect(() => {
-    const fetchKYBDetails = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const res = await getTenantKYB(params.id as string);
-        console.log('API RESPONSE : ', JSON.stringify(res));
-        setKYBData(res.data);
-
-      } catch (err: any) {
-        console.error('KYB Fetch Error:', err);
-
-        setError(err.message || 'Something went wrong');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (params?.id) {
       fetchKYBDetails();
     }
   }, [params?.id]);
-
 
   // SEPARATE useEffect FOR DEBUGGING
   useEffect(() => {
@@ -207,6 +184,26 @@ export default function VerificationDetailsPage() {
       );
     }
   }, [kybData]);
+
+
+  const fetchKYBDetails = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const res = await getTenantKYB(params.id as string);
+
+      setKYBData(res.data);
+    } catch (err: any) {
+      console.error("KYB Fetch Error:", err);
+      setError(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
 
   // Download documets
   const handleDownloadFile = async (
@@ -282,8 +279,23 @@ export default function VerificationDetailsPage() {
         internal_comment: formData.internal.description,
       });
 
-      console.log('API RESPONSE : ', JSON.stringify(res));
-      alert('API RESPONSE : ' + (res.message));
+      // console.log('API RESPONSE : ', JSON.stringify(res));
+      // alert('API RESPONSE : ' + (res.message));
+      await fetchKYBDetails();
+
+      // ✅ UPDATE LOCAL STATE
+      setKYBData((prev) => {
+        if (!prev) return prev;
+
+        return {
+          ...prev,
+          documents: prev.documents.map((doc) =>
+            doc.documentId === documentId
+              ? { ...doc, status: "APPROVED" }
+              : doc
+          ),
+        };
+      });
 
     } catch (err) {
       console.error(err);
@@ -308,8 +320,9 @@ export default function VerificationDetailsPage() {
         internal_comment: formData.internal.description,
       });
 
-      console.log('API RESPONSE : ', JSON.stringify(res));
-      alert('API RESPONSE : ' + (res.message));
+      // console.log('API RESPONSE : ', JSON.stringify(res));
+      // alert('API RESPONSE : ' + (res.message));
+      await fetchKYBDetails();
 
     } catch (err) {
       console.error(err);
@@ -328,7 +341,7 @@ export default function VerificationDetailsPage() {
       <Card className="shadow-sm border">
         <CardContent className="space-y-6">
 
-          <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-8">
+          <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-8 pb-10">
 
             {/* LEFT CONTENT */}
             <div className="flex-1">
@@ -360,7 +373,7 @@ export default function VerificationDetailsPage() {
                     {/* KYB ID */}
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground">
-                        KYB Request ID:
+                        KYB ID:
                       </span>
 
                       <span className="font-medium text-foreground">
@@ -408,314 +421,353 @@ export default function VerificationDetailsPage() {
 
           {/* Documents View */}
           {kybData?.documents?.map((doc, index) => (
-            <div
+            <div className="rounded-2xl border overflow-hidden bg-muted/10"
               key={doc.documentId || index}
-              className="rounded-2xl border overflow-hidden bg-muted/10"
             >
               {/* DOCUMENT TYPE VIEW */}
-              {/* DOCUMENT TYPE VIEW */}
-              <div className="border-b bg-muted/20 px-5 py-4 border-gray-300">
-                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
 
-                  {/* LEFT */}
-                  <div className="flex-1 space-y-5">
+              {doc.files?.length > 0 && (
 
-                    {/* TITLE */}
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
+                <div className="border-b bg-muted/20 px-5 py-4 border-gray-300">
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
 
-                          {/* DOC LABEL */}
-                          <div className="font-semibold text-base text-foreground">
-                            {doc.label || doc.type}
-                          </div>
-                        </div>
+                    {/* LEFT */}
+                    <div className="flex-1 space-y-5">
 
-                        {/* DESCRIPTION */}
-                        <div className="text-sm text-muted-foreground mt-1">
-                          {doc.description || 'No description available'}
-                        </div>
-                      </div>
-                    </div>
+                      {/* TITLE */}
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
 
-                    {/* FORM DETAILS */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-                      {/* DOCUMENT NUMBER */}
-                      <div className="space-y-1">
-                        <div className="text-sm text-muted-foreground">
-                          Document Number
-                        </div>
-
-                        <div className="font-medium text-md text-foreground">
-                          {doc.documentNumber || 'N/A'}
-                        </div>
-                      </div>
-
-                      {/* ISSUE DATE */}
-                      <div className="space-y-1">
-                        <div className="text-sm text-muted-foreground">
-                          Valid From
-                        </div>
-
-                        <div className="font-medium text-md text-foreground">
-
-                          {formatDate(
-                            doc.issueDate
-                          )}
-                        </div>
-                      </div>
-
-                      {/* EXPIRY DATE */}
-                      <div className="space-y-1">
-                        <div className="text-sm text-muted-foreground">
-                          Valid To
-                        </div>
-
-                        <div className="font-medium text-md text-foreground">
-
-                          {formatDate(
-                            doc.expiryDate
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* ACTION BUTTONS */}
-                  <div className="flex items-center gap-3">
-
-                    {/* APPROVE */}
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button className="bg-green-600 hover:bg-green-700">
-                          <CheckCircle2Icon className="w-4 h-4 mr-2" />
-                          Approve
-                        </Button>
-                      </DialogTrigger>
-
-                      <DialogContent className="sm:max-w-2xl">
-                        <DialogHeader>
-                          <DialogTitle>
-                            Approve {doc.label || doc.type}
-                          </DialogTitle>
-                          <DialogDescription>
-                            Verification Notes
-                          </DialogDescription>
-                        </DialogHeader>
-
-                        <div className="space-y-6 pt-2">
-                          <MultiLangTabs
-                            currentLang={currentLang}
-                            onChange={setCurrentLang}
-                          />
-                          {/* INTERNAL NOTE */}
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h3 className="text-sm font-semibold text-foreground">
-                                  Internal Review Notes
-                                </h3>
-
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  Visible only to admins and compliance reviewers.
-                                </p>
-                              </div>
-
-                              <div className="px-2.5 py-1 rounded-md bg-red-500 text-sm font-medium text-white">
-                                Private
-                              </div>
+                            <div className="font-semibold text-base">
+                              {doc.label}
                             </div>
-
-                            {/* Description (multilingual textarea, optional) */}
-                            <MultiLangTextarea
-                              label="Internal Note"
-                              value={formData.internal.description}
-                              currentLang={currentLang}
-                              onChange={handleInternalChange}
-                            />
-                          </div>
-
-                          {/* TENANT NOTE */}
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h3 className="text-sm font-semibold text-foreground">
-                                  Tenant Notes
-                                </h3>
-
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  This message will be visible to the tenant/company.
-                                </p>
-                              </div>
-
-                              <div className="px-2.5 py-1 rounded-md bg-blue-100 text-blue-700 text-sm font-medium border border-blue-200">
-                                Visible to Tenant
-                              </div>
-                            </div>
-
-                            {/* Description (multilingual textarea, optional) */}
-                            <MultiLangTextarea
-                              label="Description"
-                              value={formData.tenant.description}
-                              currentLang={currentLang}
-                              onChange={handleTenantChange}
-                            />
-                          </div>
-
-                          {/* ACTIONS */}
-                          <div className="flex justify-end gap-3 pt-2">
-                            <DialogClose asChild>
-                              <Button variant="outline">
-                                Cancel
-                              </Button>
-                            </DialogClose>
-
-                            <Button
-                              onClick={() => handleConfirmApprove(doc.documentId, kybData?.tenantId._id)}
-                              disabled={loading}
+                            <div
+                              className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border ${doc.isRequired
+                                ? 'bg-red-100 text-red-700 border-red-200'
+                                : 'bg-muted text-muted-foreground border-border'
+                                }`}
                             >
-                              <CheckCircle className="w-4 h-4 mr-2" />
-                              {loading ? "Processing..." : "Confirm Approval"}
+                              {doc.isRequired
+                                ? 'Required'
+                                : 'Optional'}
+                            </div>
+
+                            <div
+                              className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border ${getConsistentBadgeColor(
+                                doc.status
+                              )}`}
+                            >
+                              {doc.status}
+                            </div>
+                          </div>
+                          <div className="text-sm text-muted-foreground mt-1">
+                            {doc.description}
+                          </div>
+                        </div>
+                      </div>
+
+
+                      {/* FORM DETAILS */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                        {/* DOCUMENT NUMBER */}
+                        <div className="space-y-1">
+                          <div className="text-sm text-muted-foreground">
+                            Document Number
+                          </div>
+
+                          <div className="font-medium text-md text-foreground">
+                            {doc.documentNumber || 'N/A'}
+                          </div>
+                        </div>
+
+                        {/* ISSUE DATE */}
+                        <div className="space-y-1">
+                          <div className="text-sm text-muted-foreground">
+                            Valid From
+                          </div>
+
+                          <div className="font-medium text-md text-foreground">
+
+                            {formatDate(
+                              doc.issueDate
+                            )}
+                          </div>
+                        </div>
+
+                        {/* EXPIRY DATE */}
+                        <div className="space-y-1">
+                          <div className="text-sm text-muted-foreground">
+                            Valid To
+                          </div>
+
+                          <div className="font-medium text-md text-foreground">
+
+                            {formatDate(
+                              doc.expiryDate
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ACTION BUTTONS */}
+                    <div className="flex items-center gap-3">
+
+                      {/* APPROVE */}
+
+                      {(doc.status === "UPLOADED" || doc.status === "UNDER_REVIEW") && (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button className="bg-green-600 hover:bg-green-700">
+                              <CheckCircle2Icon className="w-4 h-4 mr-2" />
+                              Approve
                             </Button>
-                          </div>
-                        </div>
+                          </DialogTrigger>
 
-                      </DialogContent>
-                    </Dialog>
+                          <DialogContent className="sm:max-w-2xl">
+                            <DialogHeader>
+                              <DialogTitle>
+                                Approve {doc.label || doc.type}
+                              </DialogTitle>
+                              <DialogDescription>
+                                Verification Notes
+                              </DialogDescription>
+                            </DialogHeader>
 
-                    {/* REJECT */}
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="destructive">
-                          <XCircle className="w-4 h-4 mr-2" />
-                          Reject
-                        </Button>
-                      </DialogTrigger>
+                            <div className="space-y-6 pt-2">
+                              <MultiLangTabs
+                                currentLang={currentLang}
+                                onChange={setCurrentLang}
+                              />
+                              {/* INTERNAL NOTE */}
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <h3 className="text-sm font-semibold text-foreground">
+                                      Internal Review Notes
+                                    </h3>
 
-                      <DialogContent className="sm:max-w-2xl">
-                        <DialogHeader>
-                          <DialogTitle>
-                            Reject {doc.label || doc.type}
-                          </DialogTitle>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      Visible only to admins and compliance reviewers.
+                                    </p>
+                                  </div>
 
-                          <DialogDescription>
-                            Add rejection notes and compliance remarks.
-                          </DialogDescription>
-                        </DialogHeader>
+                                  <div className="px-2.5 py-1 rounded-md bg-red-500 text-sm font-medium text-white">
+                                    Private
+                                  </div>
+                                </div>
 
-                        <div className="space-y-6 pt-2">
-
-                          <MultiLangTabs
-                            currentLang={currentLang}
-                            onChange={setCurrentLang}
-                          />
-                          {/* INTERNAL NOTE */}
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h3 className="text-sm font-semibold text-foreground">
-                                  Internal Review Notes
-                                </h3>
-
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  Visible only to admins and compliance reviewers.
-                                </p>
+                                {/* Description (multilingual textarea, optional) */}
+                                <MultiLangTextarea
+                                  label="Internal Note"
+                                  value={formData.internal.description}
+                                  currentLang={currentLang}
+                                  onChange={handleInternalChange}
+                                />
                               </div>
 
-                              <div className="px-2.5 py-1 rounded-md bg-red-500 text-sm font-medium text-white">
-                                Private
+                              {/* TENANT NOTE */}
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <h3 className="text-sm font-semibold text-foreground">
+                                      Tenant Notes
+                                    </h3>
+
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      This message will be visible to the tenant/company.
+                                    </p>
+                                  </div>
+
+                                  <div className="px-2.5 py-1 rounded-md bg-blue-100 text-blue-700 text-sm font-medium border border-blue-200">
+                                    Visible to Tenant
+                                  </div>
+                                </div>
+
+                                {/* Description (multilingual textarea, optional) */}
+                                <MultiLangTextarea
+                                  label="Description"
+                                  value={formData.tenant.description}
+                                  currentLang={currentLang}
+                                  onChange={handleTenantChange}
+                                />
+                              </div>
+
+                              {/* ACTIONS */}
+                              <div className="flex justify-end gap-3 pt-2">
+                                <DialogClose asChild>
+                                  <Button variant="outline">
+                                    Cancel
+                                  </Button>
+                                </DialogClose>
+
+                                <Button
+                                  onClick={() => handleConfirmApprove(doc.documentId, kybData?.tenantId._id)}
+                                  disabled={loading}
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-2" />
+                                  {loading ? "Processing..." : "Confirm Approval"}
+                                </Button>
                               </div>
                             </div>
-                            {/* Description (multilingual textarea, optional) */}
-                            <MultiLangTextarea
-                              label="Internal Note"
-                              value={formData.internal.description}
-                              currentLang={currentLang}
-                              onChange={handleInternalChange}
-                            />
-                          </div>
 
-                          {/* TENANT NOTE */}
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h3 className="text-sm font-semibold text-foreground">
-                                  Tenant Notes
-                                </h3>
+                          </DialogContent>
+                        </Dialog>
+                      )}
 
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  This message will be visible to the tenant/company.
-                                </p>
-                              </div>
-
-                              <div className="px-2.5 py-1 rounded-md bg-blue-100 text-blue-700 text-sm font-medium border border-blue-200">
-                                Visible to Tenant
-                              </div>
-                            </div>
-
-
-
-                            {/* Description (multilingual textarea, optional) */}
-                            <MultiLangTextarea
-                              label="Description"
-                              value={formData.tenant.description}
-                              currentLang={currentLang}
-                              onChange={handleTenantChange}
-                            />
-                          </div>
-
-                          {/* ACTIONS */}
-                          <div className="flex justify-end gap-3 pt-2">
-                            <DialogClose asChild>
-                              <Button variant="outline">
-                                Cancel
-                              </Button>
-                            </DialogClose>
-
-                            <Button
-                              variant="destructive"
-                              onClick={() => handleConfirmReject(doc.documentId, kybData?.tenantId?._id)}
-                              disabled={loading}
-                            >
+                      {/* REJECT */}
+                      {(doc.status === "UPLOADED" || doc.status === "APPROVED") && (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="destructive">
                               <XCircle className="w-4 h-4 mr-2" />
-                              {loading ? "Processing..." : "Confirm Rejection"}
+                              Reject
                             </Button>
-                          </div>
-                        </div>
+                          </DialogTrigger>
 
-                      </DialogContent>
-                    </Dialog>
+                          <DialogContent className="sm:max-w-2xl">
+                            <DialogHeader>
+                              <DialogTitle>
+                                Reject {doc.label || doc.type}
+                              </DialogTitle>
+
+                              <DialogDescription>
+                                Add rejection notes and compliance remarks.
+                              </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="space-y-6 pt-2">
+
+                              <MultiLangTabs
+                                currentLang={currentLang}
+                                onChange={setCurrentLang}
+                              />
+                              {/* INTERNAL NOTE */}
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <h3 className="text-sm font-semibold text-foreground">
+                                      Internal Review Notes
+                                    </h3>
+
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      Visible only to admins and compliance reviewers.
+                                    </p>
+                                  </div>
+
+                                  <div className="px-2.5 py-1 rounded-md bg-red-500 text-sm font-medium text-white">
+                                    Private
+                                  </div>
+                                </div>
+                                {/* Description (multilingual textarea, optional) */}
+                                <MultiLangTextarea
+                                  label="Internal Note"
+                                  value={formData.internal.description}
+                                  currentLang={currentLang}
+                                  onChange={handleInternalChange}
+                                />
+                              </div>
+
+                              {/* TENANT NOTE */}
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <h3 className="text-sm font-semibold text-foreground">
+                                      Tenant Notes
+                                    </h3>
+
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      This message will be visible to the tenant/company.
+                                    </p>
+                                  </div>
+
+                                  <div className="px-2.5 py-1 rounded-md bg-blue-100 text-blue-700 text-sm font-medium border border-blue-200">
+                                    Visible to Tenant
+                                  </div>
+                                </div>
+
+
+
+                                {/* Description (multilingual textarea, optional) */}
+                                <MultiLangTextarea
+                                  label="Description"
+                                  value={formData.tenant.description}
+                                  currentLang={currentLang}
+                                  onChange={handleTenantChange}
+                                />
+                              </div>
+
+                              {/* ACTIONS */}
+                              <div className="flex justify-end gap-3 pt-2">
+                                <DialogClose asChild>
+                                  <Button variant="outline">
+                                    Cancel
+                                  </Button>
+                                </DialogClose>
+
+                                <Button
+                                  variant="destructive"
+                                  onClick={() => handleConfirmReject(doc.documentId, kybData?.tenantId?._id)}
+                                  disabled={loading}
+                                >
+                                  <XCircle className="w-4 h-4 mr-2" />
+                                  {loading ? "Processing..." : "Confirm Rejection"}
+                                </Button>
+                              </div>
+                            </div>
+
+                          </DialogContent>
+                        </Dialog>
+                      )}
+
+                    </div>
 
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* FILE GRID */}
               <div className="overflow-x-auto">
                 <div className="p-3 flex items-start gap-3 min-w-max">
+
+                  {/* FILE CARDS */}
                   {doc.files?.map((file, fileIndex) => {
+
+                    // FILE URL
                     const fileUrl = file;
-                    const fileName = file.split('/').pop() || `File-${fileIndex}`;
 
+                    // FILE NAME
+                    const fileName =
+                      file.split("/").pop() || `File-${fileIndex}`;
+
+                    // FILE EXTENSION
                     const extension =
-                      fileName.split('.').pop()?.toLowerCase() || '';
+                      fileName.split(".").pop()?.toLowerCase() || "";
 
+                    // IMAGE TYPES
                     const isImage = [
-                      'png',
-                      'jpg',
-                      'jpeg',
-                      'webp',
-                      'gif',
+                      "png",
+                      "jpg",
+                      "jpeg",
+                      "webp",
+                      "gif",
                     ].includes(extension);
 
-                    const isPDF = extension === 'pdf';
-                    const isDOC = extension === 'doc' || extension === 'docx';
+                    // PDF TYPE
+                    const isPDF = extension === "pdf";
 
+                    // DOC TYPE
+                    const isDOC =
+                      extension === "doc" ||
+                      extension === "docx";
+
+                    // VIDEO TYPES
                     const isVideo = [
-                      'mp4',
-                      'mov',
-                      'webm',
+                      "mp4",
+                      "mov",
+                      "webm",
                     ].includes(extension);
 
                     return (
@@ -725,7 +777,7 @@ export default function VerificationDetailsPage() {
                       >
                         <div className="aspect-square border-b bg-muted/20 relative overflow-hidden">
 
-                          {/* IMAGE */}
+                          {/* IMAGE PREVIEW */}
                           {isImage && (
                             <img
                               src={fileUrl}
@@ -734,7 +786,7 @@ export default function VerificationDetailsPage() {
                             />
                           )}
 
-                          {/* PDF */}
+                          {/* PDF PREVIEW */}
                           {isPDF && (
                             <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-red-50 to-red-100">
                               <FileText className="w-10 h-10 text-red-500 mb-2" />
@@ -745,18 +797,18 @@ export default function VerificationDetailsPage() {
                             </div>
                           )}
 
-                          {/* Doc */}
+                          {/* DOC PREVIEW */}
                           {isDOC && (
-                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-red-50 to-red-100">
-                              <File className="w-10 h-10 text-red-500 mb-2" />
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-blue-100">
+                              <FileText className="w-10 h-10 text-blue-500 mb-2" />
 
-                              <div className="text-[11px] font-medium text-red-600">
+                              <div className="text-[11px] font-medium text-blue-600">
                                 DOC
                               </div>
                             </div>
                           )}
 
-                          {/* VIDEO */}
+                          {/* VIDEO PREVIEW */}
                           {isVideo && (
                             <video
                               src={fileUrl}
@@ -764,18 +816,20 @@ export default function VerificationDetailsPage() {
                             />
                           )}
 
-                          {/* OTHER FILE */}
-                          {!isImage && !isPDF && !isVideo && (
-                            <div className="w-full h-full flex flex-col items-center justify-center">
-                              <FileText className="w-10 h-10 text-primary mb-2" />
+                          {/* OTHER FILE PREVIEW */}
+                          {!isImage &&
+                            !isPDF &&
+                            !isVideo && (
+                              <div className="w-full h-full flex flex-col items-center justify-center">
+                                <FileText className="w-10 h-10 text-primary mb-2" />
 
-                              <div className="text-[11px] font-medium">
-                                FILE
+                                <div className="text-[11px] font-medium">
+                                  FILE
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
 
-                          {/* FILE TYPE */}
+                          {/* FILE EXTENSION BADGE */}
                           <div className="absolute top-2 right-2 z-10">
                             <div className="px-1.5 py-0.5 rounded bg-black/70 text-white text-[9px] uppercase tracking-wide">
                               {extension}
@@ -785,15 +839,16 @@ export default function VerificationDetailsPage() {
                           {/* HOVER ACTIONS */}
                           <div className="absolute inset-0 bg-black/55 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-2">
 
-                            {/* VIEW */}
-                            {/* VIEW */}
+                            {/* VIEW BUTTON */}
                             <Button
                               variant="secondary"
                               size="icon"
                               className="h-8 w-8 bg-white text-black hover:bg-white/90"
                               onClick={() => {
 
-                                const allFiles = doc.files || [];
+                                // ALL PREVIEW FILES
+                                const allFiles =
+                                  doc.files || [];
 
                                 setPreviewFiles(allFiles);
 
@@ -805,7 +860,7 @@ export default function VerificationDetailsPage() {
                               <Eye className="w-3.5 h-3.5" />
                             </Button>
 
-                            {/* DOWNLOAD */}
+                            {/* DOWNLOAD BUTTON */}
                             <Button
                               size="icon"
                               className="h-8 w-8"
@@ -822,34 +877,40 @@ export default function VerificationDetailsPage() {
                         </div>
 
                         {/* FILE INFO */}
-                        {/* <div className="p-3">
+                        {/*
+                    <div className="p-3">
+
                         <div className="truncate text-sm font-medium text-foreground">
-                          {fileName}
+                            {fileName}
                         </div>
 
                         <div className="flex items-center justify-between mt-1 text-[14px] text-muted-foreground">
-                          <span>{extension.toUpperCase()}</span>
-                          <span>{doc.status}</span>
+                            <span>{extension.toUpperCase()}</span>
+                            <span>{doc.status}</span>
                         </div>
-                      </div> */}
+
+                    </div>
+                    */}
                       </div>
                     );
                   })}
                 </div>
               </div>
+
             </div>
           ))}
 
         </CardContent>
-
       </Card>
 
-      {/* Documets preview */}
+      {/* DOCUMENT PREVIEW MODAL */}
       <Dialog
         open={previewOpen}
         onOpenChange={(open) => {
+
           setPreviewOpen(open);
 
+          // RESET PREVIEW STATE
           if (!open) {
             setZoom(1);
 
@@ -864,6 +925,7 @@ export default function VerificationDetailsPage() {
       >
         <DialogContent className="!max-w-none w-screen h-screen p-0 m-0 border-0 rounded-none bg-black overflow-hidden">
 
+          {/* ACCESSIBILITY TITLE */}
           <DialogTitle asChild>
             <VisuallyHidden>
               <span>File Preview</span>
@@ -875,38 +937,49 @@ export default function VerificationDetailsPage() {
             {/* HEADER */}
             <div className="h-16 border-b border-white/10 bg-black/80 backdrop-blur-xl flex items-center justify-between px-5 shrink-0 z-50">
 
-              {/* LEFT */}
+              {/* LEFT SECTION */}
               <div className="flex items-center gap-4">
 
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/10">
-                  {previewFiles?.[activeIndex]
-                    ?.toLowerCase()
-                    ?.includes(".pdf") ? (
-                    <FileText className="w-5 h-5 text-red-400" />
-                  ) : (
-                    <ImageIcon className="w-5 h-5 text-white" />
-                  )}
+                {/* FILE TYPE ICON */}
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/10">
+                  {(() => {
+                    const file = previewFiles?.[activeIndex]?.toLowerCase();
+                    if (file?.includes('.pdf')) {
+                      return <FileText className="h-5 w-5 text-red-400" />;
+                    }
+                    if (file?.includes('.doc') || file?.includes('.docx')) {
+                      return <File className="h-5 w-5 text-blue-400" />;
+                    }
+                    return <ImageIcon className="h-5 w-5 text-white" />;
+                  })()}
                 </div>
 
+                {/* FILE INFO */}
                 <div>
-                  <div className="text-sm font-medium text-white">
-                    Preview File
+                  {/* FILE NAME */}
+                  <div className="max-w-[220px] truncate text-sm font-medium text-white">
+                    {previewFiles?.[activeIndex]
+                      ?.split('/')
+                      ?.pop()}
                   </div>
 
+                  {/* FILE COUNT */}
                   <div className="text-xs text-zinc-400">
                     {activeIndex + 1} of {previewFiles.length}
                   </div>
                 </div>
+
               </div>
 
-              {/* RIGHT */}
+              {/* HEADER RIGHT */}
               <div className="flex items-center gap-2">
 
-                {/* IMAGE CONTROLS ONLY */}
+                {/* IMAGE ZOOM CONTROLS */}
                 {!previewFiles?.[activeIndex]
                   ?.toLowerCase()
                   ?.includes(".pdf") && (
                     <>
+                      {/* ZOOM OUT */}
                       <Button
                         size="icon"
                         variant="secondary"
@@ -921,10 +994,12 @@ export default function VerificationDetailsPage() {
                         <ZoomOut className="w-4 h-4" />
                       </Button>
 
+                      {/* ZOOM VALUE */}
                       <div className="min-w-[70px] text-center text-sm text-white font-medium">
                         {Math.round(zoom * 100)}%
                       </div>
 
+                      {/* ZOOM IN */}
                       <Button
                         size="icon"
                         variant="secondary"
@@ -939,10 +1014,12 @@ export default function VerificationDetailsPage() {
                         <ZoomIn className="w-4 h-4" />
                       </Button>
 
+                      {/* RESET ZOOM */}
                       <Button
                         variant="secondary"
                         className="bg-white/10 border-white/10 hover:bg-white/20 text-white"
                         onClick={() => {
+
                           setZoom(1);
 
                           setPosition({
@@ -956,7 +1033,7 @@ export default function VerificationDetailsPage() {
                     </>
                   )}
 
-                {/* DOWNLOAD */}
+                {/* DOWNLOAD BUTTON */}
                 <Button
                   variant="secondary"
                   className="bg-white/10 border-white/10 hover:bg-white/20 text-white"
@@ -970,7 +1047,7 @@ export default function VerificationDetailsPage() {
                   Download
                 </Button>
 
-                {/* CLOSE */}
+                {/* CLOSE BUTTON */}
                 <Button
                   size="icon"
                   variant="destructive"
@@ -984,10 +1061,11 @@ export default function VerificationDetailsPage() {
             {/* BODY */}
             <div className="relative flex-1 overflow-hidden bg-[#050505]">
 
-              {/* LEFT NAV */}
+              {/* PREVIOUS BUTTON */}
               {activeIndex > 0 && (
                 <button
                   onClick={() => {
+
                     setActiveIndex((prev) => prev - 1);
 
                     setZoom(1);
@@ -1003,10 +1081,11 @@ export default function VerificationDetailsPage() {
                 </button>
               )}
 
-              {/* RIGHT NAV */}
+              {/* NEXT BUTTON */}
               {activeIndex < previewFiles.length - 1 && (
                 <button
                   onClick={() => {
+
                     setActiveIndex((prev) => prev + 1);
 
                     setZoom(1);
@@ -1022,92 +1101,179 @@ export default function VerificationDetailsPage() {
                 </button>
               )}
 
-              {/* PDF */}
-              {previewFiles?.[activeIndex]
-                ?.toLowerCase()
-                ?.includes(".pdf") ? (
-                <iframe
-                  src={`${previewFiles[activeIndex]}#toolbar=0`}
-                  className="w-full h-full bg-white"
-                />
-              ) : (
-                /* IMAGE */
-                <div
-                  className={`w-full h-full overflow-auto ${zoom > 1
-                    ? "cursor-grab active:cursor-grabbing"
-                    : "cursor-default"
-                    }`}
-                >
-                  <div
-                    className="min-w-full min-h-full flex items-center justify-center p-10"
-                    onMouseDown={(e) => {
-                      if (zoom <= 1) return;
+              {/* FILE PREVIEW */}
+              {(() => {
 
-                      setDragging(true);
+                // ACTIVE FILE
+                const activeFile =
+                  previewFiles?.[activeIndex] || "";
 
-                      setDragStart({
-                        x:
-                          e.clientX +
-                          e.currentTarget.scrollLeft,
-                        y:
-                          e.clientY +
-                          e.currentTarget.scrollTop,
-                      });
-                    }}
-                    onMouseMove={(e) => {
-                      if (!dragging || zoom <= 1)
-                        return;
+                // LOWERCASE FILE
+                const lowerFile =
+                  activeFile.toLowerCase();
 
-                      const container =
-                        e.currentTarget;
+                // FILE TYPES
+                const isPDF =
+                  lowerFile.includes(".pdf");
 
-                      container.scrollLeft =
-                        dragStart.x - e.clientX;
+                const isDOC =
+                  lowerFile.includes(".doc") ||
+                  lowerFile.includes(".docx");
 
-                      container.scrollTop =
-                        dragStart.y - e.clientY;
-                    }}
-                    onMouseUp={() => setDragging(false)}
-                    onMouseLeave={() =>
-                      setDragging(false)
-                    }
-                  >
-                    <img
-                      src={previewFiles?.[activeIndex]}
-                      draggable={false}
-                      className="select-none object-contain transition-transform duration-150 ease-out shadow-2xl rounded-xl"
-                      style={{
-                        transform: `scale(${zoom})`,
-                        transformOrigin:
-                          "center center",
-                        maxWidth: "unset",
-                        maxHeight: "unset",
-                        width:
-                          zoom > 1
-                            ? "auto"
-                            : "80%",
-                        height:
-                          zoom > 1
-                            ? "auto"
-                            : "80%",
-                      }}
+                const isImage = [
+                  ".png",
+                  ".jpg",
+                  ".jpeg",
+                  ".webp",
+                  ".gif",
+                ].some((ext) =>
+                  lowerFile.includes(ext)
+                );
+
+                // PDF VIEW
+                if (isPDF) {
+                  return (
+                    <iframe
+                      src={`${activeFile}#toolbar=0`}
+                      className="w-full h-full bg-white"
                     />
+                  );
+                }
+
+                // DOC / DOCX VIEW
+                if (isDOC) {
+                  return (
+                    <iframe
+                      src={`https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(
+                        activeFile
+                      )}`}
+                      className="w-full h-full bg-white"
+                    />
+                  );
+                }
+
+                // IMAGE VIEW
+                if (isImage) {
+                  return (
+                    <div
+                      className={`w-full h-full overflow-auto ${zoom > 1
+                        ? "cursor-grab active:cursor-grabbing"
+                        : "cursor-default"
+                        }`}
+                    >
+                      <div
+                        className="min-w-full min-h-full flex items-center justify-center p-10"
+
+                        // START DRAG
+                        onMouseDown={(e) => {
+
+                          if (zoom <= 1) return;
+
+                          setDragging(true);
+
+                          setDragStart({
+                            x:
+                              e.clientX +
+                              e.currentTarget.scrollLeft,
+                            y:
+                              e.clientY +
+                              e.currentTarget.scrollTop,
+                          });
+                        }}
+
+                        // DRAG MOVE
+                        onMouseMove={(e) => {
+
+                          if (!dragging || zoom <= 1)
+                            return;
+
+                          const container =
+                            e.currentTarget;
+
+                          container.scrollLeft =
+                            dragStart.x - e.clientX;
+
+                          container.scrollTop =
+                            dragStart.y - e.clientY;
+                        }}
+
+                        // STOP DRAG
+                        onMouseUp={() =>
+                          setDragging(false)
+                        }
+
+                        // STOP DRAG ON LEAVE
+                        onMouseLeave={() =>
+                          setDragging(false)
+                        }
+                      >
+                        {/* PREVIEW IMAGE */}
+                        <img
+                          src={activeFile}
+                          draggable={false}
+                          className="select-none object-contain transition-transform duration-150 ease-out shadow-2xl rounded-xl"
+                          style={{
+                            transform: `scale(${zoom})`,
+                            transformOrigin:
+                              "center center",
+                            maxWidth: "unset",
+                            maxHeight: "unset",
+                            width:
+                              zoom > 1
+                                ? "auto"
+                                : "80%",
+                            height:
+                              zoom > 1
+                                ? "auto"
+                                : "80%",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                }
+
+                // FALLBACK VIEW
+                return (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-white">
+                    <FileText className="w-16 h-16 mb-4 text-zinc-400" />
+
+                    <div className="text-lg font-medium">
+                      Preview not available
+                    </div>
+
+                    <div className="text-sm text-zinc-500 mt-1">
+                      This file type cannot be previewed.
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
 
-            {/* THUMBNAILS */}
-            {previewFiles.length > 1 && (
-              <div className="h-28 border-t border-white/10 bg-black/40 backdrop-blur-xl overflow-x-auto shrink-0">
+            {/* ================= THUMBNAILS ================= */}
 
-                <div className="flex items-center gap-3 px-5 py-3 min-w-max">
+            {previewFiles.length > 1 && (
+              <div className="h-28 shrink-0 overflow-x-auto border-t border-white/10 bg-black/40 backdrop-blur-xl">
+
+                <div className="flex min-w-max items-center gap-3 px-5 py-3">
 
                   {previewFiles.map((file, index) => {
+                    const lowerFile = file?.toLowerCase();
+
                     const isPDF =
-                      file
-                        ?.toLowerCase()
-                        ?.includes(".pdf");
+                      lowerFile?.includes('.pdf');
+
+                    const isDOC =
+                      lowerFile?.includes('.doc') ||
+                      lowerFile?.includes('.docx');
+
+                    const isEXCEL =
+                      lowerFile?.includes('.xls') ||
+                      lowerFile?.includes('.xlsx');
+
+                    const isPPT =
+                      lowerFile?.includes('.ppt') ||
+                      lowerFile?.includes('.pptx');
 
                     return (
                       <button
@@ -1122,28 +1288,53 @@ export default function VerificationDetailsPage() {
                             y: 0,
                           });
                         }}
-                        className={`relative w-24 h-20 rounded-xl overflow-hidden border transition-all duration-200 shrink-0 ${activeIndex === index
-                          ? "border-primary ring-2 ring-primary/30 scale-105"
-                          : "border-white/10 hover:border-white/30"
+                        className={`relative h-20 w-24 shrink-0 overflow-hidden rounded-xl border transition-all duration-200 ${activeIndex === index
+                          ? 'scale-105 border-primary ring-2 ring-primary/30'
+                          : 'border-white/10 hover:border-white/30'
                           }`}
                       >
                         {isPDF ? (
-                          <div className="w-full h-full bg-zinc-900 flex flex-col items-center justify-center">
-                            <FileText className="w-7 h-7 text-red-400" />
+                          <div className="flex h-full w-full flex-col items-center justify-center bg-zinc-900">
+                            <FileText className="h-7 w-7 text-red-400" />
 
-                            <span className="text-[10px] text-white mt-1">
+                            <span className="mt-1 text-[10px] text-white">
                               PDF
+                            </span>
+                          </div>
+                        ) : isDOC ? (
+                          <div className="flex h-full w-full flex-col items-center justify-center bg-zinc-900">
+                            <File className="h-7 w-7 text-blue-400" />
+
+                            <span className="mt-1 text-[10px] text-white">
+                              DOC
+                            </span>
+                          </div>
+                        ) : isEXCEL ? (
+                          <div className="flex h-full w-full flex-col items-center justify-center bg-zinc-900">
+                            <FileSpreadsheet className="h-7 w-7 text-green-400" />
+
+                            <span className="mt-1 text-[10px] text-white">
+                              Sheet
+                            </span>
+                          </div>
+                        ) : isPPT ? (
+                          <div className="flex h-full w-full flex-col items-center justify-center bg-zinc-900">
+                            <FileSpreadsheet className="h-7 w-7 text-green-400" />
+
+                            <span className="mt-1 text-[10px] text-white">
+                              PPT
                             </span>
                           </div>
                         ) : (
                           <img
                             src={file}
-                            className="w-full h-full object-cover"
+                            className="h-full w-full object-cover"
                           />
                         )}
 
+                        {/* Active Thumbnail Overlay */}
                         {activeIndex === index && (
-                          <div className="absolute inset-0 bg-primary/10 border border-primary rounded-xl" />
+                          <div className="absolute inset-0 rounded-xl border border-primary bg-primary/10" />
                         )}
                       </button>
                     );
@@ -1151,11 +1342,11 @@ export default function VerificationDetailsPage() {
                 </div>
               </div>
             )}
+
           </div>
         </DialogContent>
       </Dialog>
 
-
     </div>
   );
-}
+} 

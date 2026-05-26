@@ -21,11 +21,16 @@ import { MultiLangTabs } from '@/components/common/MultiLangTabs';
 import { MultiLangInput } from '@/components/common/MultiLangInput';
 import { MultiLangTextarea } from '@/components/common/MultiLangTextarea';
 
-import { getTenantByIdtoEdit, updateAffiliate} from '@/services/auth.service';
+import { getTenantByIdtoEdit, updateAffiliate } from '@/services/auth.service';
+
+import {
+  createMultiLangObject,
+  normalizeMultiLang,
+  MultiLangText
+} from "@/utils/multilang";
 
 /* ================= TYPES ================= */
 
-type MultiLangText = Record<Language, string>;
 
 interface TenantForm {
   companyName: MultiLangText;
@@ -125,25 +130,6 @@ const CITIES: Option[] = [
 ];
 
 /* ================= HELPERS ================= */
-
-const createMultiLangObject = (): MultiLangText =>
-  Object.keys(LANGUAGES).reduce((acc, lang) => {
-    acc[lang as Language] = '';
-    return acc;
-  }, {} as MultiLangText);
-
-const normalizeMultiLang = (value: any): MultiLangText => {
-  if (typeof value === 'object' && value !== null) {
-    return {
-      ...createMultiLangObject(),
-      ...value,
-    };
-  }
-  return {
-    ...createMultiLangObject(),
-    [DEFAULT_LANGUAGE]: value || ''
-  };
-};
 
 const normalizeValue = (value?: string) =>
   value ? value.toLowerCase().trim() : '';
@@ -289,61 +275,61 @@ function UpdateTenantContent() {
   }, [AffiliateId]);
 
 
-const mapFormToAffiliatePayload = (formData: TenantForm): UpdateAffiliatePayload => {
-  return {
-    companyName: formData.companyName,
-    description: formData.description,
+  const mapFormToAffiliatePayload = (formData: TenantForm): UpdateAffiliatePayload => {
+    return {
+      companyName: formData.companyName,
+      description: formData.description,
 
-    contact: {
-      email: formData.contact_email,
-      phone: {
-        code: formData.phoneCode,
-        number: formData.contact_phoneNumber,
+      contact: {
+        email: formData.contact_email,
+        phone: {
+          code: formData.phoneCode,
+          number: formData.contact_phoneNumber,
+        },
       },
-    },
 
-    platform: {
-      website: formData.website,
-      adminPanelUrl: formData.adminPanelUrl,
-    },
+      platform: {
+        website: formData.website,
+        adminPanelUrl: formData.adminPanelUrl,
+      },
 
-    apiDomains: formData.apiDomains.filter(Boolean),
+      apiDomains: formData.apiDomains.filter(Boolean),
 
-    address: {
-      addressLine1: formData.addressLine1,
-      addressLine2: formData.addressLine2 || "",
-      landmark: formData.landmark || "",
-      zipCode: formData.zipCode,
-      city: formData.city,
-      state: formData.state,
-      country: formData.country,
-      latitude: "",
-      longitude: "",
-    },
+      address: {
+        addressLine1: formData.addressLine1,
+        addressLine2: formData.addressLine2 || "",
+        landmark: formData.landmark || "",
+        zipCode: formData.zipCode,
+        city: formData.city,
+        state: formData.state,
+        country: formData.country,
+        latitude: "",
+        longitude: "",
+      },
+    };
   };
-};
 
   const updateAffiliateData = async () => {
-  try {
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-    const payload = mapFormToAffiliatePayload(formData);
+      const payload = mapFormToAffiliatePayload(formData);
 
-    const res = await updateAffiliate(AffiliateId, payload);
+      const res = await updateAffiliate(AffiliateId, payload);
 
-    console.log("Update Success:", res);
+      console.log("Update Success:", res);
 
-    // optionally refresh data
-    const refreshed = await getTenantByIdtoEdit(AffiliateId);
-    setFormData(mapAffiliateToForm(refreshed?.data));
+      // optionally refresh data
+      const refreshed = await getTenantByIdtoEdit(AffiliateId);
+      setFormData(mapAffiliateToForm(refreshed?.data));
 
-  } catch (err) {
-    console.error(err);
-    setErrors({ global: "Failed to update affiliate" });
-  } finally {
-    setIsLoading(false);
-  }
-};
+    } catch (err) {
+      console.error(err);
+      setErrors({ global: "Failed to update affiliate" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
 
   /* ================= UI ================= */
@@ -473,14 +459,14 @@ const mapFormToAffiliatePayload = (formData: TenantForm): UpdateAffiliatePayload
         </div>
       )}
       <div className="flex gap-3">
-       <Button
-  className="flex-1 flex items-center justify-center gap-2"
-  disabled={isLoading}
-  onClick={updateAffiliateData}
->
-  <Save className="w-4 h-4" />
-  {isLoading ? "Updating..." : "Update"}
-</Button>
+        <Button
+          className="flex-1 flex items-center justify-center gap-2"
+          disabled={isLoading}
+          onClick={updateAffiliateData}
+        >
+          <Save className="w-4 h-4" />
+          {isLoading ? "Updating..." : "Update"}
+        </Button>
 
         <Link href="/root/affiliates" className="flex-1">
           <Button variant="outline" className="w-full">Cancel</Button>

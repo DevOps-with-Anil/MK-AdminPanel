@@ -37,7 +37,7 @@ import {
   Camera
 } from 'lucide-react';
 
-import { tokenStorage } from "@/utils/token";
+// import { tokenStorage } from "@/utils/token";
 import { profile, updateProfile } from '@/services/auth.service';
 
 import { I18nContext } from '@/i18n/provider';
@@ -78,8 +78,6 @@ function ProfileContent() {
     const fetchProfile = async () => {
       setIsLoading(true);
       try {
-        const token = tokenStorage.getToken(); // get token from cookie
-        if (!token) throw new Error("No token found");
         const res = await profile(); // your API call
         const profileData = res.data;
 
@@ -260,7 +258,7 @@ function ProfileContent() {
             <div className="flex justify-center">
               <div className="relative">
 
-                <div className="w-24 h-24 rounded-full overflow-hidden border bg-muted flex items-center justify-center">
+                <div className="w-24 h-24 rounded-xl overflow-hidden border bg-muted flex items-center justify-center">
                   {avatar ? (
                     <img
                       src={avatar}

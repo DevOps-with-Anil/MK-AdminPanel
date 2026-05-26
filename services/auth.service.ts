@@ -12,6 +12,12 @@ export const login = async (payload: { email: string; password: string }) => {
   });
 };
 
+export const logout = async ():  Promise<any> => {
+  return apiClient("auth/root/logout", {
+    method: "POST",
+  });
+};
+
 // Get current user profile
 export const profile = async (): Promise<any> => {
   return apiClient("auth/root/me", { method: "GET" });
@@ -293,7 +299,6 @@ export const getAffiliates = async (payload: {
   status?: string;
 }) => {
   const params = new URLSearchParams();
-
   params.append("page", String(payload.page));
   params.append("limit", String(payload.limit));
   if (payload.search) params.append("search", payload.search);

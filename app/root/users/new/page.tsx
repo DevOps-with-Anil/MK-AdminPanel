@@ -182,7 +182,7 @@ function NewAdminContent() {
     // preview only
     const reader = new FileReader();
     reader.onload = () => {
-      handleInputChange('imagePreview', reader.result as string);
+      handleInputChange('photo', reader.result as string);
     };
     reader.readAsDataURL(file);
   }
@@ -388,6 +388,8 @@ function NewAdminContent() {
                     <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
                   </label>
                 </div>
+
+                
               </div>
 
               {/* Buttons */}

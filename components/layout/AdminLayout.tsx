@@ -43,8 +43,8 @@ import {
   BreadcrumbSeparator
 } from '@/components/ui/breadcrumb';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { tokenStorage } from "@/utils/token";
-import { profile } from '@/services/auth.service';
+// import { tokenStorage } from "@/utils/token";
+import { logout, profile } from '@/services/auth.service';
 
 import { I18nContext } from '@/i18n/provider';
 import { LANGUAGES, Language } from '@/i18n/languages';
@@ -81,62 +81,24 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // useEffect(() => {
-  //   // const savedLang = localStorage.getItem('lang') || 'en';
-  //   const fetchProfile = async () => {
-  //     setIsLoading(true);
-  //     try {
-  //       const token = tokenStorage.getToken(); // get token from cookie
-  //       if (!token) throw new Error("No token found");
-  //       const res = await profile(); // your API call
-  //       setProfileData(res);
-  //       // console.log("Profile Response on AdminLayout ::  " + JSON.stringify(res));
-  //     } catch (err: any) {
-  //       console.error(err);
-  //       setError(err.message || "Failed to load profile");
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-  //   fetchProfile();
-  // }, []);
-
   useEffect(() => {
-
     const fetchProfile = async () => {
       setIsLoading(true);
-
       try {
-        const token = tokenStorage.getToken();
-
-        if (!token) {
-          throw new Error("No token found");
-        }
-
         const res = await profile();
-
         setProfileData(res);
-
       } catch (err: any) {
-
         console.error(err);
-
         setError(err.message || "Failed to load profile");
-
       } finally {
-
         setIsLoading(false);
       }
     };
-
-    /**
-     * Initial fetch
-     */
+    // Initial fetch
     fetchProfile();
 
-    /**
-     * Listen profile updates
-     */
+
+    // Listen profile updates
     const handleProfileUpdated = () => {
       fetchProfile();
     };
@@ -156,11 +118,16 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   }, []);
 
 
-  const handleLogout = () => {
-    // Determine where to redirect based on current admin type
-    tokenStorage.clear();
-    if (currentAdminType.startsWith('root-admin')) {
+  const handleLogout = async () => {
+    setIsLoading(true);
+    try {
+      const res = await logout();
       router.push('/auth/signin');
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Failed to logout");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -218,153 +185,153 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       main: [],
     };
 
-    if (tokenStorage.getRole() === "ROOT") {
-      categoryMenus.main = [
-        {
-          label: t('translate.sidebar_dashboard'),
-          href: '/root/dashboard',
-          module: MODULES.DASHBOARD,
-          icon: LayoutDashboard,
-        },
-        {
-          label: t('translate.sidebar_tenants'),
-          href: '/root/affiliates',
-          module: MODULES.AFFILIATES,
-          icon: Building2,
-        },
-        {
-          label: t('translate.sidebar_subscription_plans'),
-          href: '/root/plans',
-          module: MODULES.SUBSCRIPTION_PLANS,
-          icon: CreditCard,
-          children: [
-            { label: t('translate.sidebar_plans_list'), href: '/root/plans' },
-            { label: t('translate.sidebar_subscribers'), href: '/root/subscribers' },
-          ],
-        },
-        {
-          label: t('translate.sidebar_kyb_requests'),
-          href: '/root/verification',
-          module: MODULES.KYB_REQUESTS,
-          icon: ShieldCheck,
-        },
-        {
-          label: t('translate.sidebar_support_tickets'),
-          href: '/root/tickets',
-          module: MODULES.SUPPORT_TICKETS,
-          icon: Ticket,
-        },
-        {
-          label: t('translate.sidebar_admin_users'),
-          href: '/root/users',
-          module: MODULES.ADMIN_USERS,
-          icon: Users,
-          children: [
-            { label: t('translate.sidebar_system_admins'), href: '/root/users' },
-            { label: t('translate.sidebar_system_roles'), href: '/root/roles' },
-          ],
-        },
-        {
-          label: t('translate.sidebar_permission_packages'),
-          href: '/root/modules',
-          module: MODULES.PERMISSION_PACKAGES,
-          icon: Package,
-          children: [
-            { label: t('translate.sidebar_system_modules'), href: '/root/modules/root-modules' },
-            { label: t('translate.sidebar_tenant_modules'), href: '/root/modules/affiliate-modules' },
-          ],
-        },
-        {
-          label: t('translate.sidebar_analytics_report'),
-          href: '/root/analytics',
-          module: MODULES.ANALYTICS_REPORT,
-          icon: BarChart3,
-        },
-        {
-          label: t('translate.sidebar_security_compliance'),
-          href: '/root/security',
-          module: MODULES.SECURITY_COMPLIANCE,
-          icon: Lock,
-        },
-        {
-          label: t('translate.sidebar_settings'),
-          href: '/root/settings',
-          module: MODULES.SETTINGS,
-          icon: Settings,
-        },
-      ];
-    } else {
-      categoryMenus.main = [
-        {
-          label: t('translate.sidebar_dashboard'),
-          href: '/admin/dashboard',
-          module: MODULES.DASHBOARD,
-          icon: LayoutDashboard,
-        },
-        {
-          label: t('translate.sidebar_business_kyb'),
-          href: '/admin/verification',
-          module: MODULES.BUSINESS_KYB,
-          icon: FileCheck,
-        },
-        {
-          label: t('translate.sidebar_subscription_plans'),
-          href: '/admin/plans',
-          module: MODULES.SUBSCRIPTION_PLANS,
-          icon: CreditCard,
-        },
-        {
-          label: t('translate.sidebar_customers'),
-          href: '/admin/users',
-          module: MODULES.CUSTOMERS,
-          icon: UserCircle,
-        },
-        {
-          label: t('translate.sidebar_cms'),
-          href: '/admin/cms',
-          module: MODULES.CMS,
-          icon: FileText,
-          children: [
-            { label: t('translate.sidebar_contact'), href: '/admin/cms/contact' },
-            { label: t('translate.sidebar_video'), href: '/admin/videos' },
-            { label: t('translate.sidebar_news_articles'), href: '/admin/articles' },
-            { label: t('translate.sidebar_challenges'), href: '/admin/challenges' },
-            { label: t('translate.sidebar_about_us'), href: '/admin/about-us' },
-            { label: t('translate.sidebar_home_page'), href: '/admin/cms/home' },
-          ],
-        },
-        {
-          label: t('translate.sidebar_analytics_report'),
-          href: '/admin/analytics',
-          module: MODULES.ANALYTICS_REPORT,
-          icon: BarChart3,
-        },
-        {
-          label: t('translate.sidebar_admin_users'),
-          href: '/admin/sub-admins',
-          module: MODULES.ADMIN_USERS,
-          icon: Users,
-        },
-        {
-          label: t('translate.sidebar_support_tickets'),
-          href: '/admin/tickets',
-          module: MODULES.SUPPORT_TICKETS,
-          icon: Ticket,
-        },
-        {
-          label: t('translate.sidebar_security_compliance'),
-          href: '/admin/security',
-          module: MODULES.SECURITY_COMPLIANCE,
-          icon: Lock,
-        },
-        {
-          label: t('translate.sidebar_settings'),
-          href: '/admin/settings',
-          module: MODULES.SETTINGS,
-          icon: Settings,
-        },
-      ];
-    }
+    // if (tokenStorage.getRole() === "ROOT") {
+    categoryMenus.main = [
+      {
+        label: t('translate.sidebar_dashboard'),
+        href: '/root/dashboard',
+        module: MODULES.DASHBOARD,
+        icon: LayoutDashboard,
+      },
+      {
+        label: t('translate.sidebar_tenants'),
+        href: '/root/affiliates',
+        module: MODULES.AFFILIATES,
+        icon: Building2,
+      },
+      {
+        label: t('translate.sidebar_subscription_plans'),
+        href: '/root/plans',
+        module: MODULES.SUBSCRIPTION_PLANS,
+        icon: CreditCard,
+        children: [
+          { label: t('translate.sidebar_plans_list'), href: '/root/plans' },
+          { label: t('translate.sidebar_subscribers'), href: '/root/subscribers' },
+        ],
+      },
+      {
+        label: t('translate.sidebar_kyb_requests'),
+        href: '/root/verification',
+        module: MODULES.KYB_REQUESTS,
+        icon: ShieldCheck,
+      },
+      {
+        label: t('translate.sidebar_support_tickets'),
+        href: '/root/tickets',
+        module: MODULES.SUPPORT_TICKETS,
+        icon: Ticket,
+      },
+      {
+        label: t('translate.sidebar_admin_users'),
+        href: '/root/users',
+        module: MODULES.ADMIN_USERS,
+        icon: Users,
+        children: [
+          { label: t('translate.sidebar_system_admins'), href: '/root/users' },
+          { label: t('translate.sidebar_system_roles'), href: '/root/roles' },
+        ],
+      },
+      {
+        label: t('translate.sidebar_permission_packages'),
+        href: '/root/modules',
+        module: MODULES.PERMISSION_PACKAGES,
+        icon: Package,
+        children: [
+          { label: t('translate.sidebar_system_modules'), href: '/root/modules/root-modules' },
+          { label: t('translate.sidebar_tenant_modules'), href: '/root/modules/affiliate-modules' },
+        ],
+      },
+      {
+        label: t('translate.sidebar_analytics_report'),
+        href: '/root/analytics',
+        module: MODULES.ANALYTICS_REPORT,
+        icon: BarChart3,
+      },
+      {
+        label: t('translate.sidebar_security_compliance'),
+        href: '/root/security',
+        module: MODULES.SECURITY_COMPLIANCE,
+        icon: Lock,
+      },
+      {
+        label: t('translate.sidebar_settings'),
+        href: '/root/settings',
+        module: MODULES.SETTINGS,
+        icon: Settings,
+      },
+    ];
+    // } else {
+    //   categoryMenus.main = [
+    //     {
+    //       label: t('translate.sidebar_dashboard'),
+    //       href: '/admin/dashboard',
+    //       module: MODULES.DASHBOARD,
+    //       icon: LayoutDashboard,
+    //     },
+    //     {
+    //       label: t('translate.sidebar_business_kyb'),
+    //       href: '/admin/verification',
+    //       module: MODULES.BUSINESS_KYB,
+    //       icon: FileCheck,
+    //     },
+    //     {
+    //       label: t('translate.sidebar_subscription_plans'),
+    //       href: '/admin/plans',
+    //       module: MODULES.SUBSCRIPTION_PLANS,
+    //       icon: CreditCard,
+    //     },
+    //     {
+    //       label: t('translate.sidebar_customers'),
+    //       href: '/admin/users',
+    //       module: MODULES.CUSTOMERS,
+    //       icon: UserCircle,
+    //     },
+    //     {
+    //       label: t('translate.sidebar_cms'),
+    //       href: '/admin/cms',
+    //       module: MODULES.CMS,
+    //       icon: FileText,
+    //       children: [
+    //         { label: t('translate.sidebar_contact'), href: '/admin/cms/contact' },
+    //         { label: t('translate.sidebar_video'), href: '/admin/videos' },
+    //         { label: t('translate.sidebar_news_articles'), href: '/admin/articles' },
+    //         { label: t('translate.sidebar_challenges'), href: '/admin/challenges' },
+    //         { label: t('translate.sidebar_about_us'), href: '/admin/about-us' },
+    //         { label: t('translate.sidebar_home_page'), href: '/admin/cms/home' },
+    //       ],
+    //     },
+    //     {
+    //       label: t('translate.sidebar_analytics_report'),
+    //       href: '/admin/analytics',
+    //       module: MODULES.ANALYTICS_REPORT,
+    //       icon: BarChart3,
+    //     },
+    //     {
+    //       label: t('translate.sidebar_admin_users'),
+    //       href: '/admin/sub-admins',
+    //       module: MODULES.ADMIN_USERS,
+    //       icon: Users,
+    //     },
+    //     {
+    //       label: t('translate.sidebar_support_tickets'),
+    //       href: '/admin/tickets',
+    //       module: MODULES.SUPPORT_TICKETS,
+    //       icon: Ticket,
+    //     },
+    //     {
+    //       label: t('translate.sidebar_security_compliance'),
+    //       href: '/admin/security',
+    //       module: MODULES.SECURITY_COMPLIANCE,
+    //       icon: Lock,
+    //     },
+    //     {
+    //       label: t('translate.sidebar_settings'),
+    //       href: '/admin/settings',
+    //       module: MODULES.SETTINGS,
+    //       icon: Settings,
+    //     },
+    //   ];
+    // }
 
     return categoryMenus;
   };

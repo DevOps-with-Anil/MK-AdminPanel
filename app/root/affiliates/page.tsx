@@ -137,8 +137,6 @@ export default function AffiliatesPage() {
 
   useEffect(() => {
     fetchAffiliates();
-    console.log("Affiliated data  Called");
-
   }, [fetchAffiliates]);
 
   // delete

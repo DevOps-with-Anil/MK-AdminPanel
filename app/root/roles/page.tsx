@@ -33,8 +33,9 @@ import {
 import { getSystemRoles, updateStatus, deleteEntity } from '@/services/auth.service';
 // import { useDeleteEntity } from '@/hooks/useDeleteEntity';
 import { useRouter } from 'next/navigation';
-import { ACTIONS } from '@/lib/mock-data';
-import { Action } from '@radix-ui/react-toast';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { AppMessage } from '@/components/common/AppMessage';
+import { useAppMessage } from '@/hooks/ui/useAppMessage';
 
 /* ================= TYPES ================= */
 
@@ -63,8 +64,32 @@ function RolesPageContent() {
   const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  // const { deleteEntity, loadingId } = useDeleteEntity();
 
+  /**
+   * Delete confirmation dialog state
+   */
+  const [
+    confirmDialog,
+    setConfirmDialog
+  ] = useState({
+    open: false,
+    title: '',
+    description: '',
+    confirmText: '',
+    loading: false,
+    onConfirm: () => { }
+  });
+
+  /**
+   * Global app message hook
+   */
+  const {
+    message,
+    type,
+    visible,
+    showMessage,
+    clearMessage
+  } = useAppMessage();
 
   /* ================= SEARCH ROLE ================= */
 
@@ -158,25 +183,6 @@ function RolesPageContent() {
     }
   };
 
-  /* ================= DELETE ROLE ================= */
-
-  const handleDelete = async (
-    roleId: string,
-    roleName: string
-  ) => {
-    if (!confirm(`Delete "${roleName}" role?`)) return;
-
-    try {
-      await deleteEntity('role', roleId);
-
-      // ✅ instant UI update
-      setRoles(prev => prev.filter(r => r.id !== roleId));
-    } catch (err) {
-      console.error(err);
-      alert('Failed to delete role');
-    }
-  };
-
   /* ================= HELPERS ================= */
 
   const formatDate = (date: string) =>
@@ -188,6 +194,70 @@ function RolesPageContent() {
       minute: '2-digit',
       hour12: false,
     });
+
+
+  /* ================= DELETE ROLE ================= */
+
+  const handleDelete = async (id: string) => {
+
+    try {
+      setConfirmDialog(prev => ({
+        ...prev,
+        loading: true,
+      }));
+
+      const res = await deleteEntity('role', id);
+
+      const isSuccess = res?.status === 200 || res?.status === 201;
+
+      if (isSuccess) {
+        setRoles(prev =>
+          prev.filter(r => r.id !== id)
+        );
+
+        showMessage(
+          res?.message || 'Role deleted successfully',
+          'success'
+        );
+      } else {
+        showMessage(
+          res?.message || 'Failed to delete role',
+          'danger'
+        );
+      }
+    } catch (err) {
+      console.error('Delete role error:', err);
+
+      showMessage(
+        (err as any)?.message || 'Something went wrong',
+        'danger'
+      );
+    } finally {
+      setConfirmDialog(prev => ({
+        ...prev,
+        open: false,
+        loading: false,
+      }));
+    }
+  };
+
+  /* =====================================================
+  * OPEN DELETE CONFIRMATION
+  * ===================================================*/
+
+  const openDeleteDialog = (id: string, roleName: string) => {
+
+
+    setConfirmDialog({
+      open: true,
+      title: `Delete Role - ${roleName}`,
+      description:
+        'Are you sure you want to delete this role? This action cannot be undone.',
+      confirmText: 'Delete Role',
+      loading: false,
+      onConfirm: () => handleDelete(id),
+    });
+  };
 
   /* ================= UI ================= */
 
@@ -386,9 +456,9 @@ function RolesPageContent() {
 
 
                             <DropdownMenuItem
-                              
+
                               onClick={() =>
-                                handleDelete(
+                                openDeleteDialog(
                                   role.id,
                                   role.name
                                 )
@@ -409,39 +479,80 @@ function RolesPageContent() {
             </table>
           </div>
 
-         {/* PAGINATION */}
-            <div className="flex justify-end gap-2 p-4">
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={page === 1}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                Prev
-              </Button>
+          {/* PAGINATION */}
+          <div className="flex justify-end gap-2 p-4">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={page === 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              Prev
+            </Button>
 
-              {[...Array(totalPages)].map((_, i) => (
-                <Button
-                  key={i}
-                  size="sm"
-                  variant={page === i + 1 ? 'default' : 'outline'}
-                  onClick={() => setPage(i + 1)}
-                >
-                  {i + 1}
-                </Button>
-              ))}
-
+            {[...Array(totalPages)].map((_, i) => (
               <Button
+                key={i}
                 size="sm"
-                variant="outline"
-                disabled={page === totalPages}
-                onClick={() => setPage((p) => p + 1)}
+                variant={page === i + 1 ? 'default' : 'outline'}
+                onClick={() => setPage(i + 1)}
               >
-                Next
+                {i + 1}
               </Button>
-            </div>
+            ))}
+
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={page === totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next
+            </Button>
+          </div>
         </CardContent>
       </Card>
+
+
+      {/* =================================================
+                DELETE CONFIRMATION DIALOG
+            ================================================== */}
+
+      <ConfirmDialog
+        open={confirmDialog.open}
+        title={confirmDialog.title}
+        description={
+          confirmDialog.description
+        }
+        confirmText={
+          confirmDialog.confirmText
+        }
+        loading={confirmDialog.loading}
+        variant="destructive"
+        onCancel={() =>
+          setConfirmDialog((prev) => ({
+            ...prev,
+            open: false
+          }))
+        }
+        onConfirm={
+          confirmDialog.onConfirm
+        }
+      />
+
+
+
+
+      {/* =================================================
+                GLOBAL APP MESSAGE
+            ================================================== */}
+
+      <AppMessage
+        visible={visible}
+        message={message}
+        type={type}
+        onClose={clearMessage}
+      />
     </div>
   );
 }

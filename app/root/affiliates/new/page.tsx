@@ -207,7 +207,6 @@ function NewTenantContent() {
     setFormData(prev => ({ ...prev, apiDomains: updated }));
   };
 
-  /* ================= VALIDATION ================= */
 
   /* ================= VALIDATION ================= */
 
@@ -217,8 +216,8 @@ function NewTenantContent() {
 
     /* ================= REGEX ================= */
 
-    const emailRegex =
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+   const emailRegex =
+  /^(?=.{1,254}$)(?=.{1,64}@)[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]{0,63})@[a-zA-Z0-9-]+(?:\.[a-zA-Z]{2,})+$/;
 
     const phoneRegex =
       /^[0-9]{7,15}$/;
@@ -226,11 +225,7 @@ function NewTenantContent() {
     const urlRegex =
       /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/\S*)?$/i;
 
-    // Minimum 8 chars
-    // 1 uppercase
-    // 1 lowercase
-    // 1 number
-    // 1 special char
+    // Minimum 8 chars, 1 uppercase, 1 lowercase, 1 number & 1 special char
 
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.#_-])[A-Za-z\d@$!%*?&.#_-]{8,}$/;
@@ -387,7 +382,7 @@ function NewTenantContent() {
         'Address Line 1 is too short';
     }
 
-    if (!formData.zipCode?.trim()) {
+    if (!formData.zipCode.trim()) {
 
       newErrors.zipCode =
         'Zip code is required';
@@ -686,6 +681,7 @@ function NewTenantContent() {
               {errors.city && <p className="text-red-500 text-xs">{errors.city}</p>}
 
               <Input placeholder="Pincode" value={formData.zipCode} onChange={e => setField('zipCode', e.target.value)} />
+              {errors.zipCode && <p className="text-red-500 text-xs">{errors.zipCode}</p>}
             </CardContent>
           </Card>
         </div>

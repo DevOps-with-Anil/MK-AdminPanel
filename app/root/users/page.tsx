@@ -19,6 +19,10 @@ import {
 import { useAdmin } from '@/contexts/AdminContext';
 import { getSystemUsers, updateStatus, deleteEntity } from '@/services/auth.service';
 import { formatDate } from "@/utils/dateFormatter";
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { AppMessage } from '@/components/common/AppMessage';
+import { useAppMessage } from '@/hooks/ui/useAppMessage';
+
 
 
 const PAGE_LIMIT_OPTIONS = [10, 25, 50, 'All'] as const;
@@ -44,7 +48,26 @@ function UsersPageContent() {
   const [totalPages, setTotalPages] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  // const { deleteEntity, loadingId } = useDeleteEntity();
+  const { message, type, visible, showMessage, clearMessage } = useAppMessage();
+
+
+  /**
+  * Delete confirmation dialog state
+  */
+  const [
+    confirmDialog,
+    setConfirmDialog
+  ] = useState({
+    open: false,
+    title: '',
+    description: '',
+    confirmText: '',
+    loading: false,
+    onConfirm: () => { }
+  });
+
+
+
 
   // Debounced search
   useEffect(() => {
@@ -109,19 +132,106 @@ function UsersPageContent() {
 
 
   /* ================= DELETE USER ================= */
-  const handleDelete = async (userId: string, adminName: string) => {
-    if (!confirm(`Delete admin "${adminName}"?`)) return;
+  // const handleDelete = async (userId: string, adminName: string) => {
+  //   if (!confirm(`Delete admin "${adminName}"?`)) return;
 
+  //   try {
+  //     await deleteEntity('rootadmin', userId);
+
+  //     // instant UI update
+  //     setUsers(prev => prev.filter(u => u.id !== userId));
+  //   } catch (err) {
+  //     console.error(err);
+  //     alert('Failed to delete admin');
+  //   }
+  // };
+
+
+  /* ================= DELETE USER ================= */
+
+  const handleDeleteUser = async (id: string) => {
     try {
-      await deleteEntity('rootadmin', userId);
+      /**
+       * Enable dialog loader
+       */
+      setConfirmDialog((prev) => ({
+        ...prev,
+        loading: true,
+      }));
 
-      // instant UI update
-      setUsers(prev => prev.filter(u => u.id !== userId));
+      /* ===============================================
+         DELETE USER API
+      ================================================ */
+      const res = await deleteEntity('rootadmin', id);
+
+      console.log("Delete Res : " + JSON.stringify(res));
+
+      const isSuccess =
+        res?.status === 200 || res?.status === 201;
+
+      /* ===============================================
+         SUCCESS
+      ================================================ */
+      if (isSuccess) {
+        /**
+         * Remove deleted user from list
+         */
+        setUsers((prev) =>
+          prev.filter((u) => u.id !== id)
+        );
+
+        showMessage(
+          res?.message || 'User deleted successfully',
+          'success'
+        );
+      } else {
+        alert(res.message)
+        showMessage(
+          res?.message || 'Failed to delete user',
+          'danger'
+        );
+      }
     } catch (err) {
-      console.error(err);
-      alert('Failed to delete admin');
+      console.error('Delete user error:', err);
+
+      showMessage(
+        (err as any)?.message || String(err),
+        'danger'
+      );
+    } finally {
+      /**
+       * Close dialog
+       */
+      setConfirmDialog((prev) => ({
+        ...prev,
+        open: false,
+        loading: false,
+      }));
+
     }
   };
+
+
+
+  /* =====================================================
+     OPEN DELETE USER CONFIRMATION
+  ===================================================== */
+
+  const openDeleteUserDialog = (
+    id: string,
+    userName: string
+  ) => {
+
+    setConfirmDialog({
+      open: true,
+      title: `Delete User - ${userName}`,
+      description: 'Are you sure you want to delete this user? This action cannot be undone.',
+      confirmText: 'Delete User',
+      loading: false,
+      onConfirm: () => handleDeleteUser(id),
+    });
+  };
+
 
   return (
     <div className="space-y-6">
@@ -291,7 +401,7 @@ function UsersPageContent() {
 
                             <DropdownMenuItem
                               className="text-destructive flex items-center gap-2"
-                              onClick={() => handleDelete(user.id, user.name)}
+                              onClick={() => openDeleteUserDialog(user.id, user.name)}
                             >
                               <Trash2 className="w-4 h-4" /> Delete
                             </DropdownMenuItem>
@@ -339,6 +449,53 @@ function UsersPageContent() {
           </div>
         </CardContent>
       </Card>
+
+
+      {/* =================================================
+          DELETE CONFIRMATION DIALOG
+      ================================================== */}
+
+      <ConfirmDialog
+        open={confirmDialog.open}
+
+        title={confirmDialog.title}
+
+        description={
+          confirmDialog.description
+        }
+
+        confirmText={
+          confirmDialog.confirmText
+        }
+
+        loading={confirmDialog.loading}
+
+        variant="destructive"
+
+        onCancel={() =>
+          setConfirmDialog((prev) => ({
+            ...prev,
+            open: false
+          }))
+        }
+
+        onConfirm={
+          confirmDialog.onConfirm
+        }
+      />
+
+      {/* =================================================
+          GLOBAL APP MESSAGE
+      ================================================== */}
+
+      <AppMessage
+        visible={visible}
+        message={message}
+        type={type}
+        onClose={clearMessage}
+      />
+
+
     </div>
   );
 }
