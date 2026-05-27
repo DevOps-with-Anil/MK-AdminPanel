@@ -191,7 +191,7 @@ function PlanPermissionsContent({ planId }: { planId: string }) {
 
   //     await updatePlanModules(planId, { modules: modulesPayload });
 
-  //     // console.log("Filtered Modules Payload:", JSON.stringify(modulesPayload, null, 2));
+  //     // // console.log("Filtered Modules Payload:", JSON.stringify(modulesPayload, null, 2));
 
   //     // alert('Plan permissions updated');
   //   } catch (err) {

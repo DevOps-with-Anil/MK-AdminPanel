@@ -525,7 +525,7 @@ function NewTenantContent() {
 
     try {
       const payload = mapFormToPayload(formData);
-      console.log('Payload ready to send:', JSON.stringify(payload));
+      // console.log('Payload ready to send:', JSON.stringify(payload));
 
      const res =  await createAffiliate(payload);
 

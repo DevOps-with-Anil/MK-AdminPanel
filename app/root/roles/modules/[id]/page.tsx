@@ -182,7 +182,7 @@ function PlanPermissionsContent({ roleId }: { roleId: string }) {
   //       }))
   //     }));
 
-  //           console.log("Set Merge Module : " + JSON.stringify(modulesPayload))
+  //           // console.log("Set Merge Module : " + JSON.stringify(modulesPayload))
 
   //     await updateRoleModules(roleId, { modules: modulesPayload });
 

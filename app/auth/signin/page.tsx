@@ -59,7 +59,7 @@ export default function RootLoginPage() {
       const res = await login({ email, password });
       const { user } = res.data;
       setCurrentUser(user);
-      console.log("Login Response ::", res);
+      // // console.log("Login Response ::", res);
       setSuccessMsg(t('translate.success'));
 
       setTimeout(() => {

@@ -420,7 +420,7 @@ function ViewTenantContent() {
     //             fileId: fileIndex
     //         });
 
-    //         console.log("Delete Response:", JSON.stringify(res));
+    //         // console.log("Delete Response:", JSON.stringify(res));
     //         showMessage(res.message ||"Delete Successfully",'success')
     //         setDynamicKYB((prev) =>
     //         prev.map((doc, index) => {
@@ -453,7 +453,7 @@ function ViewTenantContent() {
                 fileId: fileIndex
             });
 
-            console.log("Delete Response:", JSON.stringify(res));
+            // console.log("Delete Response:", JSON.stringify(res));
 
             showMessage(
                 res.message || "Delete Successfully",
@@ -621,7 +621,7 @@ function ViewTenantContent() {
                 JSON.stringify(documentsPayload)
             );
 
-            // console.log("R. D. :   " + JSON.stringify(documentsPayload))
+            // // console.log("R. D. :   " + JSON.stringify(documentsPayload))
 
             /* ================= API ================= */
 
@@ -744,7 +744,7 @@ function ViewTenantContent() {
                 payload.append("tenantLogo", logoForm.photo);
             }
 
-            console.log("Update Logo Data:", logoForm);
+            // // console.log("Update Logo Data:", logoForm);
 
             const res = await updateLogo(AffiliateId, payload);
 
@@ -788,7 +788,7 @@ function ViewTenantContent() {
                     docTypeRes?.data || [],
                     kybRes?.data?.documents || []
                 );
-                console.log(JSON.stringify(kybRes) + "        KYB Data. :  " + JSON.stringify(tenantRes.data))
+                // // console.log(JSON.stringify(kybRes) + "        KYB Data. :  " + JSON.stringify(tenantRes.data))
 
                 setKybDocuments(mergedDocs);
 

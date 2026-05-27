@@ -260,7 +260,7 @@ function UpdateTenantContent() {
 
         const data = res?.data;
 
-        console.log("dasdasdas. :  " + JSON.stringify(data));
+        // // console.log("dasdasdas. :  " + JSON.stringify(data));
 
         setFormData(mapAffiliateToForm(data));
 
@@ -317,7 +317,7 @@ function UpdateTenantContent() {
 
       const res = await updateAffiliate(AffiliateId, payload);
 
-      console.log("Update Success:", res);
+      // console.log("Update Success:", res);
 
       // optionally refresh data
       const refreshed = await getTenantByIdtoEdit(AffiliateId);

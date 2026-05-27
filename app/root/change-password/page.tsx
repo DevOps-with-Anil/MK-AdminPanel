@@ -74,7 +74,7 @@ function validatePassword(data: {
         newPassword: formData.newPassword,
       });
 
-      console.log("Chnage Password Response on Page ::  " + JSON.stringify(res));
+      // console.log("Chnage Password Response on Page ::  " + JSON.stringify(res));
       
       // Reset form
       setFormData({

@@ -175,17 +175,7 @@ export default function VerificationDetailsPage() {
     }
   }, [params?.id]);
 
-  // SEPARATE useEffect FOR DEBUGGING
-  useEffect(() => {
-    if (kybData) {
-      console.log(
-        'Company Name : ',
-        kybData?.tenantId?.companyName
-      );
-    }
-  }, [kybData]);
-
-
+ 
   const fetchKYBDetails = async () => {
     try {
       setLoading(true);
@@ -279,7 +269,7 @@ export default function VerificationDetailsPage() {
         internal_comment: formData.internal.description,
       });
 
-      // console.log('API RESPONSE : ', JSON.stringify(res));
+      // // console.log('API RESPONSE : ', JSON.stringify(res));
       // alert('API RESPONSE : ' + (res.message));
       await fetchKYBDetails();
 
@@ -320,7 +310,7 @@ export default function VerificationDetailsPage() {
         internal_comment: formData.internal.description,
       });
 
-      // console.log('API RESPONSE : ', JSON.stringify(res));
+      // // console.log('API RESPONSE : ', JSON.stringify(res));
       // alert('API RESPONSE : ' + (res.message));
       await fetchKYBDetails();
 

@@ -43,15 +43,14 @@ import {
   BreadcrumbSeparator
 } from '@/components/ui/breadcrumb';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-// import { tokenStorage } from "@/utils/token";
 import { logout, profile } from '@/services/auth.service';
-
 import { I18nContext } from '@/i18n/provider';
 import { LANGUAGES, Language } from '@/i18n/languages';
 import { useTranslation } from '@/hooks/useTranslation';
-
 import { AppMessage } from '@/components/common/AppMessage';
 import { useAppMessage } from '@/hooks/ui/useAppMessage';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
 
@@ -74,17 +73,21 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   const savedLanguage = localStorage.getItem('lang') || 'en';
   const currentLanguageData = LANGUAGES[savedLanguage as Language];
-  // console.log("current Language.  :  " + savedLanguage)
-  // const currentLanguageData = LANGUAGES[locale];
-  // const currentCountryData = COUNTRIES[currentCountry as Country] || COUNTRIES.IN;
 
   const [user, setUser] = useState(null);
-  // const ProfilePage = () => {
   const [profileData, setProfileData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const { message, type, visible, showMessage, clearMessage } = useAppMessage();
+  const [confirmDialog, setConfirmDialog] = useState({
+    open: false,
+    title: "",
+    description: "",
+    confirmText: "",
+    loading: false,
+    onConfirm: () => { },
+  });
 
 
   useEffect(() => {
@@ -143,6 +146,19 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+
+  const openCancelSubscriptionDialog = () => {
+    setConfirmDialog({
+      open: true,
+      title: "Logout Confirmation",
+      description:
+        "Are you sure you want to log out of your account?",
+      confirmText: "Log Out",
+      loading: false,
+      onConfirm: handleLogout,
+    });
   };
 
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
@@ -745,7 +761,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={handleLogout}
+                    onClick={openCancelSubscriptionDialog}
                     className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
                   >
                     <LogOut size={16} className="mr-2" />
@@ -766,6 +782,23 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         </footer>
 
       </div>
+
+      {/* ================= Logout Confirmation Dialog ================= */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        confirmText={confirmDialog.confirmText}
+        loading={confirmDialog.loading}
+        variant="destructive"
+        onCancel={() =>
+          setConfirmDialog((prev) => ({
+            ...prev,
+            open: false,
+          }))
+        }
+        onConfirm={confirmDialog.onConfirm}
+      />
 
       <AppMessage
         visible={visible}

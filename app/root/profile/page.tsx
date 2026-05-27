@@ -91,7 +91,7 @@ function ProfileContent() {
         });
 
         setAvatar(profileData?.photo ?? null);
-        console.log("Profile Response on AdminLayout ::  " + JSON.stringify(res));
+        // console.log("Profile Response on AdminLayout ::  " + JSON.stringify(res));
       } catch (err: any) {
         console.error(err);
         // setError(err.message || "Failed to load profile");

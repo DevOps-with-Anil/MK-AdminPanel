@@ -107,7 +107,7 @@ function ModulesPageContent() {
 
       setModules(formatted);
 
-      console.log("Total pages : " + JSON.stringify(res));
+      // console.log("Total pages : " + JSON.stringify(res));
 
       setTotalPages(res.meta?.totalPages || 2);
     } catch (err) {

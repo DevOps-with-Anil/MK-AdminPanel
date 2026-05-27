@@ -16,13 +16,6 @@ export async function apiClient(
   if (!isFormData) {
     headers.set("Content-Type", "application/json");
   }
-
-  // Token handling
-  // const token = tokenStorage.getToken();
-  // if (token) {
-  //   headers.set("Authorization", `Bearer ${token}`);
-  // }
-
   // Safe language handling (SSR-safe)
   let lang = language || "en";
   if (typeof window !== "undefined") {
@@ -39,7 +32,6 @@ export async function apiClient(
       credentials: "include"
     });
 
-    
 
   } catch (error: any) {
     throw new Error(error?.message || "Network error");
@@ -52,23 +44,21 @@ export async function apiClient(
   } catch {
     data = null;
   }
-
   // console.log("AuthClient Response : " + JSON.stringify(data) + "   Response Status Code  :  " + response.status );
-
   const message =
     data?.message || response.statusText || "Something went wrong";
 
   const meta = data?.meta ?? null;
 
   if (!response.ok) {
-    console.log("When response is not OK ==>>>>.  AuthClient Response : " + JSON.stringify(data) + "   Response Status Code  :  " + response.status );
+    // console.log("When response is not OK ==>>>>.  AuthClient Response : " + JSON.stringify(data) + "   Response Status Code  :  " + response.status );
     const error: any = new Error(message);
     error.status = response.status;
     error.data = data;
     throw error;
   }
 
-  console.log("When response is OK. ===>>>>.   AuthClient Response : " + JSON.stringify(data) + "   Response Status Code  :  " + response.status );
+  // console.log("When response is OK. ===>>>>.   AuthClient Response : " + JSON.stringify(data) + "   Response Status Code  :  " + response.status );
   return {
     status: response.status,
     message,

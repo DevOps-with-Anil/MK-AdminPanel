@@ -96,7 +96,7 @@ export default function AffiliatesPage() {
         limit: fetchLimit,
         search: debouncedSearch,
       });
-      // console.log("Affiliated data   :  " + JSON.stringify(res.data));
+      // // console.log("Affiliated data   :  " + JSON.stringify(res.data));
       const formatted: Affiliate[] =
         res?.data?.map((r: any) => ({
           id: r._id,

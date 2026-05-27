@@ -121,7 +121,7 @@ function VerificationPageContent() {
   //       });
 
 
-  //       console.log(JSON.stringify(res))
+  //       // console.log(JSON.stringify(res))
 
   //       if (res.status === 201) {
   //         const transformedData: KYBRequest[] = res.data.map(
@@ -140,7 +140,7 @@ function VerificationPageContent() {
 
   //         setRequests(transformedData);
 
-  //         console.log("List Data.  :   " + JSON.stringify(requests))
+  //         // console.log("List Data.  :   " + JSON.stringify(requests))
   //       }
   //     } catch (error) {
   //       console.error(

@@ -224,7 +224,7 @@ function ModulesPageContent() {
                 const res = await getTenantPlan(params.id as string);
                 if (res?.data) {
                     setSubscription(res.data);
-                    console.log('Subscription Data ', JSON.stringify(subscription));
+                    // console.log('Subscription Data ', JSON.stringify(subscription));
                 }
             } catch (err) {
                 console.error('Fetch subscription error', err);
@@ -373,7 +373,7 @@ function ModulesPageContent() {
     }, [subscription?.planId?._id, params?.id]);
 
     const handleUpdateSubscription = async () => {
-        console.log('Update subscription clicked');
+        // console.log('Update subscription clicked');
         setSubscriptionModalOpen(true);
         if (plans.length === 0) {
             await fetchPlans();
@@ -389,7 +389,7 @@ function ModulesPageContent() {
                 params?.id as string
             );
 
-            console.log(
+            // console.log(
                 'Subscription history response:',
                 JSON.stringify(res)
             );

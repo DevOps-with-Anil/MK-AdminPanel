@@ -220,7 +220,7 @@ function EditUserContent() {
         payload.append("photo", formData.photo);
       }
 
-      console.log("Update User Data : " + JSON.stringify(formData));
+      // console.log("Update User Data : " + JSON.stringify(formData));
 
       const res = await editAdminUser(userId, payload);
 
@@ -241,7 +241,7 @@ function EditUserContent() {
         const response = await getSystemRoles({});
 
         // Check the actual data structure
-        console.log('Roles API response:', response);
+        // console.log('Roles API response:', response);
 
         // Adjust based on actual structure
         const rolesData = response.data || response; // if response.data exists, use it; else use response itself
@@ -278,7 +278,7 @@ function EditUserContent() {
         const res = await getAdminUserById(userId);
         const user = res.data;
 
-        console.log("User data is  : " + JSON.stringify(user))
+        // console.log("User data is  : " + JSON.stringify(user))
 
 
         // Match role object from roles array
@@ -289,7 +289,7 @@ function EditUserContent() {
           matchedRole = roles[0] || { id: '', label: '' };
         }
 
-        console.log(user.role._id + "Matched Role is : " + matchedRole.label)
+        // console.log(user.role._id + "Matched Role is : " + matchedRole.label)
 
         setFormData((prev) => ({
           ...prev,

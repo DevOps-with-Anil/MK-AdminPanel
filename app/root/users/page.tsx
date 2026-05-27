@@ -164,7 +164,7 @@ function UsersPageContent() {
       ================================================ */
       const res = await deleteEntity('rootadmin', id);
 
-      console.log("Delete Res : " + JSON.stringify(res));
+      // console.log("Delete Res : " + JSON.stringify(res));
 
       const isSuccess =
         res?.status === 200 || res?.status === 201;

@@ -12,7 +12,7 @@ export const login = async (payload: { email: string; password: string }) => {
   });
 };
 
-export const logout = async ():  Promise<any> => {
+export const logout = async (): Promise<any> => {
   return apiClient("auth/root/logout", {
     method: "POST",
   });
@@ -36,11 +36,6 @@ export const updateProfile = async (
     }
   );
 
-  console.log(
-    "Update Profile Response:",
-    res
-  );
-
   return res;
 };
 
@@ -51,7 +46,7 @@ export const changePassword = async (data: any) => {
     body: JSON.stringify(data),
   });
 
-  console.log("Change Password Response:", res);
+  // console.log("Change Password Response:", res);
   return res;
 };
 
@@ -84,7 +79,7 @@ export const createRole = async (data: any) => {
     body: JSON.stringify(data),
   });
 
-  console.log("Create Role Response:", res);
+  // console.log("Create Role Response:", res);
   return res;
 };
 
@@ -168,7 +163,7 @@ export const createAdminUser = async (data: FormData) => {
     body: data,
   });
 
-  console.log("Create Admin User Response:", res);
+  // console.log("Create Admin User Response:", res);
   return res;
 };
 
@@ -178,7 +173,7 @@ export const editAdminUser = async (userId: string, data: FormData) => {
     body: data, // ✅ pass FormData directly
   });
 
-  console.log("Edit Admin User Response:", res);
+  // console.log("Edit Admin User Response:", res);
   return res;
 };
 
@@ -216,7 +211,7 @@ export const createRootModules = async (data: any) => {
     body: JSON.stringify(data),
   });
 
-  console.log("Create Module Response:", res);
+  // console.log("Create Module Response:", res);
   return res;
 };
 
@@ -227,7 +222,7 @@ export const createTenantModules = async (data: any) => {
     body: JSON.stringify(data),
   });
 
-  console.log("Create Module Response:", res);
+  // console.log("Create Module Response:", res);
   return res;
 };
 
@@ -258,7 +253,7 @@ export const createPlan = async (data: any) => {
     body: JSON.stringify(data),
   });
 
-  console.log("Create Plan Response:", res);
+  // console.log("Create Plan Response:", res);
   return res;
 };
 
@@ -266,7 +261,7 @@ export const createPlan = async (data: any) => {
 export const getPlantoEdit = async (id: string) => {
   const res = await apiClient(`plan/fetch/${id}`, { method: "GET" });
 
-  console.log("Plan Details Response:", res);
+  // console.log("Plan Details Response:", res);
   return res;
 };
 
@@ -316,7 +311,7 @@ export const createAffiliate = async (data: any) => {
     body: JSON.stringify(data),
   });
 
-  console.log("Create Affiliate Response:", res);
+  // console.log("Create Affiliate Response:", res);
   return res;
 };
 
@@ -340,7 +335,7 @@ export const updateAffiliate = async (
     body: JSON.stringify(data),
   });
 
-  console.log("Update Affiliate Response:", res);
+  // console.log("Update Affiliate Response:", res);
   return res;
 };
 
@@ -350,7 +345,7 @@ export const updateLogo = async (tenantId: string, data: FormData) => {
     body: data, // 
   });
 
-  console.log("Update Logo Resonse", res);
+  // console.log("Update Logo Resonse", res);
   return res;
 };
 
@@ -366,7 +361,7 @@ export const uploadTenantKYB = async (data: FormData) => {
     body: data,
   });
 
-  console.log("Upload Tenant KYB Response:", res);
+  // console.log("Upload Tenant KYB Response:", res);
   return res;
 };
 
@@ -384,20 +379,20 @@ export const getKYBDocTypes = async () => {
 export const DeleteKYBDocFile = async (data: any) => {
   const res = await apiClient("tenantkyb/file/delete", {
     method: "POST",
-     body: JSON.stringify(data),
+    body: JSON.stringify(data),
   });
-  console.log("Delete KYB File Response:", res);
+  // console.log("Delete KYB File Response:", res);
   return res;
 }
 
 
 // Update Documet Status
 export const updateKYBStatus = async (data: any) => {
-  const res = await  apiClient("tenantkyb/update-document", {
+  const res = await apiClient("tenantkyb/update-document", {
     method: "POST",
     body: JSON.stringify(data),
   });
-  console.log("Update KYB Document Status Res", res);
+  // console.log("Update KYB Document Status Res", res);
   return res;
 };
 
@@ -413,7 +408,7 @@ export const assignTenantPlan = async (data: any) => {
     body: JSON.stringify(data),
   });
 
-  console.log("Assign Plan Response:", res);
+  // console.log("Assign Plan Response:", res);
   return res;
 };
 
@@ -424,7 +419,7 @@ export const cancelTenantPlan = async (data: any) => {
     body: JSON.stringify(data),
   });
 
-  console.log("Cancel Plan Response:", res);
+  // console.log("Cancel Plan Response:", res);
   return res;
 };
 
@@ -435,7 +430,7 @@ export const updateTenantPlan = async (data: any) => {
     body: JSON.stringify(data),
   });
 
-  console.log("Update Plan Response:", res);
+  // console.log("Update Plan Response:", res);
   return res;
 };
 
@@ -450,10 +445,7 @@ export const getTenantPlan = async (
     }
   );
 
-  console.log(
-    'Get Tenant Plan Response:',
-    res
-  );
+  // console.log(    'Get Tenant Plan Response:',    res  );
 
   return res;
 };
@@ -469,10 +461,7 @@ export const getTenantPlanHistory = async (
     }
   );
 
-  console.log(
-    'Get Tenant Plan History Response:',
-    res
-  );
+  // console.log( 'Get Tenant Plan History Response:',    res  );
 
   return res;
 };
@@ -503,10 +492,7 @@ export const getKYBListtoVerify = async (payload: {
     }
   );
 
-  console.log(
-    'Get All KYBs List Response:',
-    res
-  );
+  // console.log(    'Get All KYBs List Response:',    res  );
 
   return res;
 };

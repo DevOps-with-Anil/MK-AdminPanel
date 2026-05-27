@@ -475,7 +475,7 @@ function ViewTenantContent() {
                 JSON.stringify(documentsPayload)
             );
 
-            console.log("R. D. :   " + JSON.stringify(documentsPayload))
+            // // console.log("R. D. :   " + JSON.stringify(documentsPayload))
 
             /* ================= API ================= */
 
@@ -606,7 +606,7 @@ function ViewTenantContent() {
                 payload.append("tenantLogo", logoForm.photo);
             }
 
-            console.log("Update Logo Data:", logoForm);
+            // // console.log("Update Logo Data:", logoForm);
 
             const res = await updateLogo(AffiliateId, payload);
 
