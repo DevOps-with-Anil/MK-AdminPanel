@@ -50,6 +50,9 @@ import { I18nContext } from '@/i18n/provider';
 import { LANGUAGES, Language } from '@/i18n/languages';
 import { useTranslation } from '@/hooks/useTranslation';
 
+import { AppMessage } from '@/components/common/AppMessage';
+import { useAppMessage } from '@/hooks/ui/useAppMessage';
+
 export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   const router = useRouter();
@@ -80,6 +83,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [profileData, setProfileData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { message, type, visible, showMessage, clearMessage } = useAppMessage();
+
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -120,11 +126,19 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   const handleLogout = async () => {
     setIsLoading(true);
+
     try {
-      const res = await logout();
-      router.push('/auth/signin');
+      const res = await await logout();
+      showMessage(
+        res?.message || "Logged out successfully!",
+        "success"
+      );
+
+      setTimeout(() => {
+        router.push('/auth/signin');
+      }, 1000);
+
     } catch (err: any) {
-      console.error(err);
       setError(err.message || "Failed to logout");
     } finally {
       setIsLoading(false);
@@ -752,6 +766,13 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         </footer>
 
       </div>
+
+      <AppMessage
+        visible={visible}
+        message={message}
+        type={type}
+        onClose={clearMessage}
+      />
     </div>
   );
 }

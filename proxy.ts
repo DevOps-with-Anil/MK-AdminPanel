@@ -62,6 +62,8 @@ export function proxy(request: NextRequest) {
   const isRootPage = pathname.startsWith("/root");
   const isAuthenticated = request.cookies.get('connect.sid')?.value;
 
+  console.log("Auth status. : " + isAuthenticated);
+
   if (isAuthenticated && isAuthPage) {
     return NextResponse.redirect(
       new URL("/root/dashboard", request.nextUrl.origin)

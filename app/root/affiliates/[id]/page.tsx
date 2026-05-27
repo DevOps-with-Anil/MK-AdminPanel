@@ -229,7 +229,14 @@ function ViewTenantContent() {
     const [cancelLoading, setCancelLoading] = useState(false);
     const [updatePlanLoading, setUpdatePlanLoading] = useState(false);
     const [uploadLoading, setUploadLoading] = useState(false);
-    const [previewFiles, setPreviewFiles] = useState<string[]>([]);
+
+    type PreviewFile = {
+        url: string;
+        name: string;
+        isLocal?: boolean;
+    };
+    const [previewFiles, setPreviewFiles] = useState<PreviewFile[]>([]);
+
     const [activeIndex, setActiveIndex] = useState(0);
     const [zoom, setZoom] = useState(1);
     const [position, setPosition] = useState({
@@ -1422,14 +1429,31 @@ function ViewTenantContent() {
                                                                     size="icon"
                                                                     variant="secondary"
                                                                     onClick={() => {
-                                                                        const allFiles = [
-                                                                            ...(doc.files || []),
-                                                                            ...(doc.localFiles || []).map(
-                                                                                (f: any) => f.url
-                                                                            ),
-                                                                        ];
-                                                                        setPreviewFiles(allFiles);
+
+                                                                        const serverFiles = (doc.files || []).map(
+                                                                            (f: string) => ({
+                                                                                url: f,
+                                                                                name:
+                                                                                    f.split("/").pop() || "file",
+                                                                                isLocal: false,
+                                                                            })
+                                                                        );
+
+                                                                        const localFiles = (
+                                                                            doc.localFiles || []
+                                                                        ).map((f: any) => ({
+                                                                            url: f.url,
+                                                                            name: f.name,
+                                                                            isLocal: true,
+                                                                        }));
+
+                                                                        setPreviewFiles([
+                                                                            ...serverFiles,
+                                                                            ...localFiles,
+                                                                        ]);
+
                                                                         setActiveIndex(fileIndex);
+
                                                                         setPreviewOpen(true);
                                                                     }}
                                                                 >
@@ -1531,17 +1555,34 @@ function ViewTenantContent() {
                                                                         size="icon"
                                                                         variant="secondary"
                                                                         onClick={() => {
-                                                                            const allFiles = [
-                                                                                ...(doc.files || []),
-                                                                                ...(doc.localFiles || []).map(
-                                                                                    (f: any) => f.url
-                                                                                ),
-                                                                            ];
-                                                                            setPreviewFiles(allFiles);
+
+                                                                            const serverFiles = (doc.files || []).map(
+                                                                                (f: string) => ({
+                                                                                    url: f,
+                                                                                    name:
+                                                                                        f.split("/").pop() || "file",
+                                                                                    isLocal: false,
+                                                                                })
+                                                                            );
+
+                                                                            const localFiles = (
+                                                                                doc.localFiles || []
+                                                                            ).map((f: any) => ({
+                                                                                url: f.url,
+                                                                                name: f.name,
+                                                                                isLocal: true,
+                                                                            }));
+
+                                                                            setPreviewFiles([
+                                                                                ...serverFiles,
+                                                                                ...localFiles,
+                                                                            ]);
+
                                                                             setActiveIndex(
                                                                                 (doc.files?.length || 0) +
                                                                                 fileIndex
                                                                             );
+
                                                                             setPreviewOpen(true);
                                                                         }}
                                                                     >
@@ -2067,7 +2108,10 @@ function ViewTenantContent() {
                                 {/* FILE TYPE ICON */}
                                 <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/10">
                                     {(() => {
-                                        const file = previewFiles?.[activeIndex]?.toLowerCase();
+                                        const fileIndex =
+                                            previewFiles?.[activeIndex];
+                                        const file =
+                                            fileIndex?.name?.toLowerCase() || "";
                                         if (file?.includes('.pdf')) {
                                             return <FileText className="h-5 w-5 text-red-400" />;
                                         }
@@ -2082,9 +2126,7 @@ function ViewTenantContent() {
                                 <div>
                                     {/* FILE NAME */}
                                     <div className="max-w-[220px] truncate text-sm font-medium text-white">
-                                        {previewFiles?.[activeIndex]
-                                            ?.split('/')
-                                            ?.pop()}
+                                        {previewFiles?.[activeIndex]?.name}
                                     </div>
 
                                     {/* FILE COUNT */}
@@ -2092,15 +2134,15 @@ function ViewTenantContent() {
                                         {activeIndex + 1} of {previewFiles.length}
                                     </div>
                                 </div>
-
                             </div>
 
                             {/* RIGHT SECTION */}
                             <div className="flex items-center gap-2">
-                                {/* IMAGE CONTROLS */}
-                                {!previewFiles?.[activeIndex]
-                                    ?.toLowerCase()
-                                    ?.includes('.pdf') && (
+                                {
+                                    !previewFiles?.[activeIndex]
+                                        ?.name
+                                        ?.toLowerCase()
+                                        ?.includes('.pdf') && (
                                         <>
                                             {/* Zoom Out */}
                                             <Button
@@ -2161,7 +2203,8 @@ function ViewTenantContent() {
                                     className="border-white/10 bg-white/10 text-white hover:bg-white/20"
                                     onClick={() =>
                                         handleDownloadFile(
-                                            previewFiles[activeIndex]
+                                            previewFiles[activeIndex]?.url,
+                                            previewFiles[activeIndex]?.name
                                         )
                                     }
                                 >
@@ -2221,15 +2264,14 @@ function ViewTenantContent() {
                                 </button>
                             )}
 
-
                             {/* ================= FILE PREVIEW ================= */}
 
                             {(() => {
-                                // ACTIVE FILE
-                                const activeFile = previewFiles?.[activeIndex] || '';
-                                // LOWERCASE FILE
-                                const lowerFile = activeFile.toLowerCase();
 
+                                const activeFile = previewFiles?.[activeIndex];
+                                const fileUrl = activeFile?.url || "";
+                                const fileName = activeFile?.name || "";
+                                const lowerFile = fileName.toLowerCase();
                                 // FILE TYPES
                                 const isPDF = lowerFile.includes('.pdf');
                                 const isDOC = lowerFile.includes('.doc') || lowerFile.includes('.docx');
@@ -2247,24 +2289,49 @@ function ViewTenantContent() {
                                 if (isPDF) {
                                     return (
                                         <iframe
-                                            src={activeFile}
+                                            src={fileUrl}
                                             className="h-full w-full bg-white"
                                         />
                                     );
                                 }
-
                                 // DOC / DOCX PREVIEW
                                 if (isDOC) {
+                                    // LOCAL DOC FILE
+                                    if (fileUrl.startsWith("blob:")) {
+                                        return (
+                                            <div className="flex h-full w-full flex-col items-center justify-center text-white">
+                                                <File className="mb-4 h-16 w-16 text-blue-400" />
+                                                <div className="text-lg font-medium">
+                                                    DOC Preview Not Available
+                                                </div>
+                                                <div className="mt-2 text-sm text-zinc-400">
+                                                    Browser cannot preview local DOC/DOCX files.
+                                                </div>s
+                                                <Button
+                                                    className="mt-6"
+                                                    onClick={() =>
+                                                        window.open(
+                                                            fileUrl,
+                                                            "_blank"
+                                                        )
+                                                    }
+                                                >
+                                                    Download to Open File
+                                                </Button>
+                                            </div>
+                                        );
+                                    }
+
+                                    // SERVER DOC FILE
                                     return (
                                         <iframe
                                             src={`https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(
-                                                activeFile
+                                                fileUrl
                                             )}`}
                                             className="h-full w-full bg-white"
                                         />
                                     );
                                 }
-
                                 // IMAGE PREVIEW
                                 if (isImage) {
                                     return (
@@ -2322,7 +2389,7 @@ function ViewTenantContent() {
                                             >
                                                 {/* PREVIEW IMAGE */}
                                                 <img
-                                                    src={activeFile}
+                                                    src={fileUrl}
                                                     draggable={false}
                                                     className="select-none rounded-xl object-contain shadow-2xl transition-transform duration-150 ease-out"
                                                     style={{
@@ -2344,7 +2411,6 @@ function ViewTenantContent() {
                                         </div>
                                     );
                                 }
-
                                 // FALLBACK PREVIEW
                                 return (
                                     <div className="flex h-full w-full flex-col items-center justify-center text-white">
@@ -2360,42 +2426,27 @@ function ViewTenantContent() {
                                     </div>
                                 );
                             })()}
-
-
                         </div>
 
                         {/* ================= THUMBNAILS ================= */}
                         {previewFiles.length > 1 && (
                             <div className="h-28 shrink-0 overflow-x-auto border-t border-white/10 bg-black/40 backdrop-blur-xl">
-
                                 <div className="flex min-w-max items-center gap-3 px-5 py-3">
-
                                     {previewFiles.map((file, index) => {
-                                        const lowerFile = file?.toLowerCase();
+                                        // const lowerFile = file?.toLowerCase();
+                                        const lowerFile = file?.name?.toLowerCase() || "";
 
-                                        const isPDF =
-                                            lowerFile?.includes('.pdf');
-
-                                        const isDOC =
-                                            lowerFile?.includes('.doc') ||
-                                            lowerFile?.includes('.docx');
-
-                                        const isEXCEL =
-                                            lowerFile?.includes('.xls') ||
-                                            lowerFile?.includes('.xlsx');
-
-                                        const isPPT =
-                                            lowerFile?.includes('.ppt') ||
-                                            lowerFile?.includes('.pptx');
+                                        const isPDF = lowerFile?.includes('.pdf');
+                                        const isDOC = lowerFile?.includes('.doc') || lowerFile?.includes('.docx');
+                                        const isEXCEL = lowerFile?.includes('.xls') || lowerFile?.includes('.xlsx');
+                                        const isPPT = lowerFile?.includes('.ppt') || lowerFile?.includes('.pptx');
 
                                         return (
                                             <button
                                                 key={index}
                                                 onClick={() => {
                                                     setActiveIndex(index);
-
                                                     setZoom(1);
-
                                                     setPosition({
                                                         x: 0,
                                                         y: 0,
@@ -2409,7 +2460,6 @@ function ViewTenantContent() {
                                                 {isPDF ? (
                                                     <div className="flex h-full w-full flex-col items-center justify-center bg-zinc-900">
                                                         <FileText className="h-7 w-7 text-red-400" />
-
                                                         <span className="mt-1 text-[10px] text-white">
                                                             PDF
                                                         </span>
@@ -2417,7 +2467,6 @@ function ViewTenantContent() {
                                                 ) : isDOC ? (
                                                     <div className="flex h-full w-full flex-col items-center justify-center bg-zinc-900">
                                                         <File className="h-7 w-7 text-blue-400" />
-
                                                         <span className="mt-1 text-[10px] text-white">
                                                             DOC
                                                         </span>
@@ -2425,7 +2474,6 @@ function ViewTenantContent() {
                                                 ) : isEXCEL ? (
                                                     <div className="flex h-full w-full flex-col items-center justify-center bg-zinc-900">
                                                         <FileSpreadsheet className="h-7 w-7 text-green-400" />
-
                                                         <span className="mt-1 text-[10px] text-white">
                                                             Sheet
                                                         </span>
@@ -2433,15 +2481,13 @@ function ViewTenantContent() {
                                                 ) : isPPT ? (
                                                     <div className="flex h-full w-full flex-col items-center justify-center bg-zinc-900">
                                                         <FileSpreadsheet className="h-7 w-7 text-green-400" />
-
                                                         <span className="mt-1 text-[10px] text-white">
                                                             PPT
                                                         </span>
                                                     </div>
                                                 ) : (
                                                     <img
-                                                        src={file}
-                                                        className="h-full w-full object-cover"
+                                                        src={file.url} className="h-full w-full object-cover"
                                                     />
                                                 )}
 

@@ -17,7 +17,10 @@ upload/
 # =========================
 .env
 .env.*
-!.env.example
+.env.production
+.env.development
+.env.pro
+.env.dev
 
 # =========================
 # Logs
@@ -87,6 +90,13 @@ docker-compose.override.yml
 # Deployment (Vercel etc.)
 # =========================
 .vercel/
+
+# =========================
+# Docker
+# =========================
+.dockerignore
+docker-compose.yml
+Dockerfile
 
 # =========================
 # Optional (Recommended to KEEP)

@@ -156,16 +156,11 @@ function NewRoleContent() {
 
     try {
       const res = await createRole(formData);
-
-      // setSuccess(true);
-
       showMessage(
         res?.message || "Role created successfully!",
         "success"
       );
-
       setErrors({});
-
       setFormData({
         name: createMultiLangObject(),
         description: createMultiLangObject(),

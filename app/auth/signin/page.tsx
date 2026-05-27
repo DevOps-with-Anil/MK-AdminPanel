@@ -49,25 +49,6 @@ export default function RootLoginPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Check auth
-  useEffect(() => {
-
-    const checkAuth = async () => {
-
-      try {
-
-        await profile(); // hits /auth/me or /profile route
-
-        router.replace("/root/dashboard");
-
-      } catch (err) {
-      }
-    };
-
-    checkAuth();
-
-  }, [router]);
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);

@@ -1,11 +1,18 @@
-
 services:
   nextjs:
-    build: .
-    image: impetrosys/rootui-app:v1
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_ADMIN_API_BASE_URL: ${NEXT_PUBLIC_ADMIN_API_BASE_URL}
+
+    image: impetrosys/rootui-app:v1_27May
+
     container_name: rootui-app
+
     ports:
-      - "3001:3000"
+      - "3001:3001"
+
     restart: always
-    environment:
-      - NODE_ENV=production
+
+    env_file:
+      - .env
