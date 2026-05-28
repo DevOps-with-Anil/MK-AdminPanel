@@ -7,15 +7,14 @@
 
 import {
   useState,
-  useEffect,
-  useCallback
+  useEffect
 } from 'react';
 
 import Link from 'next/link';
 
 import { useRouter } from 'next/navigation';
 
-import { useAdmin } from '@/contexts/AdminContext';
+import { useAdmin, AdminProvider } from '@/contexts/AdminContext';
 
 import {
   Card,
@@ -127,21 +126,17 @@ export default function PlansPage() {
   /**
    * Delete confirmation dialog state
    */
-  const [
-    confirmDialog,
-    setConfirmDialog
-  ] = useState({
+  const [confirmDialog, setConfirmDialog] = useState({
     open: false,
-
-    title: '',
-
-    description: '',
-
-    confirmText: '',
-
-    loading: false,
-
-    onConfirm: () => { }
+    title: "",
+    description: "",
+    buttons: [] as {
+      label: string;
+      variant?: | "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+      loading?: boolean;
+      disabled?: boolean;
+      onClick: () => void;
+    }[],
   });
 
   /**
@@ -173,10 +168,94 @@ export default function PlansPage() {
    * FETCH PLANS
    * ===================================================*/
 
-  const fetchPlans = useCallback(
-    async () => {
-      try {
+  // const fetchPlans = useCallback(
+  //   async () => {
+  //     try {
 
+  //       setLoading(true);
+
+  //       /**
+  //        * If limit is "All"
+  //        * send 0 to backend
+  //        */
+  //       const fetchLimit =
+  //         limit === 'All'
+  //           ? 0
+  //           : limit;
+
+  //       const res = await getPlans({
+  //         page,
+  //         limit: fetchLimit,
+  //         search: debouncedSearch
+  //       });
+
+  //       /**
+  //        * Format API response
+  //        */
+  //       const formatted: Plan[] =
+  //         res?.data?.map(
+  //           (r: any) => ({
+  //             id: r._id,
+
+  //             name: r.name ?? '',
+
+  //             description:
+  //               r.description ?? '',
+
+  //             price: r.price ?? 0,
+
+  //             currency:
+  //               r.currency ?? 'USD',
+
+  //             duration:
+  //               r.duration ??
+  //               'MONTHLY',
+
+  //             features:
+  //               r.modules ?? [],
+
+  //             subscribers:
+  //               r.assignedUserCount ??
+  //               0,
+
+  //             status:
+  //               r.status === 'ACTIVE'
+  //                 ? 'active'
+  //                 : 'inactive'
+  //           })
+  //         ) || [];
+
+  //       setPlans(formatted);
+
+  //       setTotalPages(
+  //         res?.meta?.totalPages ?? 1
+  //       );
+
+  //     } catch (err) {
+
+  //       console.error(
+  //         'Fetch plans error',
+  //         err
+  //       );
+
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   },
+
+  //   [page, limit, debouncedSearch]
+  // );
+
+  // /**
+  //  * Fetch plans on dependency change
+  //  */
+  // useEffect(() => {
+  //   fetchPlans();
+  // }, [fetchPlans]);
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
         setLoading(true);
 
         /**
@@ -186,77 +265,79 @@ export default function PlansPage() {
         const fetchLimit =
           limit === 'All'
             ? 0
-            : limit;
+            : Number(limit);
+
+        console.log(
+          'Calling getPlans API'
+        );
 
         const res = await getPlans({
           page,
           limit: fetchLimit,
-          search: debouncedSearch
+          search: debouncedSearch,
         });
+
+        console.log(
+          'Plans API response:',
+          res
+        );
 
         /**
          * Format API response
          */
         const formatted: Plan[] =
-          res?.data?.map(
-            (r: any) => ({
-              id: r._id,
+          res?.data?.map((r: any) => ({
+            id: r._id,
 
-              name: r.name ?? '',
+            name: r.name ?? '',
 
-              description:
-                r.description ?? '',
+            description:
+              r.description ?? '',
 
-              price: r.price ?? 0,
+            price: r.price ?? 0,
 
-              currency:
-                r.currency ?? 'USD',
+            currency:
+              r.currency ?? 'USD',
 
-              duration:
-                r.duration ??
-                'MONTHLY',
+            duration:
+              r.duration ??
+              'MONTHLY',
 
-              features:
-                r.modules ?? [],
+            features:
+              r.modules ?? [],
 
-              subscribers:
-                r.assignedUserCount ??
-                0,
+            subscribers:
+              r.assignedUserCount ??
+              0,
 
-              status:
-                r.status === 'ACTIVE'
-                  ? 'active'
-                  : 'inactive'
-            })
-          ) || [];
+            status:
+              r.status === 'ACTIVE'
+                ? 'active'
+                : 'inactive',
+          })) || [];
 
         setPlans(formatted);
 
         setTotalPages(
           res?.meta?.totalPages ?? 1
         );
-
       } catch (err) {
-
         console.error(
-          'Fetch plans error',
+          'Fetch plans error:',
           err
         );
-
       } finally {
         setLoading(false);
       }
-    },
+    };
 
-    [page, limit, debouncedSearch]
-  );
-
-  /**
-   * Fetch plans on dependency change
-   */
-  useEffect(() => {
     fetchPlans();
-  }, [fetchPlans]);
+  }, [
+    page,
+    limit,
+    debouncedSearch,
+    t
+  ]);
 
   /* =====================================================
    * DELETE PLAN
@@ -350,22 +431,27 @@ export default function PlansPage() {
     id: string,
     planName: string
   ) => {
-
-
     setConfirmDialog({
       open: true,
-
-      title:
-        `Delete Plan - ${planName}`,
-
-      description:
-        'Are you sure you want to delete this plan? This action cannot be undone.',
-
-      confirmText: 'Delete Plan',
-
-      loading: false,
-
-      onConfirm: () => handleDelete(id)
+      title: `${t("translate.delete_plan")} - ${planName}`,
+      description: t("translate.delete_plan_confirmation"),
+      buttons: [
+        {
+          label: t("translate.cancel"),
+          variant: "outline",
+          onClick: () =>
+            setConfirmDialog((prev) => ({
+              ...prev,
+              open: false,
+            })),
+        },
+        {
+          label: t("translate.delete_plan"),
+          variant: "destructive",
+          onClick: () =>
+            handleDelete(id),
+        },
+      ],
     });
   };
 
@@ -431,11 +517,7 @@ export default function PlansPage() {
       >
 
         {/* Left section */}
-        <div
-          className="
-            flex items-start gap-4
-          "
-        >
+        <div className="flex items-start gap-4">
 
           <CreditCard
             className="
@@ -774,21 +856,9 @@ export default function PlansPage() {
 
       <ConfirmDialog
         open={confirmDialog.open}
-
         title={confirmDialog.title}
-
-        description={
-          confirmDialog.description
-        }
-
-        confirmText={
-          confirmDialog.confirmText
-        }
-
-        loading={confirmDialog.loading}
-
-        variant="destructive"
-
+        description={confirmDialog.description}
+        buttons={confirmDialog.buttons}
         onCancel={() =>
           setConfirmDialog((prev) => ({
             ...prev,
@@ -796,9 +866,6 @@ export default function PlansPage() {
           }))
         }
 
-        onConfirm={
-          confirmDialog.onConfirm
-        }
       />
 
       {/* =================================================

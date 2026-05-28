@@ -1,8 +1,8 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { AdminProvider } from '@/contexts/AdminContext';
-import { useState, useEffect } from 'react';
+import { AdminProvider, useAdmin } from '@/contexts/AdminContext';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle
 } from '@/components/ui/card';
@@ -43,11 +43,15 @@ interface Module {
 
 /* ================= COMPONENT ================= */
 
-function PlanPermissionsContent({ planId }: { planId: string }) {
+export default function PlanPermissionsContent() {
 
   // alert(planId)
+  const { t } = useAdmin();
+
   const params = useParams();
-  planId = params?.id as string;
+
+  const planId =
+    params?.id as string;
 
   const [modules, setModules] = useState<Module[]>([]);
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
@@ -60,68 +64,186 @@ function PlanPermissionsContent({ planId }: { planId: string }) {
 
   /* ================= FETCH ================= */
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // useEffect(() => {
+  //   fetchData();
+  // }, []);
 
-  const fetchData = async () => {
+
+
+  // const fetchData = async () => {
+  //   try {
+  //     setLoading(true);
+
+  //     const [modRes, planRes] = await Promise.all([
+  //       getModulePackages('tenantmodule', {}),
+  //       getPlantoEdit(planId)
+  //     ]);
+
+  //     const tenantModules = modRes.data;
+  //     const planModules = planRes.data.modules || [];
+
+  //     /* ✅ PLAN MAP (FIXED) */
+  //     const planMap: Record<string, any> = {};
+
+  //     planModules.forEach((pm: any) => {
+  //       planMap[pm.moduleKey] = pm;
+  //     });
+
+  //     /* ✅ MERGE (FIXED CORE LOGIC) */
+  //     const mergedModules: Module[] = tenantModules.map((m: any) => {
+
+  //       const planModule = planMap[m.key];
+
+  //       const actions = (m.actions || []).map((a: any) => {
+
+  //         const planAction = planModule?.actions?.find(
+  //           (pa: any) => pa.actionKey === a.key
+  //         );
+
+  //         return {
+  //           _id: a._id,
+  //           key: a.key,
+  //           actionName: a.actionName,
+  //           status: planAction?.allowed ?? false
+  //         };
+  //       });
+
+  //       return {
+  //         id: m._id,
+  //         key: m.key,
+  //         name: m.moduleName,
+  //         actions,
+  //         status: actions.some((a: Action) => a.status)
+  //           ? 'active'
+  //           : 'inactive'
+  //       };
+  //     });
+
+  //     setModules(mergedModules);
+  //     setSelectedModule(mergedModules[0]?.id);
+
+  //   } catch (err) {
+  //     console.error(err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
 
       const [modRes, planRes] = await Promise.all([
-        getModulePackages('tenantmodule', {}),
+        getModulePackages(
+          'tenantmodule',
+          {}
+        ),
+
         getPlantoEdit(planId)
       ]);
 
-      const tenantModules = modRes.data;
-      const planModules = planRes.data.modules || [];
+      const tenantModules =
+        modRes.data;
 
-      /* ✅ PLAN MAP (FIXED) */
-      const planMap: Record<string, any> = {};
+      const planModules =
+        planRes.data.modules || [];
 
-      planModules.forEach((pm: any) => {
-        planMap[pm.moduleKey] = pm;
-      });
+      /* =========================================
+         PLAN MODULE MAP
+      ========================================== */
 
-      /* ✅ MERGE (FIXED CORE LOGIC) */
-      const mergedModules: Module[] = tenantModules.map((m: any) => {
+      const planMap: Record<
+        string,
+        any
+      > = {};
 
-        const planModule = planMap[m.key];
+      planModules.forEach(
+        (pm: any) => {
+          planMap[pm.moduleKey] =
+            pm;
+        }
+      );
 
-        const actions = (m.actions || []).map((a: any) => {
+      /* =========================================
+         MERGE MODULES + ACTIONS
+      ========================================== */
 
-          const planAction = planModule?.actions?.find(
-            (pa: any) => pa.actionKey === a.key
-          );
+      const mergedModules: Module[] =
+        tenantModules.map(
+          (m: any) => {
 
-          return {
-            _id: a._id,
-            key: a.key,
-            actionName: a.actionName,
-            status: planAction?.allowed ?? false
-          };
-        });
+            const planModule =
+              planMap[m.key];
 
-        return {
-          id: m._id,
-          key: m.key,
-          name: m.moduleName,
-          actions,
-          status: actions.some((a: Action) => a.status)
-            ? 'active'
-            : 'inactive'
-        };
-      });
+            const actions =
+              (m.actions || []).map(
+                (a: any) => {
+
+                  const planAction =
+                    planModule?.actions?.find(
+                      (pa: any) =>
+                        pa.actionKey ===
+                        a.key
+                    );
+
+                  return {
+                    _id: a._id,
+
+                    key: a.key,
+
+                    actionName:
+                      a.actionName,
+
+                    status:
+                      planAction?.allowed ??
+                      false
+                  };
+                }
+              );
+
+            return {
+              id: m._id,
+
+              key: m.key,
+
+              name: m.moduleName,
+
+              actions,
+
+              status:
+                actions.some(
+                  (a: Action) =>
+                    a.status
+                )
+                  ? 'active'
+                  : 'inactive'
+            };
+          }
+        );
 
       setModules(mergedModules);
-      setSelectedModule(mergedModules[0]?.id);
+
+      setSelectedModule(
+        mergedModules[0]?.id
+      );
 
     } catch (err) {
+
       console.error(err);
+
     } finally {
+
       setLoading(false);
     }
-  };
+  }, [planId, t]);
+
+  /* =========================================
+     FETCH ON LOAD
+  ========================================== */
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   /* ================= TOGGLES ================= */
 
@@ -328,30 +450,55 @@ function PlanPermissionsContent({ planId }: { planId: string }) {
 
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+
         <div className="flex items-start gap-4">
+
           <Layers className="text-primary w-7 h-7 mt-1" />
+
           <div>
-            <h1 className="text-xl font-medium">Plan Permissions</h1>
+
+            <h1 className="text-xl font-medium">
+              {t(
+                'translate.plan_permissions_title'
+              )}
+            </h1>
+
             <p className="text-muted-foreground">
-              Assign modules & actions to this plan
+              {t(
+                'translate.plan_permissions_subtitle'
+              )}
             </p>
+
           </div>
         </div>
 
         <div className="flex gap-2">
+
           <div className="relative w-64">
+
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" />
+
             <Input
-              placeholder="Search Modules..."
+              placeholder={t(
+                'translate.search_modules'
+              )}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) =>
+                setSearchQuery(
+                  e.target.value
+                )
+              }
               className="pl-10"
             />
+
           </div>
 
           <Button onClick={handleSave}>
-            Update Permissions
+            {t(
+              'translate.update_permissions'
+            )}
           </Button>
+
         </div>
       </div>
 
@@ -360,119 +507,197 @@ function PlanPermissionsContent({ planId }: { planId: string }) {
 
         {/* LEFT */}
         <div className="lg:col-span-2">
+
           <Card>
+
             <CardHeader>
-              <CardTitle>Available Modules</CardTitle>
-              <CardDescription>Select modules for this plan</CardDescription>
+
+              <CardTitle>
+                {t(
+                  'translate.available_modules'
+                )}
+              </CardTitle>
+
+              <CardDescription>
+                {t(
+                  'translate.available_modules_description'
+                )}
+              </CardDescription>
+
             </CardHeader>
 
             <CardContent className="space-y-4">
-              {filteredModules.map((mod) => (
-                <div
-                  key={mod.id}
-                  onClick={() => setSelectedModule(mod.id)}
-                  className={`p-4 border rounded-lg cursor-pointer ${selectedModule === mod.id
-                    ? 'border-primary bg-primary/5'
-                    : ''
-                    }`}
-                >
-                  <div className="flex justify-between">
-                    <div>
-                      <h3 className="font-semibold">{mod.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {mod.key}
-                      </p>
+
+              {filteredModules.map(
+                (mod) => (
+                  <div
+                    key={mod.id}
+                    onClick={() =>
+                      setSelectedModule(
+                        mod.id
+                      )
+                    }
+                    className={`p-4 border rounded-lg cursor-pointer ${selectedModule ===
+                        mod.id
+                        ? 'border-primary bg-primary/5'
+                        : ''
+                      }`}
+                  >
+
+                    <div className="flex justify-between">
+
+                      <div>
+
+                        <h3 className="font-semibold">
+                          {mod.name}
+                        </h3>
+
+                        <p className="text-sm text-muted-foreground">
+                          {mod.key}
+                        </p>
+
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between mt-3">
+
+                      <Badge variant="secondary">
+                        {mod.actions.length}{' '}
+                        {t(
+                          'translate.permissions'
+                        )}
+                      </Badge>
+
+                      <Badge
+                        onClick={() => {
+                          toggleModule(
+                            mod.id
+                          );
+                        }}
+                        className={`cursor-pointer ${mod.status ===
+                            'active'
+                            ? 'bg-green-600 text-white'
+                            : 'bg-gray-400 text-white'
+                          }`}
+                      >
+                        {t(
+                          `translate.plans_${mod.status}`
+                        )}
+                      </Badge>
+
                     </div>
                   </div>
+                )
+              )}
 
-                  <div className="flex justify-between mt-3">
-                    <Badge variant="secondary">
-                      {mod.actions.length} permissions
-                    </Badge>
-
-                    <Badge
-                      onClick={(e) => {
-                        // e.stopPropagation();
-                        toggleModule(mod.id);
-                      }}
-                      className={`cursor-pointer ${mod.status === 'active'
-                        ? 'bg-green-600 text-white'
-                        : 'bg-gray-400 text-white'
-                        }`}
-                    >
-                      {mod.status.toUpperCase()}
-                    </Badge>
-
-                    {/* {selectedModule === mod.id && <CheckCircle />} */}
-                  </div>
-                </div>
-              ))}
             </CardContent>
           </Card>
         </div>
 
         {/* RIGHT */}
         <div>
+
           <Card className="sticky top-0">
+
             <CardHeader>
-              <CardTitle>Module Actions</CardTitle>
+
+              <CardTitle>
+                {t(
+                  'translate.module_actions'
+                )}
+              </CardTitle>
+
               <p className="text-sm font-regular text-muted-foreground">
-                Select atleast one action to enable this module
+                {t(
+                  'translate.module_actions_description'
+                )}
               </p>
+
             </CardHeader>
 
             <CardContent>
+
               {selectedModule ? (
                 modules
-                  .filter((m) => m.id === selectedModule)
+                  .filter(
+                    (m) =>
+                      m.id ===
+                      selectedModule
+                  )
                   .map((mod) => (
-                    <div key={mod.id} className="space-y-2">
-                      {mod.actions.map((action) => (
-                        <div
-                          key={action._id}
-                          className={`flex justify-between p-3 border rounded ${mod.status === 'inactive'
-                            ? 'opacity-50 pointer-events-none'
-                            : ''
-                            }`
-                          }
-                        >
-                          <div>
-                            <p className="text-sm font-medium">
-                              {action.actionName}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {action.key}
-                            </p>
-                          </div>
+                    <div
+                      key={mod.id}
+                      className="space-y-2"
+                    >
 
-                          <Badge
-                            onClick={() =>
-                              toggleAction(mod.id, action._id)
-                            }
-                            className={`cursor-pointer ${action.status
-                              ? 'bg-green-600 text-white'
-                              : 'bg-gray-400 text-white'
+                      {mod.actions.map(
+                        (action) => (
+                          <div
+                            key={action._id}
+                            className={`flex justify-between p-3 border rounded ${mod.status ===
+                                'inactive'
+                                ? 'opacity-50 pointer-events-none'
+                                : ''
                               }`}
                           >
-                            {action.status ? 'ACTIVE' : 'INACTIVE'}
-                          </Badge>
-                        </div>
-                      ))}
+
+                            <div>
+
+                              <p className="text-sm font-medium">
+                                {
+                                  action.actionName
+                                }
+                              </p>
+
+                              <p className="text-xs text-muted-foreground">
+                                {action.key}
+                              </p>
+
+                            </div>
+
+                            <Badge
+                              onClick={() =>
+                                toggleAction(
+                                  mod.id,
+                                  action._id
+                                )
+                              }
+                              className={`cursor-pointer ${action.status
+                                  ? 'bg-green-600 text-white'
+                                  : 'bg-gray-400 text-white'
+                                }`}
+                            >
+                              {action.status
+                                ? t(
+                                  'translate.plans_active'
+                                )
+                                : t(
+                                  'translate.plans_inactive'
+                                )}
+                            </Badge>
+
+                          </div>
+                        )
+                      )}
+
                     </div>
                   ))
               ) : (
                 <p className="text-center text-muted-foreground">
-                  Select module to view actions
+                  {t(
+                    'translate.select_module_message'
+                  )}
                 </p>
               )}
+
             </CardContent>
           </Card>
         </div>
       </div>
 
       {/* =================================================
-                GLOBAL MESSAGE
-            ================================================== */}
+          GLOBAL MESSAGE
+      ================================================== */}
 
       <AppMessage
         visible={visible}
@@ -484,12 +709,3 @@ function PlanPermissionsContent({ planId }: { planId: string }) {
   );
 }
 
-/* ================= EXPORT ================= */
-
-export default function PlanPermissionsPage({ planId }: { planId: string }) {
-  return (
-    <AdminProvider>
-      <PlanPermissionsContent planId={planId} />
-    </AdminProvider>
-  );
-}

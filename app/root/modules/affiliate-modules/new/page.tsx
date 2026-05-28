@@ -1,7 +1,7 @@
 
 'use client';
 
-import { AdminProvider } from '@/contexts/AdminContext';
+import { AdminProvider, useAdmin } from '@/contexts/AdminContext';
 import { useState } from 'react';
 import {
   Card,
@@ -69,7 +69,8 @@ const createEmptyLangObject = (): MultiLangText => {
 };
 
 /* ================= COMPONENT ================= */
-function ModulePage() {
+export default function ModulePage() {
+  const { t } = useAdmin();
   const [formData, setFormData] = useState<ModuleForm>({
     key: '',
     name: createEmptyLangObject(),
@@ -125,12 +126,12 @@ function ModulePage() {
       actions: prev.actions.map((a, i) =>
         i === index
           ? {
-              ...a,
-              [field]:
-                prev.status === 'INACTIVE' && field === 'status'
-                  ? 'INACTIVE'
-                  : value,
-            }
+            ...a,
+            [field]:
+              prev.status === 'INACTIVE' && field === 'status'
+                ? 'INACTIVE'
+                : value,
+          }
           : a
       ),
     }));
@@ -138,18 +139,18 @@ function ModulePage() {
 
 
   const handleInputChange = (
-  field: keyof ModuleForm,
-  lang: Language,
-  value: string
-) => {
-  setFormData(prev => ({
-    ...prev,
-    [field]: {
-      ...(prev[field] as MultiLangText),
-      [lang]: value,
-    },
-  }));
-};
+    field: keyof ModuleForm,
+    lang: Language,
+    value: string
+  ) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: {
+        ...(prev[field] as MultiLangText),
+        [lang]: value,
+      },
+    }));
+  };
 
   const handleActionNameChange = (
     index: number,
@@ -246,8 +247,11 @@ function ModulePage() {
   };
 
   /* ================= UI ================= */
+
   return (
     <div className="space-y-6 max-w-2xl">
+
+      {/* HEADER */}
       <div className="flex items-center gap-4">
         <Link href="/root/modules/affiliate-modules">
           <Button variant="ghost" size="sm">
@@ -256,18 +260,24 @@ function ModulePage() {
         </Link>
 
         <div>
-          <h1 className="text-xl font-medium">Create Module & Actions</h1>
+          <h1 className="text-xl font-medium">
+            {t("translate.create_module_title")}
+          </h1>
+
           <p className="text-muted-foreground">
-            Add a new Module with multilingual support
+            {t("translate.create_module_description")}
           </p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Module Details</CardTitle>
+          <CardTitle>
+            {t("translate.module_details_title")}
+          </CardTitle>
+
           <CardDescription>
-            Fill module information in multiple languages
+            {t("translate.module_details_description")}
           </CardDescription>
         </CardHeader>
 
@@ -275,7 +285,7 @@ function ModulePage() {
 
           {success && (
             <p className="text-green-800">
-              Module created successfully!
+              {t("translate.module_created_success")}
             </p>
           )}
 
@@ -283,36 +293,23 @@ function ModulePage() {
             <p className="text-red-500">{errors.global}</p>
           )}
 
-          {/* LANGUAGE SWITCH (same UI) */}
-          {/* <div className="flex gap-2 flex-wrap">
-            {Object.entries(LANGUAGES).map(([key, lang]) => (
-              <Button
-                key={key}
-                size="sm"
-                variant={currentLang === key ? 'default' : 'outline'}
-                onClick={() => setCurrentLang(key as Language)}
-              >
-                {lang.label}
-              </Button>
-            ))}
-          </div> */}
-
-          {/* Language Tabs (controls active editing language) */}
-              <MultiLangTabs
-                currentLang={currentLang}
-                onChange={setCurrentLang}
-              />
-
+          {/* LANGUAGE SWITCH */}
+          <MultiLangTabs
+            currentLang={currentLang}
+            onChange={setCurrentLang}
+          />
 
           {/* MODULE KEY */}
           <div className="space-y-2">
-            <Label>Module Key *</Label>
+            <Label>{t("translate.module_key")}</Label>
+
             <Input
               value={formData.key}
-              onChange={e =>
+              onChange={(e) =>
                 setFormData({ ...formData, key: e.target.value })
               }
             />
+
             {errors.moduleKey && (
               <p className="text-xs text-red-500">
                 {errors.moduleKey}
@@ -321,42 +318,20 @@ function ModulePage() {
           </div>
 
           {/* MODULE NAME */}
-          {/* <div className="space-y-2">
-            <Label>
-              Module Name ({currentLang.toUpperCase()}) *
-            </Label>
-            <Input
-              value={formData.name[currentLang]}
-              onChange={e =>
-                setFormData(prev => ({
-                  ...prev,
-                  name: {
-                    ...prev.name,
-                    [currentLang]: e.target.value,
-                  },
-                }))
-              }
-            />
-            {errors.moduleName?.[currentLang] && (
-              <p className="text-xs text-red-500">
-                {errors.moduleName[currentLang]}
-              </p>
-            )}
-          </div> */}
-
           <MultiLangInput
-                label="Module Name"
-                value={formData.name}
-                currentLang={currentLang}
-                onChange={(lang, value) =>
-                  handleInputChange('name', lang, value)
-                }
-                error={errors.moduleName?.[currentLang]}
-              />
+            label={t("translate.module_name")}
+            value={formData.name}
+            currentLang={currentLang}
+            onChange={(lang, value) =>
+              handleInputChange("name", lang, value)
+            }
+            error={errors.moduleName?.[currentLang]}
+          />
 
           {/* STATUS */}
           <div className="space-y-2">
-            <Label>Status</Label>
+            <Label>{t("translate.status")}</Label>
+
             <Select
               value={formData.status}
               onValueChange={handleModuleStatusChange}
@@ -364,53 +339,62 @@ function ModulePage() {
               <SelectTrigger className="w-full min-w-[220px]">
                 <SelectValue />
               </SelectTrigger>
+
               <SelectContent>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="INACTIVE">Inactive</SelectItem>
+                <SelectItem value="ACTIVE">
+                  {t("translate.active")}
+                </SelectItem>
+
+                <SelectItem value="INACTIVE">
+                  {t("translate.inactive")}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* ACTIONS */}
           <div className="space-y-2">
-            <CardTitle>Actions Details</CardTitle>
-            <CardDescription>
-              Fill actions information in multiple languages
-            </CardDescription>
+            <CardTitle>
+              {t("translate.actions_details")}
+            </CardTitle>
+            {/* 
+          <CardDescription>
+            {t("translate.action_description")}
+          </CardDescription> */}
 
-            <div className="flex justify-between items-center">
-              <Button
-                size="lg"
-                variant="outline"
-                className="bg-white hover:bg-gray-50"
-                onClick={handleAddAction}
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Add Action
-              </Button>
-            </div>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={handleAddAction}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              {t("translate.add_action")}
+            </Button>
 
             {formData.actions.map((action, index) => (
               <div
                 key={index}
-                className="bg-white border border-gray-200 p-4 rounded-lg space-y-4 relative shadow-sm"
+                className="bg-white border p-4 rounded-lg space-y-4 relative"
               >
+
                 <button
                   onClick={() => handleDeleteAction(index)}
-                  className="absolute right-3 top-3 text-red-500 hover:text-red-600"
+                  className="absolute right-3 top-3 text-red-500"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
 
                 {/* ACTION KEY */}
                 <div className="space-y-2">
-                  <Label>Action Key *</Label>
+                  <Label>{t("translate.action_key")}</Label>
+
                   <Input
                     value={action.key}
-                    onChange={e =>
-                      handleActionChange(index, 'key', e.target.value)
+                    onChange={(e) =>
+                      handleActionChange(index, "key", e.target.value)
                     }
                   />
+
                   {errors.actions?.[index]?.key && (
                     <p className="text-xs text-red-500">
                       {errors.actions[index].key}
@@ -419,61 +403,38 @@ function ModulePage() {
                 </div>
 
                 {/* ACTION NAME */}
-                {/* <div className="space-y-2">
-                  <Label>
-                    Action Name ({currentLang.toUpperCase()}) *
-                  </Label>
-                  <Input
-                    value={action.actionName[currentLang]}
-                    onChange={e =>
-                      handleActionNameChange(
-                        index,
-                        currentLang,
-                        e.target.value
-                      )
-                    }
-                  />
-                  {errors.actions?.[index]?.name?.[currentLang] && (
-                    <p className="text-xs text-red-500">
-                      {
-                        errors.actions[index].name?.[
-                          currentLang
-                        ]
-                      }
-                    </p>
-                  )}
-                </div> */}
-
-
                 <MultiLangInput
-  label="Action Name"
-  value={action.actionName}
-  currentLang={currentLang}
-  onChange={(lang, value) =>
-    handleActionNameChange(index, lang, value)
-  }
-  error={errors.actions?.[index]?.name?.[currentLang]}
-/>
+                  label={t("translate.action_name")}
+                  value={action.actionName}
+                  currentLang={currentLang}
+                  onChange={(lang, value) =>
+                    handleActionNameChange(index, lang, value)
+                  }
+                  error={errors.actions?.[index]?.name?.[currentLang]}
+                />
 
-                {/* STATUS */}
+                {/* ACTION STATUS */}
                 <div className="space-y-2">
-                  <Label>Status</Label>
+                  <Label>{t("translate.status")}</Label>
+
                   <Select
                     value={action.status}
-                    disabled={formData.status === 'INACTIVE'}
-                    onValueChange={val =>
-                      handleActionChange(index, 'status', val)
+                    disabled={formData.status === "INACTIVE"}
+                    onValueChange={(val) =>
+                      handleActionChange(index, "status", val)
                     }
                   >
-                    <SelectTrigger className="w-full min-w-[220px] bg-white">
+                    <SelectTrigger className="w-full min-w-[220px]">
                       <SelectValue />
                     </SelectTrigger>
+
                     <SelectContent>
                       <SelectItem value="ACTIVE">
-                        Active
+                        {t("translate.active")}
                       </SelectItem>
+
                       <SelectItem value="INACTIVE">
-                        Inactive
+                        {t("translate.inactive")}
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -486,23 +447,20 @@ function ModulePage() {
           <div className="flex gap-3">
             <Button onClick={handleSubmit} disabled={isLoading}>
               <Save className="w-4 h-4 mr-2" />
-              Create Module
+              {t("translate.create_module_btn")}
             </Button>
 
-            <Link href="/root/modules/affiliate-modules">
-              <Button variant="outline">Cancel</Button>
+            <Link href="/root/modules/root-modules">
+              <Button variant="outline">
+                {t("translate.cancel")}
+              </Button>
             </Link>
           </div>
+
         </CardContent>
       </Card>
     </div>
   );
+
 }
 
-export default function Page() {
-  return (
-    <AdminProvider>
-      <ModulePage />
-    </AdminProvider>
-  );
-}

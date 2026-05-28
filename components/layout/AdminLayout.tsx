@@ -80,15 +80,28 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   const { message, type, visible, showMessage, clearMessage } = useAppMessage();
+  // const [confirmDialog, setConfirmDialog] = useState({
+  //   open: false,
+  //   title: "",
+  //   description: "",
+  //   cancelText: '',
+  //   confirmText: "",
+  //   loading: false,
+  //   onConfirm: () => { },
+  // });
+
   const [confirmDialog, setConfirmDialog] = useState({
     open: false,
     title: "",
     description: "",
-    confirmText: "",
-    loading: false,
-    onConfirm: () => { },
+    buttons: [] as {
+      label: string;
+      variant?: | "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+      loading?: boolean;
+      disabled?: boolean;
+      onClick: () => void;
+    }[],
   });
-
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -124,7 +137,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       );
     };
 
-  }, []);
+  }, [t]);
 
 
   const handleLogout = async () => {
@@ -149,15 +162,28 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   };
 
 
-  const openCancelSubscriptionDialog = () => {
+  const openLogoutDialog = () => {
     setConfirmDialog({
       open: true,
-      title: "Logout Confirmation",
-      description:
-        "Are you sure you want to log out of your account?",
-      confirmText: "Log Out",
-      loading: false,
-      onConfirm: handleLogout,
+      title: t("translate.logout_confirmation_title"),
+      description: t("translate.logout_confirmation_description"),
+
+      buttons: [
+        {
+          label: t("translate.cancel"),
+          variant: "outline",
+          onClick: () =>
+            setConfirmDialog((prev) => ({
+              ...prev,
+              open: false,
+            })),
+        },
+        {
+          label: t("translate.logout_confirm_button"),
+          variant: "destructive",
+          onClick: handleLogout,
+        },
+      ],
     });
   };
 
@@ -761,7 +787,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={openCancelSubscriptionDialog}
+                    onClick={openLogoutDialog}
                     className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
                   >
                     <LogOut size={16} className="mr-2" />
@@ -788,16 +814,13 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         open={confirmDialog.open}
         title={confirmDialog.title}
         description={confirmDialog.description}
-        confirmText={confirmDialog.confirmText}
-        loading={confirmDialog.loading}
-        variant="destructive"
+        buttons={confirmDialog.buttons}
         onCancel={() =>
           setConfirmDialog((prev) => ({
             ...prev,
             open: false,
           }))
         }
-        onConfirm={confirmDialog.onConfirm}
       />
 
       <AppMessage

@@ -150,7 +150,7 @@ export default function SubscribersPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, limit, debouncedSearch]);
+  }, [page, limit, debouncedSearch, t]);
 
   /* ================= FETCH PLANS ================= */
 
@@ -180,7 +180,7 @@ export default function SubscribersPage() {
   useEffect(() => {
     fetchSubscribers();
     fetchPlans();
-  }, [fetchSubscribers, fetchPlans]);
+  }, [fetchSubscribers, fetchPlans, t]);
 
 
   /* ================= FILTER ================= */
@@ -209,68 +209,6 @@ export default function SubscribersPage() {
       );
     });
 
-  /* ================= PLAN COLORS ================= */
-
-  // const getPlanColor = (
-  //   plan: string
-  // ) => {
-  //   const colors: Record<
-  //     string,
-  //     string
-  //   > = {
-  //     FREE: 'bg-gray-400 text-gray-700',
-
-  //     BASIC:
-  //       'bg-blue-300 text-blue-700',
-
-  //     STANDARD:
-  //       'bg-purple-100 text-purple-700',
-
-  //     PREMIUM:
-  //       'bg-orange-300 text-orange-700',
-
-  //     ENTERPRISE:
-  //       'bg-green text-green-700',
-  //   };
-
-  //   return (
-  //     colors[
-  //     plan.toUpperCase()
-  //     ] ||
-  //     'bg-primary text-white'
-  //   );
-  // };
-
-  const planColorPalette = [
-    'bg-blue-200 text-blue-700',
-    'bg-purple-200 text-purple-700',
-    'bg-green-200 text-green-700',
-    'bg-orange-200 text-orange-700',
-    'bg-pink-200 text-pink-700',
-    'bg-cyan-200 text-cyan-700',
-    'bg-yellow-200 text-yellow-700',
-    'bg-indigo-200 text-indigo-700',
-    'bg-red-200 text-red-700',
-    'bg-emerald-200 text-emerald-700',
-  ];
-
-  const getPlanColor = (plan: string) => {
-    if (!plan) {
-      return 'bg-gray-100 text-gray-700';
-    }
-
-    // generate stable index from plan name
-    const hash = plan
-      .split('')
-      .reduce(
-        (acc, char) => acc + char.charCodeAt(0),
-        0
-      );
-
-    return planColorPalette[
-      hash % planColorPalette.length
-    ];
-  };
 
   /* ================= DATE FORMAT ================= */
 
@@ -288,13 +226,11 @@ export default function SubscribersPage() {
   };
 
   /* ================= UI ================= */
-
   return (
     <AdminProvider>
       <div className="space-y-6">
 
         {/* HEADER */}
-
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
           <div className="flex items-start gap-4">
@@ -302,11 +238,11 @@ export default function SubscribersPage() {
 
             <div>
               <h1 className="text-xl font-medium">
-                Subscribers
+                {t("translate.subscribers_title")}
               </h1>
 
               <p className="text-muted-foreground">
-                Manage subscribers and plans
+                {t("translate.subscribers_description")}
               </p>
             </div>
           </div>
@@ -314,95 +250,71 @@ export default function SubscribersPage() {
           <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
 
             {/* SEARCH */}
-
             <div className="relative w-full md:w-72">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
 
               <Input
-                placeholder="Search subscriber..."
+                placeholder={t("translate.subscribers_search_placeholder")}
                 value={searchQuery}
-                onChange={(e) =>
-                  setSearchQuery(
-                    e.target.value
-                  )
-                }
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
               />
             </div>
 
             {/* PLAN FILTER */}
-
             <select
               value={selectedPlan}
-              onChange={(e) =>
-                setSelectedPlan(
-                  e.target.value
-                )
-              }
+              onChange={(e) => setSelectedPlan(e.target.value)}
               className="border rounded-md px-3 py-2 text-sm min-w-[180px] bg-background"
             >
               {plans.map((plan) => (
-                <option
-                  key={plan}
-                  value={plan}
-                >
-                  {plan === 'ALL'
-                    ? 'Filter by Plan'
+                <option key={plan} value={plan}>
+                  {plan === "ALL"
+                    ? t("translate.subscribers_filter_plan")
                     : plan}
                 </option>
               ))}
             </select>
 
-           
           </div>
         </div>
 
         {/* TABLE */}
-
         <Card>
 
           <CardHeader className="flex items-center justify-between">
             <div>
               <CardTitle>
-                Subscribers
+                {t("translate.subscribers_table_title")}
               </CardTitle>
 
               <CardDescription>
                 {loading
-                  ? 'Loading subscribers...'
-                  : `${filteredSubscribers.length} subscriber(s) found`}
+                  ? t("translate.subscribers_table_loading")
+                  : `${filteredSubscribers.length} ${t("translate.subscribers_table_found")}`}
               </CardDescription>
             </div>
+
             {/* LIMIT DROPDOWN */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                >
-                  Show: {limit}
+                <Button variant="outline" size="sm">
+                  {t("translate.subscribers_show")}: {limit}
                 </Button>
               </DropdownMenuTrigger>
 
               <DropdownMenuContent align="end">
-                {PAGE_LIMIT_OPTIONS.map(
-                  (option) => (
-                    <DropdownMenuItem
-                      key={option}
-                      onClick={() => {
-                        setLimit(
-                          option === 'All'
-                            ? 'All'
-                            : Number(option)
-                        );
-
-                        setPage(1);
-                      }}
-                    >
-                      {option}
-                    </DropdownMenuItem>
-                  )
-                )}
+                {PAGE_LIMIT_OPTIONS.map((option) => (
+                  <DropdownMenuItem
+                    key={option}
+                    onClick={() => {
+                      setLimit(option === "All" ? "All" : Number(option));
+                      setPage(1);
+                    }}
+                  >
+                    {option}
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -415,159 +327,114 @@ export default function SubscribersPage() {
               <table className="w-full">
 
                 <thead>
-
                   <tr className="border-b">
 
                     <th className="text-left py-3 px-4">
-                      Subscriber ID
+                      {t("translate.subscribers_col_id")}
                     </th>
 
                     <th className="text-left py-3 px-4">
-                      Subscriber
+                      {t("translate.subscribers_col_name")}
                     </th>
 
                     <th className="text-left py-3 px-4">
-                      Contact
+                      {t("translate.subscribers_col_contact")}
                     </th>
 
                     <th className="text-left py-3 px-4">
-                      Plan
+                      {t("translate.subscribers_col_plan")}
                     </th>
 
                     <th className="text-left py-3 px-4">
-                      Start Date
+                      {t("translate.subscribers_col_start_date")}
                     </th>
 
                     <th className="text-left py-3 px-4">
-                      Expiry Date
+                      {t("translate.subscribers_col_expiry_date")}
                     </th>
 
                     <th className="text-right py-3 px-4">
-                      Actions
+                      {t("translate.subscribers_col_actions")}
                     </th>
 
                   </tr>
-
                 </thead>
 
                 <tbody>
 
                   {loading ? (
-
                     <tr>
-                      <td
-                        colSpan={7}
-                        className="text-center py-8"
-                      >
-                        Loading...
+                      <td colSpan={7} className="text-center py-8">
+                        {t("translate.subscribers_loading")}
                       </td>
                     </tr>
 
                   ) : filteredSubscribers.length === 0 ? (
-
                     <tr>
-                      <td
-                        colSpan={7}
-                        className="text-center py-8 text-muted-foreground"
-                      >
-                        No subscribers found
+                      <td colSpan={7} className="text-center py-8 text-muted-foreground">
+                        {t("translate.subscribers_empty")}
                       </td>
                     </tr>
 
                   ) : (
 
-                    filteredSubscribers.map(
-                      (sub) => (
+                    filteredSubscribers.map((sub) => (
+                      <tr key={sub.id} className="border-b hover:bg-muted/40">
 
-                        <tr
-                          key={sub.id}
-                          className="border-b hover:bg-muted/40"
-                        >
+                        <td className="py-4 px-4 font-medium">
+                          {sub.tenantId}
+                        </td>
 
-                          <td className="py-4 px-4 font-medium">
-                            {sub.tenantId}
-                          </td>
+                        <td className="py-4 px-4">
+                          <p className="font-medium">{sub.companyName}</p>
 
-                          <td className="py-4 px-4">
-
-                            <p className="font-medium">
-                              {
-                                sub.companyName
-                              }
+                          {sub.isVerified && (
+                            <p className="text-sm text-primary flex items-center gap-1 mt-1">
+                              <CheckCircle className="w-4 h-4" />
+                              {t("translate.subscribers_verified")}
                             </p>
+                          )}
+                        </td>
 
-                            {sub.isVerified && (
-                              <p className="text-sm text-primary flex items-center gap-1 mt-1">
-                                <CheckCircle className="w-4 h-4" />
-                                Verified
-                              </p>
-                            )}
+                        <td className="py-4 px-4 text-sm">
+                          <p>{sub.contact.email}</p>
+                          <p className="text-muted-foreground">
+                            {sub.contact.phone.code} {sub.contact.phone.number}
+                          </p>
+                        </td>
 
-                          </td>
+                        <td className="py-4 px-4">
+                          <Badge className={getConsistentBadgeColor(sub.plan)}>
+                            {sub.plan}
+                          </Badge>
+                        </td>
 
-                          <td className="py-4 px-4 text-sm">
+                        <td className="py-4 px-4 text-sm">
+                          {formatDate(sub.startDate)}
+                        </td>
 
-                            <p>
-                              {
-                                sub.contact
-                                  .email
-                              }
-                            </p>
+                        <td className="py-4 px-4 text-sm">
+                          {formatDate(sub.expiryDate)}
+                        </td>
 
-                            <p className="text-muted-foreground">
-                              {
-                                sub.contact
-                                  .phone
-                                  .code
-                              }{' '}
-                              {
-                                sub.contact
-                                  .phone
-                                  .number
-                              }
-                            </p>
-
-                          </td>
-
-                          <td className="py-4 px-4">
-
-                            <Badge
-                              className={getConsistentBadgeColor(
-                                sub.plan
-                              )}
-                            >
-                              {sub.plan}
-                            </Badge>
-
-                          </td>
-
-                          <td className="py-4 px-4 text-sm">
-                            {formatDate(
-                              sub.startDate
-                            )}
-                          </td>
-
-                          <td className="py-4 px-4 text-sm">
-                            {formatDate(
-                              sub.expiryDate
-                            )}
-                          </td>
-
-                          <td className="py-4 px-4 text-right">
+                        <td className="p-4 align-top">
+                          <div className="flex items-center justify-left">
                             <Link href={`/root/subscribers/${sub.id}`}>
                               <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                className="h-8 w-8 p-0"
+                                className="flex items-center gap-2"
                               >
                                 <Eye className="w-4 h-4" />
+                                {t('translate.subscribers_col_viewBTN')}
                               </Button>
                             </Link>
-                          </td>
+                          </div>
+                        </td>
 
-                        </tr>
-                      )
-                    )
+                      </tr>
+                    ))
+
                   )}
 
                 </tbody>
@@ -576,20 +443,21 @@ export default function SubscribersPage() {
 
               {/* PAGINATION */}
               <div className="flex justify-end gap-2 p-4">
+
                 <Button
                   size="sm"
                   variant="outline"
                   disabled={page === 1}
                   onClick={() => setPage((p) => p - 1)}
                 >
-                  Prev
+                  {t("translate.subscribers_prev")}
                 </Button>
 
                 {[...Array(totalPages)].map((_, i) => (
                   <Button
                     key={i}
                     size="sm"
-                    variant={page === i + 1 ? 'default' : 'outline'}
+                    variant={page === i + 1 ? "default" : "outline"}
                     onClick={() => setPage(i + 1)}
                   >
                     {i + 1}
@@ -602,8 +470,9 @@ export default function SubscribersPage() {
                   disabled={page === totalPages}
                   onClick={() => setPage((p) => p + 1)}
                 >
-                  Next
+                  {t("translate.subscribers_next")}
                 </Button>
+
               </div>
 
             </div>
@@ -615,4 +484,5 @@ export default function SubscribersPage() {
       </div>
     </AdminProvider>
   );
+
 }

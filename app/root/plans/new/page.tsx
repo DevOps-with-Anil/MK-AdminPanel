@@ -553,8 +553,8 @@ export default function AddPlanPage() {
     <div className="space-y-6 max-w-xl">
 
       {/* =================================================
-          PAGE HEADER
-      ================================================== */}
+        PAGE HEADER
+    ================================================== */}
 
       <div className="flex items-center gap-4">
 
@@ -572,9 +572,9 @@ export default function AddPlanPage() {
         <div>
           <h1
             className="
-              text-xl font-medium
-              text-foreground
-            "
+            text-xl font-medium
+            text-foreground
+          "
           >
             {t(
               'translate.plans_create_title'
@@ -583,8 +583,8 @@ export default function AddPlanPage() {
 
           <p
             className="
-              text-sm text-muted-foreground
-            "
+            text-sm text-muted-foreground
+          "
           >
             {t(
               'translate.plans_create_subtitle'
@@ -594,8 +594,8 @@ export default function AddPlanPage() {
       </div>
 
       {/* =================================================
-          FORM CARD
-      ================================================== */}
+        FORM CARD
+    ================================================== */}
 
       <Card>
 
@@ -603,12 +603,15 @@ export default function AddPlanPage() {
         <CardHeader>
 
           <CardTitle>
-            Plan Details
+            {t(
+              'translate.plans_details'
+            )}
           </CardTitle>
 
           <CardDescription>
-            Fill plan information in
-            multiple languages
+            {t(
+              'translate.plans_details_description'
+            )}
           </CardDescription>
 
         </CardHeader>
@@ -617,24 +620,24 @@ export default function AddPlanPage() {
         <CardContent className="space-y-4">
 
           {/* =============================================
-              GLOBAL ERROR
-          ============================================== */}
+            GLOBAL ERROR
+        ============================================== */}
 
           {errors.global && (
             <div
               className="
-                p-3 rounded-md
-                bg-red-100 text-red-700
-                border border-red-300
-              "
+              p-3 rounded-md
+              bg-red-100 text-red-700
+              border border-red-300
+            "
             >
               {errors.global}
             </div>
           )}
 
           {/* =============================================
-              LANGUAGE TABS
-          ============================================== */}
+            LANGUAGE TABS
+        ============================================== */}
 
           <MultiLangTabs
             currentLang={currentLang}
@@ -642,11 +645,13 @@ export default function AddPlanPage() {
           />
 
           {/* =============================================
-              PLAN NAME
-          ============================================== */}
+            PLAN NAME
+        ============================================== */}
 
           <MultiLangInput
-            label="Plan Name"
+            label={t(
+              'translate.plans_name'
+            )}
             value={formData.name}
             currentLang={currentLang}
             onChange={(lang, value) =>
@@ -660,11 +665,13 @@ export default function AddPlanPage() {
           />
 
           {/* =============================================
-              DESCRIPTION
-          ============================================== */}
+            DESCRIPTION
+        ============================================== */}
 
           <MultiLangTextarea
-            label="Description"
+            label={t(
+              'translate.description'
+            )}
             value={formData.description}
             currentLang={currentLang}
             onChange={(lang, value) =>
@@ -678,8 +685,8 @@ export default function AddPlanPage() {
           />
 
           {/* =============================================
-              CURRENCY + PRICE
-          ============================================== */}
+            CURRENCY + PRICE
+        ============================================== */}
 
           <div className="flex gap-2">
 
@@ -687,7 +694,9 @@ export default function AddPlanPage() {
             <div className="flex-1">
 
               <Label className="mb-2 block">
-                Currency
+                {t(
+                  'translate.currency'
+                )}
               </Label>
 
               <Dropdown
@@ -711,7 +720,9 @@ export default function AddPlanPage() {
             <div className="flex-1">
 
               <Label className="mb-2 block">
-                Price
+                {t(
+                  'translate.price'
+                )}
               </Label>
 
               <Input
@@ -730,8 +741,8 @@ export default function AddPlanPage() {
               {errors.price && (
                 <p
                   className="
-                    text-red-500 text-sm
-                  "
+                  text-red-500 text-sm
+                "
                 >
                   {errors.price}
                 </p>
@@ -740,8 +751,8 @@ export default function AddPlanPage() {
           </div>
 
           {/* =============================================
-              PLAN TYPE + STATUS
-          ============================================== */}
+            PLAN TYPE + STATUS
+        ============================================== */}
 
           <div className="flex gap-2">
 
@@ -749,11 +760,20 @@ export default function AddPlanPage() {
             <div className="flex-1">
 
               <Label className="mb-2 block">
-                Plan Type
+                {t(
+                  'translate.plan_type'
+                )}
               </Label>
 
               <Dropdown
-                options={PLAN_TYPES}
+                options={PLAN_TYPES.map(
+                  (type) => ({
+                    ...type,
+                    label: t(
+                      `translate.plans_interval_${type.id.toLowerCase()}`
+                    )
+                  })
+                )}
                 value={formData.type}
                 onChange={(val) =>
                   handleInputChange(
@@ -768,11 +788,20 @@ export default function AddPlanPage() {
             <div className="flex-1">
 
               <Label className="mb-2 block">
-                Status
+                {t(
+                  'translate.status'
+                )}
               </Label>
 
               <Dropdown
-                options={STATUS_TYPES}
+                options={STATUS_TYPES.map(
+                  (status) => ({
+                    ...status,
+                    label: t(
+                      `translate.plans_${status.id.toLowerCase()}`
+                    )
+                  })
+                )}
                 value={formData.status}
                 onChange={(val) =>
                   handleInputChange(
@@ -785,8 +814,8 @@ export default function AddPlanPage() {
           </div>
 
           {/* =============================================
-              ACTION BUTTONS
-          ============================================== */}
+            ACTION BUTTONS
+        ============================================== */}
 
           <div className="flex gap-3 mt-4">
 
@@ -794,15 +823,19 @@ export default function AddPlanPage() {
             <Button
               onClick={handleSave}
               className="
-                gap-2 bg-primary flex-1
-              "
+              gap-2 bg-primary flex-1
+            "
               disabled={isLoading}
             >
               <Save className="w-4 h-4" />
 
               {isLoading
-                ? 'Saving...'
-                : 'Save Plan'}
+                ? t(
+                  'translate.saving'
+                )
+                : t(
+                  'translate.plans_save'
+                )}
             </Button>
 
             {/* Cancel */}
@@ -814,7 +847,9 @@ export default function AddPlanPage() {
                 variant="outline"
                 className="w-full"
               >
-                Cancel
+                {t(
+                  'translate.cancel'
+                )}
               </Button>
             </Link>
           </div>
@@ -823,8 +858,8 @@ export default function AddPlanPage() {
       </Card>
 
       {/* =================================================
-          GLOBAL APP MESSAGE
-      ================================================== */}
+        GLOBAL APP MESSAGE
+    ================================================== */}
 
       <AppMessage
         visible={visible}

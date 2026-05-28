@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { AdminProvider } from '@/contexts/AdminContext';
+import { AdminProvider, useAdmin } from '@/contexts/AdminContext';
 import { useState, useEffect } from 'react';
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle
@@ -42,9 +42,9 @@ interface Module {
 
 /* ================= COMPONENT ================= */
 
-function PlanPermissionsContent({ roleId }: { roleId: string }) {
+export default function PlanPermissionsContent({ roleId }: { roleId: string }) {
 
-
+  const { t } = useAdmin();
   const params = useParams();
   roleId = params?.id as string;
 
@@ -53,7 +53,7 @@ function PlanPermissionsContent({ roleId }: { roleId: string }) {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
-   const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   // const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
@@ -64,7 +64,7 @@ function PlanPermissionsContent({ roleId }: { roleId: string }) {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [t]);
 
   const fetchData = async () => {
     try {
@@ -193,7 +193,7 @@ function PlanPermissionsContent({ roleId }: { roleId: string }) {
   // };
   const handleSave = async () => {
     setError('');
-   // setSuccess(false);
+    // setSuccess(false);
     try {
       const modulesPayload = modules
         // ✅ only active modules
@@ -213,26 +213,26 @@ function PlanPermissionsContent({ roleId }: { roleId: string }) {
         // ✅ remove modules with no actions (optional but recommended)
         .filter(mod => mod.actions.length > 0);
 
-    const res =   await updateRoleModules(roleId, { modules: modulesPayload });
+      const res = await updateRoleModules(roleId, { modules: modulesPayload });
 
-    showMessage(
+      showMessage(
         res?.message || "Permission updated successfully!",
         "success"
       );
 
 
       // Success
-     // setSuccess(true);
+      // setSuccess(true);
       setTimeout(() => {
-      //setSuccess(false);  
+        //setSuccess(false);  
       }, 2000);
 
     } catch (err: any) {
       setError(err?.message);
       setTimeout(() => {
-      setError("");  
+        setError("");
       }, 2000);
-      
+
     } finally {
       setIsLoading(false);
     }
@@ -259,9 +259,12 @@ function PlanPermissionsContent({ roleId }: { roleId: string }) {
         <div className="flex items-start gap-4">
           <Layers className="text-primary w-7 h-7 mt-1" />
           <div>
-            <h1 className="text-xl font-medium">Plan Permissions</h1>
+            <h1 className="text-xl font-medium">
+              {t("translate.plan_permissions_title")}
+            </h1>
+
             <p className="text-muted-foreground">
-              Assign modules & actions to this role
+              {t("translate.plan_permissions_description")}
             </p>
           </div>
         </div>
@@ -269,8 +272,9 @@ function PlanPermissionsContent({ roleId }: { roleId: string }) {
         <div className="flex gap-2">
           <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" />
+
             <Input
-              placeholder="Search Modules..."
+              placeholder={t("translate.plan_permissions_search_placeholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -278,23 +282,17 @@ function PlanPermissionsContent({ roleId }: { roleId: string }) {
           </div>
 
           <Button onClick={handleSave}>
-            Update Permissions
+            {t("translate.plan_permissions_update_btn")}
           </Button>
         </div>
       </div>
-      {error && (
-              <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-1">
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                <p className="text-sm font-medium">{error}</p>
-              </div>
-            )}
 
-            {/* {success && (
-              <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 px-4 py-3 rounded-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-1">
-                <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-                <p className="text-sm font-medium">Permissions updated successfully!</p>
-              </div>
-            )} */}
+      {error && (
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-1">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <p className="text-sm font-medium">{error}</p>
+        </div>
+      )}
 
       {/* GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -303,8 +301,13 @@ function PlanPermissionsContent({ roleId }: { roleId: string }) {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Available Modules</CardTitle>
-              <CardDescription>Select modules for this Role</CardDescription>
+              <CardTitle>
+                {t("translate.plan_permissions_available_modules")}
+              </CardTitle>
+
+              <CardDescription>
+                {t("translate.plan_permissions_select_modules")}
+              </CardDescription>
             </CardHeader>
 
             <CardContent className="space-y-4">
@@ -313,8 +316,8 @@ function PlanPermissionsContent({ roleId }: { roleId: string }) {
                   key={mod.id}
                   onClick={() => setSelectedModule(mod.id)}
                   className={`p-4 border rounded-lg cursor-pointer ${selectedModule === mod.id
-                    ? 'border-primary bg-primary/5'
-                    : ''
+                    ? "border-primary bg-primary/5"
+                    : ""
                     }`}
                 >
                   <div className="flex justify-between">
@@ -328,23 +331,19 @@ function PlanPermissionsContent({ roleId }: { roleId: string }) {
 
                   <div className="flex justify-between mt-3">
                     <Badge variant="secondary">
-                      {mod.actions.length} permissions
+                      {mod.actions.length}{" "}
+                      {t("translate.plan_permissions_permissions_label")}
                     </Badge>
 
                     <Badge
-                      onClick={(e) => {
-                        // e.stopPropagation();
-                        toggleModule(mod.id);
-                      }}
-                      className={`cursor-pointer ${mod.status === 'active'
-                        ? 'bg-green-600 text-white'
-                        : 'bg-gray-400 text-white'
+                      onClick={() => toggleModule(mod.id)}
+                      className={`cursor-pointer ${mod.status === "active"
+                        ? "bg-green-600 text-white"
+                        : "bg-gray-400 text-white"
                         }`}
                     >
                       {mod.status.toUpperCase()}
                     </Badge>
-
-                    {/* {selectedModule === mod.id && <CheckCircle />} */}
                   </div>
                 </div>
               ))}
@@ -356,9 +355,12 @@ function PlanPermissionsContent({ roleId }: { roleId: string }) {
         <div>
           <Card className="sticky top-0">
             <CardHeader>
-              <CardTitle>Module Actions</CardTitle>
+              <CardTitle>
+                {t("translate.plan_permissions_module_actions")}
+              </CardTitle>
+
               <p className="text-sm font-regular text-muted-foreground">
-                Select atleast one action to enable this module
+                {t("translate.plan_permissions_select_action_hint")}
               </p>
             </CardHeader>
 
@@ -371,11 +373,10 @@ function PlanPermissionsContent({ roleId }: { roleId: string }) {
                       {mod.actions.map((action) => (
                         <div
                           key={action._id}
-                          className={`flex justify-between p-3 border rounded ${mod.status === 'inactive'
-                            ? 'opacity-50 pointer-events-none'
-                            : ''
-                            }`
-                          }
+                          className={`flex justify-between p-3 border rounded ${mod.status === "inactive"
+                            ? "opacity-50 pointer-events-none"
+                            : ""
+                            }`}
                         >
                           <div>
                             <p className="text-sm font-medium">
@@ -391,11 +392,13 @@ function PlanPermissionsContent({ roleId }: { roleId: string }) {
                               toggleAction(mod.id, action._id)
                             }
                             className={`cursor-pointer ${action.status
-                              ? 'bg-green-600 text-white'
-                              : 'bg-gray-400 text-white'
+                              ? "bg-green-600 text-white"
+                              : "bg-gray-400 text-white"
                               }`}
                           >
-                            {action.status ? 'ACTIVE' : 'INACTIVE'}
+                            {action.status
+                              ? t("translate.plan_permissions_active")
+                              : t("translate.plan_permissions_inactive")}
                           </Badge>
                         </div>
                       ))}
@@ -403,7 +406,7 @@ function PlanPermissionsContent({ roleId }: { roleId: string }) {
                   ))
               ) : (
                 <p className="text-center text-muted-foreground">
-                  Select module to view actions
+                  {t("translate.plan_permissions_select_module_placeholder")}
                 </p>
               )}
             </CardContent>
@@ -411,24 +414,14 @@ function PlanPermissionsContent({ roleId }: { roleId: string }) {
         </div>
       </div>
 
-
-            {/* RIGHT SIDE RESPONSE MESSAGE */}
-            <AppMessage
-              visible={visible}
-              message={message}
-              type={type}
-              onClose={clearMessage}
-            />
+      {/* RIGHT SIDE RESPONSE MESSAGE */}
+      <AppMessage
+        visible={visible}
+        message={message}
+        type={type}
+        onClose={clearMessage}
+      />
     </div>
   );
-}
 
-/* ================= EXPORT ================= */
-
-export default function PlanPermissionsPage({ roleId }: { roleId: string }) {
-  return (
-    <AdminProvider>
-      <PlanPermissionsContent roleId={roleId} />
-    </AdminProvider>
-  );
 }

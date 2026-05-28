@@ -164,7 +164,7 @@ export default function Dashboard() {
               {t('translate.dashboard_overview')}
             </h1>
             <p className="text-muted-foreground">
-              
+
               {t('translate.dashboard_welcome_message').replace('{name}', currentUser.name)}
             </p>
           </div>
@@ -327,8 +327,7 @@ export default function Dashboard() {
       </div>
 
       {/* Bottom Row */}
-      {/* <div className="grid grid-cols-1 lg:grid-cols-12 gap-8"> */}
-        <div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <Card className="lg:col-span-8 border-none shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-4">
             <div>
@@ -375,7 +374,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* <Card className="lg:col-span-4 border-none shadow-sm">
+        <Card className="lg:col-span-4 border-none shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg font-medium">
               {t('translate.platform_status_title')}
@@ -422,7 +421,7 @@ export default function Dashboard() {
               </div>
             </div>
           </CardContent>
-        </Card> */}
+        </Card>
       </div>
     </div>
 

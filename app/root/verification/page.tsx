@@ -88,7 +88,7 @@ interface KYBRequest {
   approvedBy?: string | null;
 }
 
-function VerificationPageContent() {
+export default function VerificationPageContent() {
   const { t } = useAdmin();
   const params = useParams();
   const router = useRouter();
@@ -234,7 +234,7 @@ function VerificationPageContent() {
 
   useEffect(() => {
     fetchKYBRequests();
-  }, [fetchKYBRequests]);
+  }, [fetchKYBRequests, t]);
 
 
   /* ================= COMMON HELPERS ================= */
@@ -258,17 +258,19 @@ function VerificationPageContent() {
 
   return (
     <div className="space-y-6">
+
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+
         <div className="flex items-start gap-4">
           <CheckCircle className="text-primary w-7 h-7 mt-1" />
 
           <div>
             <h1 className="text-xl font-medium text-foreground">
-              KYB Requests
+              {t("translate.kyb_requests_title")}
             </h1>
 
             <p className="text-muted-foreground">
-              Manage and review KYB submissions
+              {t("translate.kyb_requests_description")}
             </p>
           </div>
         </div>
@@ -278,33 +280,32 @@ function VerificationPageContent() {
 
           <Input
             type="text"
-            placeholder="Search requests..."
+            placeholder={t("translate.kyb_search_placeholder")}
             className="pl-10"
             value={searchQuery}
-            onChange={(e) =>
-              setSearchQuery(e.target.value)
-            }
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
+
       </div>
 
       <Card>
         <CardHeader className="flex items-center justify-between">
+
           <div>
-            <CardTitle>KYB Requests</CardTitle>
+            <CardTitle>
+              {t("translate.kyb_requests_title")}
+            </CardTitle>
 
             <CardDescription>
-              Review and process new KYB submissions.
+              {t("translate.kyb_requests_subtitle")}
             </CardDescription>
           </div>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-              >
-                Show: {limit}
+              <Button variant="outline" size="sm">
+                {t("translate.kyb_show")}: {limit}
               </Button>
             </DropdownMenuTrigger>
 
@@ -313,12 +314,7 @@ function VerificationPageContent() {
                 <DropdownMenuItem
                   key={option}
                   onClick={() => {
-                    setLimit(
-                      option === 'All'
-                        ? 'All'
-                        : Number(option)
-                    );
-
+                    setLimit(option === "All" ? "All" : Number(option));
                     setPage(1);
                   }}
                 >
@@ -331,37 +327,38 @@ function VerificationPageContent() {
         </CardHeader>
 
         <CardContent>
+
           <div className="overflow-x-auto">
+
             <table className="w-full min-w-[900px]">
+
               <thead>
                 <tr className="border-b bg-muted/30">
+
                   <th className="text-left py-3 px-4">
-                    KYB ID
+                    {t("translate.kyb_col_id")}
                   </th>
 
                   <th className="text-left py-3 px-4">
-                    Requester
+                    {t("translate.kyb_col_requester")}
                   </th>
 
                   <th className="text-left py-3 px-4">
-                    Submitted at
+                    {t("translate.kyb_col_submitted_at")}
                   </th>
 
                   <th className="text-left py-3 px-4">
-                    Submitted by
+                    {t("translate.kyb_col_submitted_by")}
                   </th>
 
                   <th className="text-left py-3 px-4">
-                    Status
+                    {t("translate.kyb_col_status")}
                   </th>
-
-                  {/* <th className="text-left py-3 px-4">
-                    Approved By
-                  </th> */}
 
                   <th className="text-left py-3 px-4">
-                    Actions
+                    {t("translate.kyb_col_actions")}
                   </th>
+
                 </tr>
               </thead>
 
@@ -371,121 +368,88 @@ function VerificationPageContent() {
                     key={request.KYBID}
                     className="border-b hover:bg-muted/20 transition-colors"
                   >
-                    {/* KYB ID */}
-                    <td className="p-4 align-top">
-                      <div className="font-medium text-foreground">
+
+                    <td className="p-4">
+                      <div className="font-medium">
                         {request.KYBID}
                       </div>
                     </td>
 
-                    {/* REQUESTER */}
-                    <td className="p-4 align-top">
-                      <div className="font-medium text-foreground">
+                    <td className="p-4">
+                      <div className="font-medium">
                         {request.companyName}
                       </div>
                     </td>
 
-                    {/* SUBMITTED */}
-                    <td className="p-4 align-top">
-                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <td className="p-4">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="w-4 h-4" />
-
-                        {formatDate(
-                          request.submittedAt
-                        )}
+                        {formatDate(request.submittedAt)}
                       </div>
                     </td>
 
-                    {/* SUBMITTED BY */}
-                    <td className="p-4 align-top">
-                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <td className="p-4">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <User2 className="w-4 h-4" />
                         {request.submittedBy}
                       </div>
                     </td>
 
-                    {/* STATUS */}
-                    <td className="p-4 align-top">
-                      <div
-                        className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${getConsistentBadgeColor(
-                          request.status
-                        )}`}
-                      >
+                    <td className="p-4">
+                      <div className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getConsistentBadgeColor(request.status)}`}>
                         {request.status}
                       </div>
                     </td>
 
-                    {/* APPROVED BY */}
-                    {/* <td className="p-4 align-top">
-                      {request.status ===
-                        'APPROVED' &&
-                        request.approvedBy ? (
-                        <div>
-                          <div className="text-sm font-medium text-foreground">
-                            {request.approvedBy}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-xm text-muted-foreground italic">
-                          Not approved yet
-                        </div>
-                      )}
-                    </td> */}
-
-                    {/* ACTIONS */}
-
-                    <td className="p-4 align-top">
-                      <div className="flex items-center justify-left">
-                        <Link href={`/root/verification/${request.id}`}>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex items-center gap-2"
-                          >
-                            <Eye className="w-4 h-4" />
-                            Review KYB
-                          </Button>
-                        </Link>
-                      </div>
+                    <td className="p-4">
+                      <Link href={`/root/verification/${request.id}`}>
+                        <Button variant="outline" size="sm">
+                          <Eye className="w-4 h-4" />
+                          {t("translate.kyb_review")}
+                        </Button>
+                      </Link>
                     </td>
 
                   </tr>
                 ))}
               </tbody>
+
             </table>
 
-            {!loading &&
-              !filteredRequests.length && (
-                <div className="py-10 text-center text-muted-foreground">
-                  No KYB requests found.
-                </div>
-              )}
+            {!loading && !filteredRequests.length && (
+              <div className="py-10 text-center text-muted-foreground">
+                {t("translate.kyb_empty")}
+              </div>
+            )}
 
             {loading && (
               <div className="py-10 text-center text-muted-foreground">
-                Loading KYB requests...
+                {t("translate.kyb_loading")}
               </div>
             )}
+
           </div>
+
         </CardContent>
       </Card>
 
       {/* PAGINATION */}
       <div className="flex justify-end gap-2 p-4">
+
         <Button
           size="sm"
           variant="outline"
           disabled={page === 1}
           onClick={() => setPage((p) => p - 1)}
         >
-          Prev
+          {t("translate.prev")}
         </Button>
 
         {[...Array(totalPages)].map((_, i) => (
           <Button
             key={i}
             size="sm"
-            variant={page === i + 1 ? 'default' : 'outline'}
+            variant={page === i + 1 ? "default" : "outline"}
             onClick={() => setPage(i + 1)}
           >
             {i + 1}
@@ -498,19 +462,12 @@ function VerificationPageContent() {
           disabled={page === totalPages}
           onClick={() => setPage((p) => p + 1)}
         >
-          Next
+          {t("translate.next")}
         </Button>
-      </div>
 
+      </div>
 
     </div>
   );
-}
 
-export default function VerificationPage() {
-  return (
-    <AdminProvider>
-      <VerificationPageContent />
-    </AdminProvider>
-  );
 }

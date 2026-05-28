@@ -1,6 +1,6 @@
 'use client';
 
-import { AdminProvider } from '@/contexts/AdminContext';
+import { AdminProvider, useAdmin } from '@/contexts/AdminContext';
 import { useParams, useRouter } from 'next/navigation';
 import {
   useEffect,
@@ -136,6 +136,7 @@ interface KYBResponse {
 
 export default function VerificationDetailsPage() {
 
+  const { t } = useAdmin();
   const params = useParams();
   const router = useRouter();
 
@@ -173,9 +174,9 @@ export default function VerificationDetailsPage() {
     if (params?.id) {
       fetchKYBDetails();
     }
-  }, [params?.id]);
+  }, [params?.id, t]);
 
- 
+
   const fetchKYBDetails = async () => {
     try {
       setLoading(true);
@@ -341,11 +342,11 @@ export default function VerificationDetailsPage() {
                 {/* PAGE TITLE */}
                 <div>
                   <h1 className="text-2xl font-semibold text-foreground tracking-tight">
-                    KYB Verification Documents
+                    {t("translate.kyb_title")}
                   </h1>
 
                   <p className="text-sm text-muted-foreground mt-1">
-                    Review and verify uploaded business compliance documents.
+                    {t("translate.kyb_description")}
                   </p>
                 </div>
 
@@ -363,7 +364,7 @@ export default function VerificationDetailsPage() {
                     {/* KYB ID */}
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground">
-                        KYB ID:
+                        {t("translate.kyb_id")}:
                       </span>
 
                       <span className="font-medium text-foreground">
@@ -376,7 +377,7 @@ export default function VerificationDetailsPage() {
                     {/* SUBMITTED DATE */}
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground">
-                        Submitted on:
+                        {t("translate.submitted_on")}:
                       </span>
 
                       <span className="font-medium text-foreground">
@@ -439,8 +440,8 @@ export default function VerificationDetailsPage() {
                                 }`}
                             >
                               {doc.isRequired
-                                ? 'Required'
-                                : 'Optional'}
+                                ? t("translate.required")
+                                : t("translate.optional")}
                             </div>
 
                             <div
@@ -464,7 +465,7 @@ export default function VerificationDetailsPage() {
                         {/* DOCUMENT NUMBER */}
                         <div className="space-y-1">
                           <div className="text-sm text-muted-foreground">
-                            Document Number
+                            {t("translate.document_number")}
                           </div>
 
                           <div className="font-medium text-md text-foreground">
@@ -475,7 +476,7 @@ export default function VerificationDetailsPage() {
                         {/* ISSUE DATE */}
                         <div className="space-y-1">
                           <div className="text-sm text-muted-foreground">
-                            Valid From
+                            {t("translate.valid_from")}
                           </div>
 
                           <div className="font-medium text-md text-foreground">
@@ -489,7 +490,7 @@ export default function VerificationDetailsPage() {
                         {/* EXPIRY DATE */}
                         <div className="space-y-1">
                           <div className="text-sm text-muted-foreground">
-                            Valid To
+                            {t("translate.valid_to")}
                           </div>
 
                           <div className="font-medium text-md text-foreground">
@@ -512,17 +513,17 @@ export default function VerificationDetailsPage() {
                           <DialogTrigger asChild>
                             <Button className="bg-green-600 hover:bg-green-700">
                               <CheckCircle2Icon className="w-4 h-4 mr-2" />
-                              Approve
+                              {t("translate.approve")}
                             </Button>
                           </DialogTrigger>
 
                           <DialogContent className="sm:max-w-2xl">
                             <DialogHeader>
                               <DialogTitle>
-                                Approve {doc.label || doc.type}
+                                {t("translate.verification_notes")} {doc.label || doc.type}
                               </DialogTitle>
                               <DialogDescription>
-                                Verification Notes
+                                {t("translate.verification_notes")}
                               </DialogDescription>
                             </DialogHeader>
 
@@ -536,22 +537,23 @@ export default function VerificationDetailsPage() {
                                 <div className="flex items-center justify-between">
                                   <div>
                                     <h3 className="text-sm font-semibold text-foreground">
-                                      Internal Review Notes
+                                      {t("translate.internal_review_notes")}
                                     </h3>
 
                                     <p className="text-xs text-muted-foreground mt-1">
-                                      Visible only to admins and compliance reviewers.
+                                      {t("translate.internal_note_description")}
                                     </p>
                                   </div>
 
                                   <div className="px-2.5 py-1 rounded-md bg-red-500 text-sm font-medium text-white">
-                                    Private
+                                    {t("translate.private")}
+
                                   </div>
                                 </div>
 
                                 {/* Description (multilingual textarea, optional) */}
                                 <MultiLangTextarea
-                                  label="Internal Note"
+                                  label={t("translate.description")}
                                   value={formData.internal.description}
                                   currentLang={currentLang}
                                   onChange={handleInternalChange}
@@ -563,22 +565,22 @@ export default function VerificationDetailsPage() {
                                 <div className="flex items-center justify-between">
                                   <div>
                                     <h3 className="text-sm font-semibold text-foreground">
-                                      Tenant Notes
+                                      {t("translate.tenant_notes")}
                                     </h3>
 
                                     <p className="text-xs text-muted-foreground mt-1">
-                                      This message will be visible to the tenant/company.
+                                      {t("translate.tenant_note_description")}
                                     </p>
                                   </div>
 
                                   <div className="px-2.5 py-1 rounded-md bg-blue-100 text-blue-700 text-sm font-medium border border-blue-200">
-                                    Visible to Tenant
+                                    {t("translate.visible_to_tenant")}
                                   </div>
                                 </div>
 
                                 {/* Description (multilingual textarea, optional) */}
                                 <MultiLangTextarea
-                                  label="Description"
+                                  label={t("translate.description")}
                                   value={formData.tenant.description}
                                   currentLang={currentLang}
                                   onChange={handleTenantChange}
@@ -589,7 +591,7 @@ export default function VerificationDetailsPage() {
                               <div className="flex justify-end gap-3 pt-2">
                                 <DialogClose asChild>
                                   <Button variant="outline">
-                                    Cancel
+                                    {t("translate.cancel")}
                                   </Button>
                                 </DialogClose>
 
@@ -598,7 +600,9 @@ export default function VerificationDetailsPage() {
                                   disabled={loading}
                                 >
                                   <CheckCircle className="w-4 h-4 mr-2" />
-                                  {loading ? "Processing..." : "Confirm Approval"}
+                                  {loading
+                                    ? t("translate.processing")
+                                    : t("translate.confirm_approval")}
                                 </Button>
                               </div>
                             </div>
@@ -613,18 +617,17 @@ export default function VerificationDetailsPage() {
                           <DialogTrigger asChild>
                             <Button variant="destructive">
                               <XCircle className="w-4 h-4 mr-2" />
-                              Reject
+                              {t("translate.reject")}
                             </Button>
                           </DialogTrigger>
 
                           <DialogContent className="sm:max-w-2xl">
                             <DialogHeader>
                               <DialogTitle>
-                                Reject {doc.label || doc.type}
+                                {t("translate.verification_notes")} {doc.label || doc.type}
                               </DialogTitle>
-
                               <DialogDescription>
-                                Add rejection notes and compliance remarks.
+                                {t("translate.verification_notes")}
                               </DialogDescription>
                             </DialogHeader>
 
@@ -639,21 +642,21 @@ export default function VerificationDetailsPage() {
                                 <div className="flex items-center justify-between">
                                   <div>
                                     <h3 className="text-sm font-semibold text-foreground">
-                                      Internal Review Notes
+                                      {t("translate.internal_review_notes")}
                                     </h3>
 
                                     <p className="text-xs text-muted-foreground mt-1">
-                                      Visible only to admins and compliance reviewers.
+                                      {t("translate.internal_note_description")}
                                     </p>
                                   </div>
 
                                   <div className="px-2.5 py-1 rounded-md bg-red-500 text-sm font-medium text-white">
-                                    Private
+                                    {t("translate.private")}
                                   </div>
                                 </div>
                                 {/* Description (multilingual textarea, optional) */}
                                 <MultiLangTextarea
-                                  label="Internal Note"
+                                  label={t("translate.description")}
                                   value={formData.internal.description}
                                   currentLang={currentLang}
                                   onChange={handleInternalChange}
@@ -665,16 +668,16 @@ export default function VerificationDetailsPage() {
                                 <div className="flex items-center justify-between">
                                   <div>
                                     <h3 className="text-sm font-semibold text-foreground">
-                                      Tenant Notes
+                                      {t("translate.tenant_notes")}
                                     </h3>
 
                                     <p className="text-xs text-muted-foreground mt-1">
-                                      This message will be visible to the tenant/company.
+                                      {t("translate.tenant_note_description")}
                                     </p>
                                   </div>
 
                                   <div className="px-2.5 py-1 rounded-md bg-blue-100 text-blue-700 text-sm font-medium border border-blue-200">
-                                    Visible to Tenant
+                                    {t("translate.visible_to_tenant")}
                                   </div>
                                 </div>
 
@@ -682,7 +685,7 @@ export default function VerificationDetailsPage() {
 
                                 {/* Description (multilingual textarea, optional) */}
                                 <MultiLangTextarea
-                                  label="Description"
+                                  label={t("translate.description")}
                                   value={formData.tenant.description}
                                   currentLang={currentLang}
                                   onChange={handleTenantChange}
@@ -693,7 +696,7 @@ export default function VerificationDetailsPage() {
                               <div className="flex justify-end gap-3 pt-2">
                                 <DialogClose asChild>
                                   <Button variant="outline">
-                                    Cancel
+                                    {t("translate.cancel")}
                                   </Button>
                                 </DialogClose>
 
@@ -703,7 +706,9 @@ export default function VerificationDetailsPage() {
                                   disabled={loading}
                                 >
                                   <XCircle className="w-4 h-4 mr-2" />
-                                  {loading ? "Processing..." : "Confirm Rejection"}
+                                  {loading
+                                    ? t("translate.processing")
+                                    : t("translate.confirm_rejection")}
                                 </Button>
                               </div>
                             </div>
@@ -918,7 +923,7 @@ export default function VerificationDetailsPage() {
           {/* ACCESSIBILITY TITLE */}
           <DialogTitle asChild>
             <VisuallyHidden>
-              <span>File Preview</span>
+              <span>{t("translate.file_preview")}</span>
             </VisuallyHidden>
           </DialogTitle>
 
@@ -1018,7 +1023,7 @@ export default function VerificationDetailsPage() {
                           });
                         }}
                       >
-                        Reset
+                        {t("translate.reset")}
                       </Button>
                     </>
                   )}
@@ -1034,7 +1039,7 @@ export default function VerificationDetailsPage() {
                   }
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  Download
+                  {t("translate.download")}
                 </Button>
 
                 {/* CLOSE BUTTON */}
@@ -1229,11 +1234,11 @@ export default function VerificationDetailsPage() {
                     <FileText className="w-16 h-16 mb-4 text-zinc-400" />
 
                     <div className="text-lg font-medium">
-                      Preview not available
+                      {t("translate.no_preview")}
                     </div>
 
                     <div className="text-sm text-zinc-500 mt-1">
-                      This file type cannot be previewed.
+                      {t("translate.no_preview_desc")}
                     </div>
                   </div>
                 );

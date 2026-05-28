@@ -1,7 +1,7 @@
 
 'use client';
 
-import { AdminProvider } from '@/contexts/AdminContext';
+import { AdminProvider, useAdmin } from '@/contexts/AdminContext';
 import { useState, useContext, useEffect } from 'react';
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
@@ -63,7 +63,9 @@ const createMultiLangObject = (): MultiLangText =>
 
 /* ================= COMPONENT ================= */
 
-function NewRoleContent() {
+export default function NewRoleContent() {
+
+  const { t } = useAdmin();
   const { locale } = useContext(I18nContext);
 
   const [currentLang, setCurrentLang] = useState<Language>(locale);
@@ -181,134 +183,151 @@ function NewRoleContent() {
   return (
     <div className="space-y-6 max-w-6xl">
 
-      {/* Page Header + Back Navigation */}
+      {/* PAGE HEADER */}
       <div className="flex items-center gap-4">
+
         <Link href="/root/roles">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="w-4 h-4" />
           </Button>
         </Link>
 
-        {/* Page Title & Subtitle */}
         <div>
-          <h1 className="text-xl font-medium">Create Role</h1>
+          <h1 className="text-xl font-medium">
+            {t("translate.create_role_title")}
+          </h1>
+
           <p className="text-muted-foreground">
-            Add a new role with multilingual support
+            {t("translate.create_role_description")}
           </p>
         </div>
+
       </div>
 
-      {/* Main Layout Grid */}
+      {/* GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
         <div className="lg:col-span-2">
 
-          {/* Role Creation Form */}
           <Card>
+
             <CardHeader>
-              <CardTitle>Role Details</CardTitle>
+              <CardTitle>
+                {t("translate.role_details_title")}
+              </CardTitle>
+
               <CardDescription>
-                Fill role information in multiple languages
+                {t("translate.role_details_description")}
               </CardDescription>
             </CardHeader>
 
             <CardContent className="space-y-6">
 
-              {/* Global Error (API / submission failure) */}
+              {/* GLOBAL ERROR */}
               {errors.global && (
                 <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
                   {errors.global}
                 </div>
               )}
 
-              {/* Language Tabs (controls active editing language) */}
+              {/* LANGUAGE TABS */}
               <MultiLangTabs
                 currentLang={currentLang}
                 onChange={setCurrentLang}
               />
 
-              {/* Role Name (multilingual input, required for default language) */}
+              {/* ROLE NAME */}
               <MultiLangInput
-                label="Role Name"
+                label={t("translate.role_name")}
                 value={formData.name}
                 currentLang={currentLang}
                 onChange={(lang, value) =>
-                  handleInputChange('name', lang, value)
+                  handleInputChange("name", lang, value)
                 }
                 error={errors.name?.[currentLang]}
               />
 
-              {/* Description (multilingual textarea, optional) */}
+              {/* DESCRIPTION */}
               <MultiLangTextarea
-                label="Description"
+                label={t("translate.role_description")}
                 value={formData.description}
                 currentLang={currentLang}
                 onChange={(lang, value) =>
-                  handleInputChange('description', lang, value)
+                  handleInputChange("description", lang, value)
                 }
               />
 
-              {/* Role Status Selector */}
+              {/* STATUS */}
               <div>
-                <Label className="mb-2 block">Status</Label>
+                <Label className="mb-2 block">
+                  {t("translate.status")}
+                </Label>
+
                 <Select
                   value={formData.status}
                   onValueChange={(val: Status) =>
-                    setFormData(prev => ({ ...prev, status: val }))
+                    setFormData((prev) => ({ ...prev, status: val }))
                   }
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue
+                      placeholder={t("translate.select_status")}
+                    />
                   </SelectTrigger>
 
                   <SelectContent>
-                    {STATUS_OPTIONS.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
+                    {STATUS_OPTIONS.map((option) => (
+                      <SelectItem
+                        key={option.value}
+                        value={option.value}
+                      >
                         {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
+
                 </Select>
               </div>
 
-              {/* Form Actions (Submit + Cancel) */}
+              {/* ACTIONS */}
               <div className="flex gap-3">
+
                 <Button
                   onClick={handleSubmit}
                   disabled={isLoading}
                   className="gap-2 flex-1"
                 >
                   <Save className="w-4 h-4" />
-                  {isLoading ? 'Creating...' : 'Create Role'}
+
+                  {isLoading
+                    ? t("translate.creating")
+                    : t("translate.create_role")}
                 </Button>
 
                 <Link href="/root/roles" className="flex-1">
                   <Button variant="outline" className="w-full">
-                    Cancel
+                    {t("translate.cancel")}
                   </Button>
                 </Link>
+
               </div>
+
             </CardContent>
           </Card>
+
         </div>
+
       </div>
 
-      {/* RIGHT SIDE RESPONSE MESSAGE */}
+      {/* MESSAGE */}
       <AppMessage
         visible={visible}
         message={message}
         type={type}
         onClose={clearMessage}
       />
+
     </div>
   );
-}
 
-/* ================= PAGE ================= */
-
-export default function NewRolePage() {
-  return (
-    <AdminProvider>
-      <NewRoleContent />
-    </AdminProvider>
-  );
 }

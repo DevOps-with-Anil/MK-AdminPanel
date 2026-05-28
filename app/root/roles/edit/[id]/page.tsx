@@ -1,7 +1,7 @@
 'use client';
 
-import { AdminProvider } from '@/contexts/AdminContext';
-import { useState, useEffect, useContext } from 'react';
+import { AdminProvider, useAdmin } from '@/contexts/AdminContext';
+import { useState, useEffect, useContext, use } from 'react';
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from '@/components/ui/card';
@@ -74,7 +74,9 @@ const createMultiLangObject = (): MultiLangText =>
 
 /* ================= COMPONENT ================= */
 
-function EditRoleContent() {
+export default function EditRoleContent() {
+
+  const { t } = useAdmin();
   const { id } = useParams();
   const router = useRouter();
   const { locale } = useContext(I18nContext);
@@ -216,15 +218,17 @@ function EditRoleContent() {
 
   /* ================= UI ================= */
 
+
   if (loadingData) {
-    return <p className="p-6">Loading role...</p>;
+    return <p className="p-6">{t("translate.loading_role")}</p>;
   }
 
   return (
     <div className="space-y-6 max-w-6xl">
 
-      {/* Page Header + Navigation */}
+      {/* HEADER */}
       <div className="flex items-center gap-4">
+
         <Link href="/root/roles">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="w-4 h-4" />
@@ -232,124 +236,141 @@ function EditRoleContent() {
         </Link>
 
         <div>
-          <h1 className="text-xl font-medium">Edit Role</h1>
+          <h1 className="text-xl font-medium">
+            {t("translate.edit_role_title")}
+          </h1>
+
           <p className="text-muted-foreground">
-            Update role details
+            {t("translate.edit_role_description")}
           </p>
         </div>
+
       </div>
 
-      {/* Main Layout (Form Section) */}
+      {/* GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
         <div className="lg:col-span-2">
 
-          {/* Role Form Card */}
           <Card>
+
             <CardHeader>
-              <CardTitle>Role Details</CardTitle>
+              <CardTitle>
+                {t("translate.role_details_title")}
+              </CardTitle>
+
               <CardDescription>
-                Modify role in multiple languages
+                {t("translate.role_details_edit_description")}
               </CardDescription>
             </CardHeader>
 
             <CardContent className="space-y-6">
 
-              {/* Global API / Submission Error */}
+              {/* ERROR */}
               {errors.global && (
                 <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
                   {errors.global}
                 </div>
               )}
 
-              {/* Language Switcher (controls current editing language) */}
+              {/* LANG SWITCH */}
               <MultiLangTabs
                 currentLang={currentLang}
                 onChange={setCurrentLang}
               />
 
-              {/* Role Name (multilingual input) */}
+              {/* ROLE NAME */}
               <MultiLangInput
-                label="Role Name"
+                label={t("translate.role_name")}
                 value={formData.name}
                 currentLang={currentLang}
                 onChange={(lang, value) =>
-                  handleInputChange('name', lang, value)
+                  handleInputChange("name", lang, value)
                 }
                 error={errors.name?.[currentLang]}
               />
 
-              {/* Description (multilingual textarea) */}
+              {/* DESCRIPTION */}
               <MultiLangTextarea
-                label="Description"
+                label={t("translate.role_description")}
                 value={formData.description}
                 currentLang={currentLang}
                 onChange={(lang, value) =>
-                  handleInputChange('description', lang, value)
+                  handleInputChange("description", lang, value)
                 }
               />
 
-              {/* Role Status Selector */}
+              {/* STATUS */}
               <div>
-                <Label className="mb-2 block">Status</Label>
+                <Label className="mb-2 block">
+                  {t("translate.status")}
+                </Label>
+
                 <Select
                   value={formData.status}
                   onValueChange={(val: Status) =>
-                    setFormData(prev => ({ ...prev, status: val }))
+                    setFormData((prev) => ({ ...prev, status: val }))
                   }
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder={t("translate.select_status")} />
                   </SelectTrigger>
 
                   <SelectContent>
-                    {STATUS_OPTIONS.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
+                    {STATUS_OPTIONS.map((option) => (
+                      <SelectItem
+                        key={option.value}
+                        value={option.value}
+                      >
                         {option.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
+
                 </Select>
               </div>
 
-              {/* Form Actions (Submit / Cancel) */}
+              {/* ACTIONS */}
               <div className="flex gap-3">
+
                 <Button
                   onClick={handleSubmit}
                   disabled={isLoading}
                   className="gap-2 flex-1"
                 >
                   <Save className="w-4 h-4" />
-                  {isLoading ? 'Updating...' : 'Update Role'}
+
+                  {isLoading
+                    ? t("translate.updating")
+                    : t("translate.update_role")}
                 </Button>
 
                 <Link href="/root/roles" className="flex-1">
                   <Button variant="outline" className="w-full">
-                    Cancel
+                    {t("translate.cancel")}
                   </Button>
                 </Link>
+
               </div>
+
             </CardContent>
+
           </Card>
+
         </div>
+
       </div>
 
-      {/* RIGHT SIDE RESPONSE MESSAGE */}
+      {/* MESSAGE */}
       <AppMessage
         visible={visible}
         message={message}
         type={type}
         onClose={clearMessage}
       />
+
     </div>
   );
+
 }
 
-/* ================= EXPORT ================= */
-
-export default function EditRolePage() {
-  return (
-    <AdminProvider>
-      <EditRoleContent />
-    </AdminProvider>
-  );
-}

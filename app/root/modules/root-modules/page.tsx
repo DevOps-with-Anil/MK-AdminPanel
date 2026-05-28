@@ -1,6 +1,6 @@
 'use client';
 
-import { AdminProvider } from '@/contexts/AdminContext';
+import { AdminProvider, useAdmin } from '@/contexts/AdminContext';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
@@ -52,7 +52,9 @@ interface Module {
 
 /* ================= COMPONENT ================= */
 
-function ModulesPageContent() {
+export default function ModulesPageContent() {
+
+  const { t } = useAdmin()
   const [modules, setModules] = useState<Module[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -82,7 +84,7 @@ function ModulesPageContent() {
 
   useEffect(() => {
     fetchRootModule();
-  }, [page, limit, debouncedSearch]);
+  }, [page, limit, debouncedSearch, t]);
 
   const fetchRootModule = async () => {
     try {
@@ -202,7 +204,7 @@ function ModulesPageContent() {
   //     alert('Failed to delete module');
   //   }
   // };
-  
+
   /* ================= FILTER ================= */
 
   const filteredModules = modules.filter(
@@ -213,6 +215,7 @@ function ModulesPageContent() {
 
   /* ================= UI ================= */
 
+
   return (
     <div className="space-y-6">
       {/* HEADER */}
@@ -220,9 +223,12 @@ function ModulesPageContent() {
         <div className="flex items-start gap-4">
           <Layers className="text-primary w-7 h-7 mt-1" />
           <div>
-            <h1 className="text-xl font-medium">Modules & Features</h1>
+            <h1 className="text-xl font-medium">
+              {t("translate.modules_features_title")}
+            </h1>
+
             <p className="text-muted-foreground">
-              Manage platform modules and permissions
+              {t("translate.modules_features_description")}
             </p>
           </div>
         </div>
@@ -230,8 +236,9 @@ function ModulesPageContent() {
         <div className="flex gap-2">
           <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" />
+
             <Input
-              placeholder="Search Modules..."
+              placeholder={t("translate.modules_features_search_placeholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -241,7 +248,7 @@ function ModulesPageContent() {
           <Link href="/root/modules/root-modules/new">
             <Button className="gap-2">
               <Plus className="w-4 h-4" />
-              New Module
+              {t("translate.modules_features_new_module_btn")}
             </Button>
           </Link>
         </div>
@@ -249,30 +256,36 @@ function ModulesPageContent() {
 
       {/* GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
         {/* LEFT */}
         <div className="lg:col-span-2">
           <Card>
-            {/* ✅ UPDATED HEADER WITH THEME SELECT */}
+
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Available Modules</CardTitle>
+                <CardTitle>
+                  {t("translate.modules_features_available_modules")}
+                </CardTitle>
+
                 <CardDescription>
-                  Page {page} of {totalPages}
+                  {t("translate.modules_features_page_info")}
                 </CardDescription>
               </div>
-              {/* Page Row Limit */}
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
-                    Show: {limit}
+                    {t("translate.modules_features_show")} {limit}
                   </Button>
                 </DropdownMenuTrigger>
+
                 <DropdownMenuContent align="end">
                   {PAGE_LIMIT_OPTIONS.map(option => (
                     <DropdownMenuItem
                       key={option}
                       onClick={() => {
-                        const newLimit: number | 'All' = option === 'All' ? 'All' : Number(option);
+                        const newLimit =
+                          option === "All" ? "All" : Number(option);
                         setLimit(newLimit);
                         setPage(1);
                       }}
@@ -282,10 +295,7 @@ function ModulesPageContent() {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-
             </CardHeader>
-
-
 
             <CardContent className="space-y-4">
               {filteredModules.map((mod) => (
@@ -293,8 +303,8 @@ function ModulesPageContent() {
                   key={mod.id}
                   onClick={() => setSelectedModule(mod.id)}
                   className={`p-4 border rounded-lg cursor-pointer ${selectedModule === mod.id
-                    ? 'border-primary bg-primary/5'
-                    : ''
+                    ? "border-primary bg-primary/5"
+                    : ""
                     }`}
                 >
                   <div className="flex justify-between">
@@ -304,58 +314,28 @@ function ModulesPageContent() {
                         {mod.key}
                       </p>
                     </div>
-                    {/* <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreVertical />
-                        </Button>
-                      </DropdownMenuTrigger>
-
-                      <DropdownMenuContent>
-                        <DropdownMenuItem
-                        // onClick={(e) => {
-                        //   e.stopPropagation();
-                        //   handleEdit(mod.id);
-                        // }}
-                        >
-                          <Edit2 className="w-4 h-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-
-            
-                        <DropdownMenuItem
-                          className="text-red-500"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(mod.id, mod.name);
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu> */}
                   </div>
 
                   <div className="flex justify-between mt-3">
                     <div className="flex gap-2">
-                      <Badge variant="secondary">{mod.actionsCount} permissions</Badge>
+                      <Badge variant="secondary">
+                        {mod.actionsCount}{" "}
+                        {t("translate.modules_features_permissions")}
+                      </Badge>
 
                       <Badge
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleToggleStatus(mod.id,
-                            mod.status);
+                          handleToggleStatus(mod.id, mod.status);
                         }}
                         className={
-                      mod.status === 'active'
-                        ? ''
-                        : 'bg-red-100 text-gray-600 border-red-300'
-                    }
+                          mod.status === "active"
+                            ? ""
+                            : "bg-red-100 text-gray-600 border-red-300"
+                        }
                       >
                         {mod.status}
                       </Badge>
-
                     </div>
 
                     {selectedModule === mod.id && <CheckCircle />}
@@ -363,6 +343,7 @@ function ModulesPageContent() {
                 </div>
               ))}
             </CardContent>
+
             {/* PAGINATION */}
             <div className="flex justify-end gap-2 p-4">
               <Button
@@ -371,14 +352,14 @@ function ModulesPageContent() {
                 disabled={page === 1}
                 onClick={() => setPage((p) => p - 1)}
               >
-                Prev
+                {t("translate.pagination_prev")}
               </Button>
 
               {[...Array(totalPages)].map((_, i) => (
                 <Button
                   key={i}
                   size="sm"
-                  variant={page === i + 1 ? 'default' : 'outline'}
+                  variant={page === i + 1 ? "default" : "outline"}
                   onClick={() => setPage(i + 1)}
                 >
                   {i + 1}
@@ -391,123 +372,89 @@ function ModulesPageContent() {
                 disabled={page === totalPages}
                 onClick={() => setPage((p) => p + 1)}
               >
-                Next
+                {t("translate.pagination_next")}
               </Button>
             </div>
           </Card>
         </div>
 
         {/* RIGHT */}
-      <div>
-  <Card className="sticky top-4">
-    
-    <CardHeader>
-      <CardTitle>
-        Module Actions
-      </CardTitle>
+        <div>
+          <Card className="sticky top-4">
+            <CardHeader>
+              <CardTitle>
+                {t("translate.module_actions_title")}
+              </CardTitle>
 
-      <CardDescription>
-        Detailed actions for selected module
-      </CardDescription>
-    </CardHeader>
+              <CardDescription>
+                {t("translate.module_actions_description")}
+              </CardDescription>
+            </CardHeader>
 
-    <CardContent>
+            <CardContent>
+              {!selectedModule ? (
+                <div className="py-10 text-center">
+                  <ShieldCheck className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
 
-      {!selectedModule ? (
-
-        <div className="py-10 text-center">
-          
-          <ShieldCheck className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-
-          <p className="text-muted-foreground">
-            Please select a module to view its actions
-          </p>
-
-        </div>
-
-      ) : (
-
-        modules
-          .filter((m) => m.id === selectedModule)
-          .map((mod) => (
-
-            <div
-              key={mod.id}
-              className="space-y-3"
-            >
-
-              {/* MODULE INFO */}
-            
-              {/* ACTION LIST */}
-              {mod.actions.map((action) => (
-
-                <div
-                  key={action._id}
-                  className={`flex items-center justify-between border rounded-xl px-3 py-3 transition ${
-                    mod.status === 'inactive'
-                      ? 'opacity-50 pointer-events-none'
-                      : ''
-                  }`}
-                >
-
-                  {/* ACTION INFO */}
-                  <div className="pr-3">
-                    
-                    <p className="text-sm font-medium">
-                      {action.actionName}
-                    </p>
-
-                    <p className="text-xs text-muted-foreground">
-                      {action.key}
-                    </p>
-
-                  </div>
-
-                  {/* STATUS */}
-                  <Badge
-                    onClick={() =>
-                      handleToggleActionStatus(
-                        mod.id,
-                        action._id
-                      )
-                    }
-                    className={`cursor-pointer transition-colors ${
-                      mod.status === 'inactive'
-                        ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                        : action.status
-                          ? 'bg-green-100 text-green-800 border border-green-200 hover:bg-green-200'
-                          : 'bg-red-100 text-red-700 border border-red-200 hover:bg-red-200'
-                    }`}
-                  >
-                    {mod.status === 'inactive'
-                      ? 'Disabled'
-                      : action.status
-                        ? 'Active'
-                        : 'Inactive'}
-                  </Badge>
-
+                  <p className="text-muted-foreground">
+                    {t("translate.module_actions_empty")}
+                  </p>
                 </div>
+              ) : (
+                modules
+                  .filter((m) => m.id === selectedModule)
+                  .map((mod) => (
+                    <div key={mod.id} className="space-y-3">
+                      {mod.actions.map((action) => (
+                        <div
+                          key={action._id}
+                          className={`flex items-center justify-between border rounded-xl px-3 py-3 transition ${mod.status === "inactive"
+                            ? "opacity-50 pointer-events-none"
+                            : ""
+                            }`}
+                        >
+                          <div className="pr-3">
+                            <p className="text-sm font-medium">
+                              {action.actionName}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {action.key}
+                            </p>
+                          </div>
 
-              ))}
-
-            </div>
-
-          ))
-
-      )}
-
-    </CardContent>
-
-  </Card>
-</div>
-        
+                          <Badge
+                            onClick={() =>
+                              handleToggleActionStatus(mod.id, action._id)
+                            }
+                            className={`cursor-pointer transition-colors ${mod.status === "inactive"
+                              ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                              : action.status
+                                ? "bg-green-100 text-green-800 border border-green-200 hover:bg-green-200"
+                                : "bg-red-100 text-red-700 border border-red-200 hover:bg-red-200"
+                              }`}
+                          >
+                            {mod.status === "inactive"
+                              ? t("translate.disabled")
+                              : action.status
+                                ? t("translate.active")
+                                : t("translate.inactive")}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  ))
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
+
       {/* STATS */}
       <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardContent className="text-center pt-6">
             <p className="text-2xl font-bold">{modules.length}</p>
-            <p>Total Modules</p>
+            <p>{t("translate.total_modules")}</p>
           </CardContent>
         </Card>
 
@@ -516,29 +463,20 @@ function ModulesPageContent() {
             <p className="text-2xl font-bold">
               {modules.reduce((s, m) => s + m.actionsCount, 0)}
             </p>
-            <p>Total Permissions</p>
+            <p>{t("translate.total_permissions")}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="text-center pt-6">
             <p className="text-2xl font-bold">
-              {modules.filter((m) => m.status === 'active').length}
+              {modules.filter((m) => m.status === "active").length}
             </p>
-            <p>Active Modules</p>
+            <p>{t("translate.active_modules")}</p>
           </CardContent>
         </Card>
       </div>
     </div>
   );
-}
 
-/* ================= EXPORT ================= */
-
-export default function ModulesPage() {
-  return (
-    <AdminProvider>
-      <ModulesPageContent />
-    </AdminProvider>
-  );
 }

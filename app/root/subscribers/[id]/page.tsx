@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { AdminProvider } from '@/contexts/AdminContext';
+import { AdminProvider, useAdmin } from '@/contexts/AdminContext';
 import {
     useEffect,
     useMemo,
@@ -171,7 +171,9 @@ interface SubscriptionHistoryItem {
 
 /* ================= COMPONENT ================= */
 
-function ModulesPageContent() {
+export default function ModulesPageContent() {
+
+    const { t } = useAdmin();
     const params = useParams();
     const [loading, setLoading] = useState(true);
     const [plansLoading, setPlansLoading] = useState(false);
@@ -208,10 +210,22 @@ function ModulesPageContent() {
     const [historyModalOpen, setHistoryModalOpen] =
         useState(false);
     const [plans, setPlans] = useState<SubscriptionPlans[]>([]);
-    const [cancelDialogOpen, setCancelDialogOpen] =
-        useState(false);
+
     const [cancelLoading, setCancelLoading] =
         useState(false);
+
+    const [confirmDialog, setConfirmDialog] = useState({
+        open: false,
+        title: "",
+        description: "",
+        buttons: [] as {
+            label: string;
+            variant?: | "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+            loading?: boolean;
+            disabled?: boolean;
+            onClick: () => void;
+        }[],
+    });
 
     /* ================= FETCH ================= */
 
@@ -233,19 +247,17 @@ function ModulesPageContent() {
             }
         };
         fetchTenantSubscription();
-    }, [params?.id]);
+    }, [params?.id, t]);
     // ================= FETCH PLANS =================
 
     const fetchPlans = useCallback(async () => {
         try {
             setPlansLoading(true);
-
             const res = await getPlans({
                 page: 1,
                 limit: 100,
                 search: '',
             });
-
             const formatted: SubscriptionPlans[] =
                 res?.data?.map((r: any) => ({
                     id: r._id,
@@ -261,15 +273,17 @@ function ModulesPageContent() {
                             ? 'active'
                             : 'inactive',
                 })) || [];
-
             setPlans(formatted);
-
         } catch (err) {
             console.error('Fetch plans error', err);
         } finally {
             setPlansLoading(false);
         }
     }, []);
+
+    useEffect(() => {
+        fetchPlans();
+    }, [fetchPlans, t]);
 
     /* ================= HELPERS ================= */
 
@@ -286,31 +300,6 @@ function ModulesPageContent() {
         );
     };
 
-    // const getCurrentPlanId = () => {
-    //     const planId = subscription?.planId?._id;
-
-    //     if (!planId) return null;
-
-    //     if (typeof planId === 'string') return planId;
-
-    //     return planId._id || null;
-    // };
-
-    // const currentPlanId = useMemo(() => {
-    //     const planId = subscription?.planId?._id;
-
-    //     if (!planId) return null;
-
-    //     if (typeof planId === 'string') return planId;
-
-    //     return planId._id || null;
-    // }, [subscription?.planId?._id]);
-
-
-    // const isCurrentPlan = useCallback(
-    //     (planId: string) => currentPlanId === planId,
-    //     [currentPlanId]
-    // );
     /* ================= FILTER MODULES ================= */
 
     const filteredModules = useMemo(() => {
@@ -336,41 +325,34 @@ function ModulesPageContent() {
 
 
     // ================= HANDLE SELECT PLAN =================
-    const handleSelectPlan = useCallback(async (planId: string) => {
-        if (subscription?.planId?._id === planId) return;
 
-        try {
-            setUpdatePlanLoading(true);
+    // const handleSelectPlan = useCallback(async (planId: string) => {
+    //     if (subscription?.planId?._id === planId) return;
 
-            const tenantId = params?.id as string;
-
-            const res = await updateTenantPlan({
-                tenantId,
-                newPlanId: planId,
-            });
-
-            if (![200, 201].includes(res?.status)) {
-                showMessage(res?.message || 'Failed to update subscription', 'danger');
-                return;
-            }
-
-            setSubscriptionModalOpen(false);
-            setCancelDialogOpen(false);
-
-            showMessage(res?.message || 'Subscription updated successfully', 'success');
-
-            const updated = await getTenantPlan(tenantId);
-
-            if (updated?.data) {
-                setSubscription(updated.data);
-            }
-        } catch (err) {
-            console.error(err);
-            showMessage('Failed to update subscription', 'danger');
-        } finally {
-            setUpdatePlanLoading(false);
-        }
-    }, [subscription?.planId?._id, params?.id]);
+    //     try {
+    //         setUpdatePlanLoading(true);
+    //         const tenantId = params?.id as string;
+    //         const res = await updateTenantPlan({
+    //             tenantId,
+    //             newPlanId: planId,
+    //         });
+    //         if (![200, 201].includes(res?.status)) {
+    //             showMessage(res?.message || 'Failed to update subscription', 'danger');
+    //             return;
+    //         }
+    //         setSubscriptionModalOpen(false);
+    //         showMessage(res?.message || 'Subscription updated successfully', 'success');
+    //         const updated = await getTenantPlan(tenantId);
+    //         if (updated?.data) {
+    //             setSubscription(updated.data);
+    //         }
+    //     } catch (err) {
+    //         console.error(err);
+    //         showMessage('Failed to update subscription', 'danger');
+    //     } finally {
+    //         setUpdatePlanLoading(false);
+    //     }
+    // }, [subscription?.planId?._id, params?.id, t]);
 
     const handleUpdateSubscription = async () => {
         // console.log('Update subscription clicked');
@@ -380,18 +362,12 @@ function ModulesPageContent() {
         }
     };
 
-
     const fetchSubscriptionHistory = async () => {
         try {
             setHistoryLoading(true);
 
             const res = await getTenantPlanHistory(
                 params?.id as string
-            );
-
-            // console.log(
-                'Subscription history response:',
-                JSON.stringify(res)
             );
 
             setSubscriptionHistory(
@@ -419,29 +395,42 @@ function ModulesPageContent() {
         await fetchSubscriptionHistory();
     };
 
-
-    function handleCancelPlan() {
-        setCancelDialogOpen(true);
-    }
+    const openCancelSubscriptionDialog = () => {
+        setConfirmDialog({
+            open: true,
+            title: t("translate.cancel_subscription_title"),
+            description: t("translate.cancel_subscription_description"),
+            buttons: [
+                {
+                    label: t("translate.cancel"),
+                    variant: "outline",
+                    onClick: () =>
+                        setConfirmDialog((prev) => ({
+                            ...prev,
+                            open: false,
+                        })),
+                },
+                {
+                    label: t("translate.confirm_cancel_subscription"),
+                    variant: "destructive",
+                    onClick: handleConfirmCancel,
+                },
+            ],
+        });
+    };
 
     const handleConfirmCancel = async () => {
         try {
             setCancelLoading(true);
-
             const res = await cancelTenantPlan({
                 tenantId: params?.id as string,
             });
-
             const isSuccess = res?.status === 201;
-
             if (isSuccess) {
-                setCancelDialogOpen(false);
-
                 showMessage(
                     res?.message || "Subscription cancelled successfully",
                     "danger" // you can also use "danger" if you want red styling for cancel
                 );
-
                 setTimeout(() => {
                     router.replace("/root/subscribers");
                 }, 1500);
@@ -453,14 +442,11 @@ function ModulesPageContent() {
             }
         } catch (err) {
             console.error("Cancel subscription error", err);
-
             showMessage("Failed to cancel subscription", "danger");
         } finally {
             setCancelLoading(false);
         }
     };
-
-
 
     /* ================= LOADING ================= */
 
@@ -472,207 +458,148 @@ function ModulesPageContent() {
         );
     }
     /* ================= UI ================= */
-
     return (
         <div className="space-y-6">
             {/* PLAN OVERVIEW */}
             <Card>
-                {/* PLAN OVERVIEW */}
-                <CardHeader >
+                <CardHeader>
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+
                         <div className="flex items-center gap-4">
                             <Link href="/root/subscribers" className="flex items-center gap-2">
                                 <ArrowLeft className="w-6 h-6 text-primary cursor-pointer" />
                             </Link>
 
-                            {/* LEFT */}
                             <div>
                                 <CardTitle>
-                                    Subscription Overview : {subscription?.tenantId?.companyName}
+                                    {t("translate.subscription_overview")} : {subscription?.tenantId?.companyName}
                                 </CardTitle>
+
                                 <CardDescription>
-                                    Active plan details and
-                                    module access
+                                    {t("translate.subscription_active_plan_description")}
                                 </CardDescription>
                             </div>
                         </div>
 
-                        {/* RIGHT */}
                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
 
-                            {/* UPDATE SUBSCRIPTION */}
                             <Button
                                 onClick={handleUpdateSubscription}
                                 size="sm"
                                 className="min-w-[145px] h-9 text-sm"
                             >
-                                Update Subscription
+                                {t("translate.subscription_update_subscription")}
                             </Button>
 
-                            {/* CANCEL SUBSCRIPTION */}
                             <Button
                                 variant="destructive"
-                                onClick={handleCancelPlan}
+                                onClick={openCancelSubscriptionDialog}
                                 size="sm"
                                 className="min-w-[145px] h-9 text-sm"
                             >
-                                Cancel Subscription
+                                {t("translate.subscription_cancel_subscription")}
                             </Button>
 
-                            <ConfirmDialog
-                                open={cancelDialogOpen}
-                                title="Cancel Subscription"
-                                description="Are you sure you want to cancel this subscription? This action cannot be undone."
-                                confirmText="Confirm Cancel Subscription"
-                                loading={cancelLoading}
-                                variant="destructive"
-                                onCancel={() => setCancelDialogOpen(false)}
-                                onConfirm={handleConfirmCancel}
-                            />
-
-
-
-                            {/* SUBSCRIPTION HISTORY */}
                             <Button
                                 variant="secondary"
                                 onClick={handleOpenHistoryModal}
                                 size="sm"
                                 className="min-w-[145px] h-9 text-sm"
                             >
-                                Subscription History
+                                {t("translate.subscription_history")}
                             </Button>
-
-
 
                         </div>
                     </div>
-
-                    {/* COMPANY INFO */}
-                    {/* <div className="pt-4">
-                        <div>
-                            <h1 className="text-2xl font-semibold text-foreground leading-tight">
-                                {subscription?.tenantId?.companyName} 
-                            </h1>
-
-                            <div className="text-md font-semibold text-muted-foreground mt-1">
-                                Tenant ID: {subscription?.tenantId?.tenantId}
-                            </div>
-                        </div>
-
-                    </div> */}
-
                 </CardHeader>
 
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* PLAN NAME */}
+
                         <div className="border rounded-2xl p-5">
                             <p className="text-sm text-muted-foreground mb-1">
-                                Active Plan Name
+                                {t("translate.subscription_active_plan_name")}
                             </p>
                             <p className="font-semibold text-base">
-                                {getPlanName(
-                                    subscription?.planName
-                                )}
+                                {getPlanName(subscription?.planName)}
                             </p>
                         </div>
-                        {/* START DATE */}
+
                         <div className="border rounded-2xl p-5">
                             <p className="text-sm text-muted-foreground mb-1">
-                                Start Date
+                                {t("translate.subscription_start_date")}
                             </p>
-
                             <p className="font-medium">
-                                {formatDate(
-                                    subscription?.startDate
-                                )}
+                                {formatDate(subscription?.startDate)}
                             </p>
                         </div>
 
-                        {/* EXPIRY DATE */}
                         <div className="border rounded-2xl p-5">
                             <p className="text-sm text-muted-foreground mb-1">
-                                Expiry Date
+                                {t("translate.subscription_expiry_date")}
                             </p>
-
                             <p className="font-medium">
-                                {formatDate(
-                                    subscription?.expiryDate
-                                )}
+                                {formatDate(subscription?.expiryDate)}
                             </p>
                         </div>
+
                     </div>
                 </CardContent>
             </Card>
 
             {/* GRID */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
                 {/* LEFT */}
                 <div className="lg:col-span-2">
-
                     <Card>
+
                         <CardHeader className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                            {/* LEFT SIDE MODULES LIST */}
+
                             <div>
                                 <CardTitle>
-                                    Plan Modules
+                                    {t("translate.subscription_plan_modules")}
                                 </CardTitle>
 
                                 <CardDescription>
-                                    Available modules and permissions
-                                    for this subscription
+                                    {t("translate.subscription_plan_modules_desc")}
                                 </CardDescription>
                             </div>
 
                             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                                {/* SEARCH */}
+
                                 <div className="relative w-full sm:w-72">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
 
                                     <Input
-                                        placeholder="Search modules..."
+                                        placeholder={t("translate.subscription_search_modules")}
                                         value={searchQuery}
-                                        onChange={(e) =>
-                                            setSearchQuery(
-                                                e.target.value
-                                            )
-                                        }
+                                        onChange={(e) => setSearchQuery(e.target.value)}
                                         className="pl-10"
                                     />
                                 </div>
-                                {/* LIMIT */}
+
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="w-full sm:w-auto"
-                                        >
-                                            Show: {limit}
+                                        <Button variant="outline" size="sm">
+                                            {t("translate.subscription_show")}: {limit}
                                         </Button>
                                     </DropdownMenuTrigger>
 
                                     <DropdownMenuContent align="end">
-                                        {PAGE_LIMIT_OPTIONS.map(
-                                            (option) => (
-                                                <DropdownMenuItem
-                                                    key={option}
-                                                    onClick={() => {
-                                                        const newLimit:
-                                                            | number
-                                                            | 'All' =
-                                                            option === 'All'
-                                                                ? 'All'
-                                                                : Number(option);
-
-                                                        setLimit(newLimit);
-                                                        setPage(1);
-                                                    }}
-                                                >
-                                                    {option}
-                                                </DropdownMenuItem>
-                                            )
-                                        )}
+                                        {PAGE_LIMIT_OPTIONS.map((option) => (
+                                            <DropdownMenuItem
+                                                key={option}
+                                                onClick={() => {
+                                                    const newLimit =
+                                                        option === 'All' ? 'All' : Number(option);
+                                                    setLimit(newLimit);
+                                                    setPage(1);
+                                                }}
+                                            >
+                                                {option}
+                                            </DropdownMenuItem>
+                                        ))}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
 
@@ -685,76 +612,70 @@ function ModulesPageContent() {
                             {!filteredModules.length ? (
                                 <div className="border rounded-2xl py-14 text-center bg-muted/30">
                                     <p className="text-muted-foreground">
-                                        No modules found
+                                        {t("translate.subscription_no_modules_found")}
                                     </p>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 xl:grid-cols-1 gap-4">
+                                <div className="grid grid-cols-1 gap-4">
 
-                                    {filteredModules.map(
-                                        (
-                                            module,
-                                            index
-                                        ) => (
-                                            <div
-                                                key={`${module.moduleKey}-${index}`}
-                                                onClick={() =>
-                                                    setSelectedModule(module.moduleKey)
-                                                }
-                                                className={`p-4 border rounded-lg cursor-pointer transition-all ${selectedModule === module.moduleKey
-                                                    ? 'border-primary bg-primary/5'
-                                                    : ''
-                                                    }`}
-                                            >
-                                                {/* TOP */}
-                                                <div className="flex justify-between">
-                                                    <div>
-                                                        <h3 className="font-semibold">
-                                                            {module.moduleName}
-                                                        </h3>
+                                    {filteredModules.map((module, index) => (
+                                        <div
+                                            key={`${module.moduleKey}-${index}`}
+                                            onClick={() => setSelectedModule(module.moduleKey)}
+                                            className={`p-4 border rounded-lg cursor-pointer transition-all ${selectedModule === module.moduleKey
+                                                ? 'border-primary bg-primary/5'
+                                                : ''
+                                                }`}
+                                        >
 
-                                                        <p className="text-sm text-muted-foreground">
-                                                            {module.moduleKey}
-                                                        </p>
-                                                    </div>
-
-                                                </div>
-
-                                                {/* BOTTOM */}
-                                                <div className="flex justify-between mt-3">
-                                                    <div className="flex gap-2 flex-wrap">
-                                                        <Badge variant="secondary">
-                                                            {module.actions?.length || 0}{' '}
-                                                            Permissions
-                                                        </Badge>
-
-                                                        <Badge className="bg-primary text-white border-green-200">
-                                                            Active
-                                                        </Badge>
-                                                    </div>
-
-                                                    {selectedModule ===
-                                                        module.moduleKey && (
-                                                            <CheckCircle className="w-5 h-5 text-primary" />
-                                                        )}
+                                            <div className="flex justify-between">
+                                                <div>
+                                                    <h3 className="font-semibold">
+                                                        {module.moduleName}
+                                                    </h3>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        {module.moduleKey}
+                                                    </p>
                                                 </div>
                                             </div>
-                                        )
-                                    )}
+
+                                            <div className="flex justify-between mt-3">
+
+                                                <div className="flex gap-2 flex-wrap">
+                                                    <Badge variant="secondary">
+                                                        {module.actions?.length || 0}{' '}
+                                                        {t("translate.subscription_permissions")}
+                                                    </Badge>
+
+                                                    <Badge className="bg-primary text-white">
+                                                        {t("translate.subscription_active")}
+                                                    </Badge>
+                                                </div>
+
+                                                {selectedModule === module.moduleKey && (
+                                                    <CheckCircle className="w-5 h-5 text-primary" />
+                                                )}
+
+                                            </div>
+
+                                        </div>
+                                    ))}
 
                                 </div>
                             )}
 
                         </CardContent>
+
                         {/* PAGINATION */}
                         <div className="flex justify-end gap-2 p-4">
+
                             <Button
                                 size="sm"
                                 variant="outline"
                                 disabled={page === 1}
                                 onClick={() => setPage((p) => p - 1)}
                             >
-                                Prev
+                                {t("translate.subscription_prev")}
                             </Button>
 
                             {[...Array(totalPages)].map((_, i) => (
@@ -774,24 +695,25 @@ function ModulesPageContent() {
                                 disabled={page === totalPages}
                                 onClick={() => setPage((p) => p + 1)}
                             >
-                                Next
+                                {t("translate.subscription_next")}
                             </Button>
+
                         </div>
 
                     </Card>
                 </div>
 
-                {/* RIGHT SIDE MODULE'S PERMISSIONS */}
+                {/* RIGHT */}
                 <div>
                     <Card className="sticky top-4">
+
                         <CardHeader>
                             <CardTitle>
-                                Module Permissions
+                                {t("translate.subscription_module_permissions")}
                             </CardTitle>
 
                             <CardDescription>
-                                Detailed actions for
-                                selected module
+                                {t("translate.subscription_module_permissions_desc")}
                             </CardDescription>
                         </CardHeader>
 
@@ -800,71 +722,58 @@ function ModulesPageContent() {
                             {!selectedModuleData ? (
                                 <div className="py-10 text-center">
                                     <ShieldCheck className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-
                                     <p className="text-muted-foreground">
-                                        Select a module to
-                                        view permissions
+                                        {t("translate.subscription_select_module")}
                                     </p>
                                 </div>
                             ) : (
                                 <div className="space-y-3">
 
-                                    {selectedModuleData.actions.map(
-                                        (
-                                            action,
-                                            index
-                                        ) => (
-                                            <div
-                                                key={`${action.actionKey}-${index}`}
-                                                className="flex items-center justify-between border rounded-xl px-3 py-3"
-                                            >
-
-                                                <div className="pr-3">
-                                                    <p className="text-sm font-medium">
-                                                        {
-                                                            action.actionName
-                                                        }
-                                                    </p>
-
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {
-                                                            action.actionKey
-                                                        }
-                                                    </p>
-                                                </div>
-
-                                                <Badge
-                                                    className={
-                                                        action.allowed
-                                                            ? 'bg-green-100 text-green-800 border-green-200'
-                                                            : 'bg-red-100 text-red-700 border-red-200'
-                                                    }
-                                                >
-                                                    {action.allowed
-                                                        ? 'Allowed'
-                                                        : 'Restricted'}
-                                                </Badge>
+                                    {selectedModuleData.actions.map((action, index) => (
+                                        <div
+                                            key={`${action.actionKey}-${index}`}
+                                            className="flex items-center justify-between border rounded-xl px-3 py-3"
+                                        >
+                                            <div>
+                                                <p className="text-sm font-medium">
+                                                    {action.actionName}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {action.actionKey}
+                                                </p>
                                             </div>
-                                        )
-                                    )}
+
+                                            <Badge
+                                                className={
+                                                    action.allowed
+                                                        ? 'bg-green-100 text-green-800'
+                                                        : 'bg-red-100 text-red-700'
+                                                }
+                                            >
+                                                {action.allowed
+                                                    ? t("translate.subscription_allowed")
+                                                    : t("translate.subscription_restricted")}
+                                            </Badge>
+                                        </div>
+                                    ))}
+
                                 </div>
                             )}
+
                         </CardContent>
+
                     </Card>
                 </div>
 
             </div>
 
-            {/* MODEL TO UPDATE SUBSCRIPTION PLAN */}
-            <Dialog
-                open={subscriptionModalOpen}
-                onOpenChange={setSubscriptionModalOpen}
-            >
+            {/* PLAN MODAL */}
+            <Dialog open={subscriptionModalOpen} onOpenChange={setSubscriptionModalOpen}>
                 <DialogContent className="max-w-2xl">
 
                     <DialogHeader>
                         <DialogTitle>
-                            Available Subscription Plans
+                            {t("translate.subscription_available_plans")}
                         </DialogTitle>
                     </DialogHeader>
 
@@ -872,228 +781,123 @@ function ModulesPageContent() {
 
                         {plansLoading ? (
                             <div className="text-center py-6">
-                                Loading plans...
+                                {t("translate.subscription_loading_plans")}
                             </div>
                         ) : plans.length === 0 ? (
                             <div className="text-center py-6 text-muted-foreground">
-                                No plans available
+                                {t("translate.subscription_no_plans")}
                             </div>
                         ) : (
-                            (() => {
+                            plans.map((plan) => {
 
-                                return plans.map((plan) => {
-
-                                    const isPlanActive = subscription?.planId?._id === plan.id
-
-                                    return (
-                                        <div
-                                            key={plan.id}
-                                            className={`border rounded-2xl p-5 space-y-4 transition ${isPlanActive
-                                                ? 'border-primary bg-primary/5'
-                                                : ''
-                                                }`}
-                                        >
-                                            {/* HEADER */}
-                                            <div className="flex items-start justify-between gap-4">
-                                                <div>
-                                                    <h3 className="font-semibold text-lg">
-                                                        {plan.name}
-                                                    </h3>
-
-                                                    <p className="text-sm text-muted-foreground">
-                                                        {plan.description}
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            {/* PRICE */}
-                                            <div className="text-2xl font-bold">
-                                                {plan.currency} {plan.price}
-                                                <span className="text-2xl font-bold">
-                                                    /{plan.type.charAt(0).toUpperCase() + plan.type.slice(1).toLowerCase()}
-                                                </span>
-                                            </div>
-
-                                            {/* BUTTON */}
-                                            <Button
-                                                className="w-full"
-                                                disabled={isPlanActive || updatePlanLoading}
-                                                variant={isPlanActive ? 'secondary' : 'default'}
-                                                onClick={() => {
-                                                    if (isPlanActive) return;
-                                                    handleSelectPlan(plan.id);
-                                                }}
-                                            >
-                                                {isPlanActive ? (
-                                                    <>
-                                                        <CheckCircle className="w-4 h-4 mr-2" />
-                                                        Current Plan
-                                                    </>
-                                                ) : updatePlanLoading ? (
-                                                    <>
-                                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                                        Updating...
-                                                    </>
-                                                ) : (
-                                                    'Select Plan'
-                                                )}
-                                            </Button>
-
-
-                                        </div>
-                                    );
-                                });
-                            })()
-                        )}
-                    </div>
-
-                </DialogContent>
-            </Dialog>
-
-            {/* ================= SUBSCRIPTION HISTORY MODAL ================= */}
-            <Dialog
-                open={historyModalOpen}
-                onOpenChange={setHistoryModalOpen}
-            >
-                <DialogContent className="max-w-3xl">
-                    <DialogHeader>
-                        <DialogTitle>
-                            Subscription History
-                        </DialogTitle>
-                    </DialogHeader>
-
-                    <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-
-                        {historyLoading ? (
-                            <div className="py-10 text-center">
-                                Loading history...
-                            </div>
-                        ) : subscriptionHistory.length === 0 ? (
-                            <div className="py-10 text-center text-muted-foreground">
-                                No subscription history found
-                            </div>
-                        ) : (
-                            subscriptionHistory.map((item) => {
-
-                                const isActive =
-                                    item.status === 'ACTIVE';
+                                const isPlanActive =
+                                    subscription?.planId?._id === plan.id;
 
                                 return (
-                                    <Card
-                                        key={item._id}
-                                        className={`rounded-2xl border ${isActive
-                                            ? 'border-primary bg-primary/5'
-                                            : ''
-                                            }`}
-                                    >
-                                        <CardContent className="p-5 space-y-5">
+                                    <div key={plan.id} className="border rounded-2xl p-5 space-y-4">
 
-                                            {/* HEADER */}
-                                            <div className="flex items-start justify-between gap-4">
+                                        <h3 className="font-semibold text-lg">
+                                            {plan.name}
+                                        </h3>
 
-                                                <div>
-                                                    <h3 className="text-lg font-semibold">
-                                                        {item.planName.en}
-                                                    </h3>
+                                        <p className="text-sm text-muted-foreground">
+                                            {plan.description}
+                                        </p>
 
-                                                    <p className="text-sm text-muted-foreground">
-                                                        Plan ID:
-                                                        {' '}
-                                                        {item.planId._id}
-                                                    </p>
-                                                </div>
+                                        <div className="text-2xl font-bold">
+                                            {plan.currency} {plan.price}
+                                        </div>
 
-                                                <Badge
-                                                    variant={
-                                                        isActive
-                                                            ? 'default'
-                                                            : 'secondary'
-                                                    }
-                                                >
-                                                    {item.status}
-                                                </Badge>
-                                            </div>
+                                        <Button
+                                            className="w-full"
+                                            disabled={isPlanActive || updatePlanLoading}
+                                            variant={isPlanActive ? 'secondary' : 'default'}
+                                        >
+                                            {isPlanActive
+                                                ? t("translate.subscription_current_plan")
+                                                : updatePlanLoading
+                                                    ? t("translate.subscription_updating")
+                                                    : t("translate.subscription_select_plan")}
+                                        </Button>
 
-                                            {/* PRICE */}
-                                            <div>
-                                                <p className="text-sm text-muted-foreground">
-                                                    Price
-                                                </p>
-
-                                                <h2 className="text-3xl font-bold">
-                                                    ${item.planId.price}
-                                                </h2>
-                                            </div>
-
-                                            {/* DATES */}
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-                                                <div className="border rounded-xl p-3">
-                                                    <p className="text-sm font-medium">
-                                                        Start Date
-                                                    </p>
-
-                                                    <p className="text-sm text-muted-foreground mt-1">
-                                                        {new Date(
-                                                            item.startDate
-                                                        ).toLocaleString()}
-                                                    </p>
-                                                </div>
-
-                                                <div className="border rounded-xl p-3">
-                                                    <p className="text-sm font-medium">
-                                                        Expiry Date
-                                                    </p>
-
-                                                    <p className="text-sm text-muted-foreground mt-1">
-                                                        {new Date(
-                                                            item.expiryDate
-                                                        ).toLocaleString()}
-                                                    </p>
-                                                </div>
-
-                                                {item.cancelledAt && (
-                                                    <div className="border rounded-xl p-3">
-                                                        <p className="text-sm font-medium">
-                                                            Cancelled At
-                                                        </p>
-
-                                                        <p className="text-sm text-muted-foreground mt-1">
-                                                            {new Date(
-                                                                item.cancelledAt
-                                                            ).toLocaleString()}
-                                                        </p>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                        </CardContent>
-                                    </Card>
+                                    </div>
                                 );
                             })
                         )}
+
                     </div>
+
                 </DialogContent>
             </Dialog>
 
+            {/* HISTORY MODAL */}
+            <Dialog open={historyModalOpen} onOpenChange={setHistoryModalOpen}>
+                <DialogContent className="max-w-3xl">
 
-            {/* RIGHT SIDE RESPONSE MESSAGE */}
+                    <DialogHeader>
+                        <DialogTitle>
+                            {t("translate.subscription_history_title")}
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="space-y-4 max-h-[600px] overflow-y-auto">
+
+                        {historyLoading ? (
+                            <div className="py-10 text-center">
+                                {t("translate.subscription_loading_history")}
+                            </div>
+                        ) : subscriptionHistory.length === 0 ? (
+                            <div className="py-10 text-center text-muted-foreground">
+                                {t("translate.subscription_no_history")}
+                            </div>
+                        ) : (
+                            subscriptionHistory.map((item) => (
+                                <Card key={item._id}>
+                                    <CardContent className="p-5 space-y-5">
+
+                                        <h3 className="text-lg font-semibold">
+                                            {item.planName.en}
+                                        </h3>
+
+                                        <Badge>
+                                            {item.status}
+                                        </Badge>
+
+                                        <h2 className="text-3xl font-bold">
+                                            ${item.planId.price}
+                                        </h2>
+
+                                    </CardContent>
+                                </Card>
+                            ))
+                        )}
+
+                    </div>
+
+                </DialogContent>
+            </Dialog>
+
             <AppMessage
                 visible={visible}
                 message={message}
                 type={type}
                 onClose={clearMessage}
             />
+
+            {/* ================= Confirm Cancel Subscription Dialog ================= */}
+            <ConfirmDialog
+                open={confirmDialog.open}
+                title={confirmDialog.title}
+                description={confirmDialog.description}
+                buttons={confirmDialog.buttons}
+                onCancel={() =>
+                    setConfirmDialog((prev) => ({
+                        ...prev,
+                        open: false,
+                    }))
+                }
+            />
         </div>
     );
 }
 
-/* ================= EXPORT ================= */
-
-export default function ModulesPage() {
-    return (
-        <AdminProvider>
-            <ModulesPageContent />
-        </AdminProvider>
-    );
-}

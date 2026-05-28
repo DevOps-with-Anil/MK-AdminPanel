@@ -1,13 +1,13 @@
 'use client';
 
-import { AdminProvider } from '@/contexts/AdminContext';
+import { AdminProvider, useAdmin } from '@/contexts/AdminContext';
 import { useState, useContext } from 'react';
 import {
   Card, CardContent, CardHeader, CardTitle, CardDescription
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Eye, EyeOff, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, Badge, Eye, EyeOff, Plus, Save, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
@@ -108,15 +108,12 @@ function Dropdown({ options, value, onChange, placeholder = 'Select' }: Dropdown
 
 /* ================= PAGE ================= */
 
-function NewTenantContent() {
+export default function NewTenantContent() {
 
+  const { t } = useAdmin();
   const { locale } = useContext(I18nContext);
   const [currentLang, setCurrentLang] = useState<Language>(locale);
-  
-  // const [success, setSuccess] = useState(false);
-  // const [successMessage, setSuccessMessage] = useState('');
-  // const [apiError, setApiError] = useState('');
-  
+
   // Fields error states
   const [errors, setErrors] = useState<Record<string, string>>({});
   // APis Response states
@@ -216,8 +213,8 @@ function NewTenantContent() {
 
     /* ================= REGEX ================= */
 
-   const emailRegex =
-  /^(?=.{1,254}$)(?=.{1,64}@)[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]{0,63})@[a-zA-Z0-9-]+(?:\.[a-zA-Z]{2,})+$/;
+    const emailRegex =
+      /^(?=.{1,254}$)(?=.{1,64}@)[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]{0,63})@[a-zA-Z0-9-]+(?:\.[a-zA-Z]{2,})+$/;
 
     const phoneRegex =
       /^[0-9]{7,15}$/;
@@ -527,7 +524,7 @@ function NewTenantContent() {
       const payload = mapFormToPayload(formData);
       // console.log('Payload ready to send:', JSON.stringify(payload));
 
-     const res =  await createAffiliate(payload);
+      const res = await createAffiliate(payload);
 
       setErrors({});
 
@@ -588,124 +585,365 @@ function NewTenantContent() {
 
   return (
     <div className="space-y-6 max-w-6xl">
+
+      {/* =================================================
+        PAGE HEADER
+    ================================================== */}
+
       <div className="flex items-center gap-4">
+
         <Link href="/root/affiliates">
-          <Button variant="ghost" size="sm"><ArrowLeft className="w-4 h-4" /></Button>
+          <Button
+            variant="ghost"
+            size="sm"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
         </Link>
+
         <div>
-          <h1 className="text-xl font-medium">Create Tenant</h1>
-          <p className="text-muted-foreground">Multi-tenant setup</p>
+
+          <h1 className="text-xl font-medium">
+            {t(
+              'translate.create_tenant'
+            )}
+          </h1>
+
+          <p className="text-muted-foreground">
+            {t(
+              'translate.multi_tenant_setup'
+            )}
+          </p>
+
         </div>
       </div>
 
-
+      {/* =================================================
+        CONTENT GRID
+    ================================================== */}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
+        {/* =================================================
+          LEFT SIDE
+      ================================================== */}
+
         <div className="space-y-6">
+
+          {/* COMPANY INFO */}
+
           <Card>
+
             <CardHeader>
-              <CardTitle>Company Info</CardTitle>
-              <CardDescription>Provide company name and description in multiple languages</CardDescription>
+
+              <CardTitle>
+                {t(
+                  'translate.company_info'
+                )}
+              </CardTitle>
+
+              <CardDescription>
+                {t(
+                  'translate.company_info_description'
+                )}
+              </CardDescription>
+
             </CardHeader>
+
             <CardContent className="space-y-4">
-              <MultiLangTabs currentLang={currentLang} onChange={setCurrentLang} />
+
+              <MultiLangTabs
+                currentLang={currentLang}
+                onChange={setCurrentLang}
+              />
+
               <MultiLangInput
-                label="Company Name"
+                label={t(
+                  'translate.company_name'
+                )}
                 value={formData.companyName}
                 currentLang={currentLang}
-                onChange={(lang, value) => handleInputChange('companyName', value, lang)}
+                onChange={(lang, value) =>
+                  handleInputChange(
+                    'companyName',
+                    value,
+                    lang
+                  )
+                }
                 error={errors.companyName}
               />
+
               <MultiLangTextarea
-                label="Description"
+                label={t(
+                  'translate.description'
+                )}
                 value={formData.description}
                 currentLang={currentLang}
-                onChange={(lang, value) => handleInputChange('description', value, lang)}
+                onChange={(lang, value) =>
+                  handleInputChange(
+                    'description',
+                    value,
+                    lang
+                  )
+                }
                 error={errors.description}
                 rows={3}
               />
+
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Contact Info</CardTitle>
-              <CardDescription>Basic contact and address details</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Input placeholder="Email" value={formData.contact_email} onChange={e => setField('contact_email', e.target.value)} />
-              {errors.contact_email && <p className="text-red-500 text-xs">{errors.contact_email}</p>}
-
-              <div className="grid grid-cols-[150px_1fr] gap-2">
-                <Dropdown options={PHONE_CODES} value={formData.phoneCode} onChange={(val) => setField('phoneCode', val)} />
-                <Input placeholder="Phone Number" value={formData.contact_phoneNumber} onChange={e => setField('contact_phoneNumber', e.target.value.replace(/\D/g, ''))} />
-              </div>
-              {errors.phoneCode && <p className="text-red-500 text-xs">{errors.phoneCode}</p>}
-              {errors.contact_phoneNumber && <p className="text-red-500 text-xs">{errors.contact_phoneNumber}</p>}
-
-              <Input placeholder="Address Line 1" value={formData.addressLine1} onChange={e => setField('addressLine1', e.target.value)} />
-              {errors.addressLine1 && <p className="text-red-500 text-xs">{errors.addressLine1}</p>}
-              <Input placeholder="Address Line 2" value={formData.addressLine2} onChange={e => setField('addressLine2', e.target.value)} />
-              <Input placeholder="Landmark" value={formData.landmark} onChange={e => setField('landmark', e.target.value)} />
-
-              {/* <div className="grid grid-cols-3 gap-4">
-                <Dropdown options={COUNTRIES} value={formData.country} onChange={(v) => setField('country', v)} />
-                <Dropdown options={STATES} value={formData.state} onChange={(v) => setField('state', v)} />
-                <Dropdown options={CITIES} value={formData.city} onChange={(v) => setField('city', v)} />
-              </div> */}
-
-              <div className="grid grid-cols-3 gap-4">
-                <Dropdown
-                  options={countries}
-                  value={formData.country}
-                  onChange={(v) => setField('country', v)}
-                />
-
-                <Dropdown
-                  options={states}
-                  value={formData.state}
-                  onChange={(v) => setField('state', v)}
-                />
-
-                <Dropdown
-                  options={cities}
-                  value={formData.city}
-                  onChange={(v) => setField('city', v)}
-                />
-              </div>
-
-
-              {errors.country && <p className="text-red-500 text-xs">{errors.country}</p>}
-              {errors.state && <p className="text-red-500 text-xs">{errors.state}</p>}
-              {errors.city && <p className="text-red-500 text-xs">{errors.city}</p>}
-
-              <Input placeholder="Pincode" value={formData.zipCode} onChange={e => setField('zipCode', e.target.value)} />
-              {errors.zipCode && <p className="text-red-500 text-xs">{errors.zipCode}</p>}
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-
-          {/* ================= ADMIN CREDENTIALS ================= */}
+          {/* CONTACT INFO */}
 
           <Card>
+
             <CardHeader>
-              <CardTitle>Admin Credentials</CardTitle>
+
+              <CardTitle>
+                {t(
+                  'translate.contact_info'
+                )}
+              </CardTitle>
 
               <CardDescription>
-                Create default tenant admin account
+                {t(
+                  'translate.contact_info_description'
+                )}
               </CardDescription>
+
             </CardHeader>
 
             <CardContent className="space-y-4">
 
               <Input
-                placeholder="Admin Name"
+                placeholder={t(
+                  'translate.email'
+                )}
+                value={formData.contact_email}
+                onChange={(e) =>
+                  setField(
+                    'contact_email',
+                    e.target.value
+                  )
+                }
+              />
+
+              {errors.contact_email && (
+                <p className="text-red-500 text-xs">
+                  {errors.contact_email}
+                </p>
+              )}
+
+              <div className="grid grid-cols-[150px_1fr] gap-2">
+
+                <Dropdown
+                  options={PHONE_CODES}
+                  value={formData.phoneCode}
+                  placeholder={t('translate.select')}
+                  onChange={(val) =>
+                    setField(
+                      'phoneCode',
+                      val
+                    )
+                  }
+                />
+
+                <Input
+                  placeholder={t(
+                    'translate.phone_number'
+                  )}
+                  value={
+                    formData.contact_phoneNumber
+                  }
+                  onChange={(e) =>
+                    setField(
+                      'contact_phoneNumber',
+                      e.target.value.replace(
+                        /\D/g,
+                        ''
+                      )
+                    )
+                  }
+                />
+
+              </div>
+
+              {errors.phoneCode && (
+                <p className="text-red-500 text-xs">
+                  {errors.phoneCode}
+                </p>
+              )}
+
+              {errors.contact_phoneNumber && (
+                <p className="text-red-500 text-xs">
+                  {errors.contact_phoneNumber}
+                </p>
+              )}
+
+              <Input
+                placeholder={t(
+                  'translate.address_line_1'
+                )}
+                value={formData.addressLine1}
+                onChange={(e) =>
+                  setField(
+                    'addressLine1',
+                    e.target.value
+                  )
+                }
+              />
+
+              {errors.addressLine1 && (
+                <p className="text-red-500 text-xs">
+                  {errors.addressLine1}
+                </p>
+              )}
+
+              <Input
+                placeholder={t(
+                  'translate.address_line_2'
+                )}
+                value={formData.addressLine2}
+                onChange={(e) =>
+                  setField(
+                    'addressLine2',
+                    e.target.value
+                  )
+                }
+              />
+
+              <Input
+                placeholder={t(
+                  'translate.landmark'
+                )}
+                value={formData.landmark}
+                onChange={(e) =>
+                  setField(
+                    'landmark',
+                    e.target.value
+                  )
+                }
+              />
+
+              <div className="grid grid-cols-3 gap-4">
+
+                <Dropdown
+                  options={countries}
+                  value={formData.country}
+                  placeholder={t('translate.select')}
+                  onChange={(v) =>
+                    setField(
+                      'country',
+                      v
+                    )
+                  }
+                />
+
+                <Dropdown
+                  options={states}
+                  value={formData.state}
+                  placeholder={t('translate.select')}
+                  onChange={(v) =>
+                    setField(
+                      'state',
+                      v
+                    )
+                  }
+                />
+
+                <Dropdown
+                  options={cities}
+                  value={formData.city}
+                  placeholder={t('translate.select')}
+                  onChange={(v) =>
+                    setField(
+                      'city',
+                      v
+                    )
+                  }
+                />
+
+              </div>
+
+              {errors.country && (
+                <p className="text-red-500 text-xs">
+                  {errors.country}
+                </p>
+              )}
+
+              {errors.state && (
+                <p className="text-red-500 text-xs">
+                  {errors.state}
+                </p>
+              )}
+
+              {errors.city && (
+                <p className="text-red-500 text-xs">
+                  {errors.city}
+                </p>
+              )}
+
+              <Input
+                placeholder={t(
+                  'translate.pincode'
+                )}
+                value={formData.zipCode}
+                onChange={(e) =>
+                  setField(
+                    'zipCode',
+                    e.target.value
+                  )
+                }
+              />
+
+              {errors.zipCode && (
+                <p className="text-red-500 text-xs">
+                  {errors.zipCode}
+                </p>
+              )}
+
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* =================================================
+          RIGHT SIDE
+      ================================================== */}
+
+        <div className="space-y-6">
+
+          {/* ADMIN CREDENTIALS */}
+
+          <Card>
+
+            <CardHeader>
+
+              <CardTitle>
+                {t(
+                  'translate.admin_credentials'
+                )}
+              </CardTitle>
+
+              <CardDescription>
+                {t(
+                  'translate.admin_credentials_description'
+                )}
+              </CardDescription>
+
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+
+              <Input
+                placeholder={t(
+                  'translate.admin_name'
+                )}
                 value={formData.adminName}
                 onChange={(e) =>
-                  setField('adminName', e.target.value)
+                  setField(
+                    'adminName',
+                    e.target.value
+                  )
                 }
               />
 
@@ -716,10 +954,15 @@ function NewTenantContent() {
               )}
 
               <Input
-                placeholder="Admin Email"
+                placeholder={t(
+                  'translate.admin_email'
+                )}
                 value={formData.adminEmail}
                 onChange={(e) =>
-                  setField('adminEmail', e.target.value)
+                  setField(
+                    'adminEmail',
+                    e.target.value
+                  )
                 }
               />
 
@@ -734,18 +977,27 @@ function NewTenantContent() {
                 <Dropdown
                   options={PHONE_CODES}
                   value={formData.adminPhoneCode}
+                  placeholder={t('translate.select')}
                   onChange={(v) =>
-                    setField('adminPhoneCode', v)
+                    setField(
+                      'adminPhoneCode',
+                      v
+                    )
                   }
                 />
 
                 <Input
-                  placeholder="Admin Phone Number"
+                  placeholder={t(
+                    'translate.admin_phone_number'
+                  )}
                   value={formData.adminPhoneNumber}
                   onChange={(e) =>
                     setField(
                       'adminPhoneNumber',
-                      e.target.value.replace(/\D/g, '')
+                      e.target.value.replace(
+                        /\D/g,
+                        ''
+                      )
                     )
                   }
                 />
@@ -765,12 +1017,22 @@ function NewTenantContent() {
               )}
 
               <div className="relative">
+
                 <Input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Admin Password"
+                  type={
+                    showPassword
+                      ? 'text'
+                      : 'password'
+                  }
+                  placeholder={t(
+                    'translate.admin_password'
+                  )}
                   value={formData.adminPassword}
                   onChange={(e) =>
-                    setField('adminPassword', e.target.value)
+                    setField(
+                      'adminPassword',
+                      e.target.value
+                    )
                   }
                   className="pr-10"
                 />
@@ -778,7 +1040,9 @@ function NewTenantContent() {
                 <button
                   type="button"
                   onClick={() =>
-                    setShowPassword(!showPassword)
+                    setShowPassword(
+                      !showPassword
+                    )
                   }
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
                 >
@@ -788,6 +1052,7 @@ function NewTenantContent() {
                     <Eye className="w-4 h-4" />
                   )}
                 </button>
+
               </div>
 
               {errors.adminPassword && (
@@ -798,52 +1063,175 @@ function NewTenantContent() {
 
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Platform Config</CardTitle>
-              <CardDescription>Configure URLs</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Input placeholder="Website" value={formData.website} onChange={e => setField('website', e.target.value)} />
-              {errors.website && <p className="text-red-500 text-xs">{errors.website}</p>}
 
-              <Input placeholder="Admin Panel URL" value={formData.adminPanelUrl} onChange={e => setField('adminPanelUrl', e.target.value)} />
-              {errors.adminPanelUrl && <p className="text-red-500 text-xs">{errors.adminPanelUrl}</p>}
+          {/* PLATFORM CONFIG */}
+
+          <Card>
+
+            <CardHeader>
+
+              <CardTitle>
+                {t(
+                  'translate.platform_config'
+                )}
+              </CardTitle>
+
+              <CardDescription>
+                {t(
+                  'translate.configure_urls'
+                )}
+              </CardDescription>
+
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+
+              <Input
+                placeholder={t(
+                  'translate.website'
+                )}
+                value={formData.website}
+                onChange={(e) =>
+                  setField(
+                    'website',
+                    e.target.value
+                  )
+                }
+              />
+
+              {errors.website && (
+                <p className="text-red-500 text-xs">
+                  {errors.website}
+                </p>
+              )}
+
+              <Input
+                placeholder={t(
+                  'translate.admin_panel_url'
+                )}
+                value={formData.adminPanelUrl}
+                onChange={(e) =>
+                  setField(
+                    'adminPanelUrl',
+                    e.target.value
+                  )
+                }
+              />
+
+              {errors.adminPanelUrl && (
+                <p className="text-red-500 text-xs">
+                  {errors.adminPanelUrl}
+                </p>
+              )}
+
             </CardContent>
           </Card>
 
+          {/* API DOMAINS */}
+
           <Card>
+
             <CardHeader>
-              <CardTitle>API Domains</CardTitle>
+
+              <CardTitle>
+                {t(
+                  'translate.api_domains'
+                )}
+              </CardTitle>
+
             </CardHeader>
+
             <CardContent className="space-y-3">
-              {formData.apiDomains.map((d, i) => (
-                <div key={i} className="flex gap-2">
-                  <Input value={d} onChange={e => setDomain(i, e.target.value)} />
-                  <Button variant="ghost" size="icon" onClick={() => removeDomain(i)}>
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </Button>
-                </div>
-              ))}
-              {errors.apiDomains && <p className="text-red-500 text-xs">{errors.apiDomains}</p>}
-              <Button variant="outline" onClick={addDomain}>+ Add Domain</Button>
+
+              {formData.apiDomains.map(
+                (d, i) => (
+                  <div
+                    key={i}
+                    className="flex gap-2"
+                  >
+
+                    <Input
+                      value={d}
+                      onChange={(e) =>
+                        setDomain(
+                          i,
+                          e.target.value
+                        )
+                      }
+                    />
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() =>
+                        removeDomain(i)
+                      }
+                    >
+                      <Trash2 className="w-4 h-4 text-red-500" />
+                    </Button>
+
+                  </div>
+                )
+              )}
+
+              {errors.apiDomains && (
+                <p className="text-red-500 text-xs">
+                  {errors.apiDomains}
+                </p>
+              )}
+
+              <Button
+                variant="outline"
+                onClick={addDomain}
+              >
+                <Plus />
+                {t(
+                  'translate.add_domain'
+                )}
+              </Button>
+
             </CardContent>
           </Card>
         </div>
       </div>
 
+      {/* =================================================
+        ACTION BUTTONS
+    ================================================== */}
 
       <div className="flex gap-3">
-        <Button className="flex-1" onClick={handleSubmit}>
-          <Save className="w-4 h-4 mr-2" />Create
+
+        <Button
+          className="flex-1"
+          onClick={handleSubmit}
+        >
+          <Save className="w-4 h-4 mr-2" />
+
+          {t(
+            'translate.create'
+          )}
         </Button>
 
-        <Link href="/root/affiliates" className="flex-1">
-          <Button variant="outline" className="w-full">Cancel</Button>
+        <Link
+          href="/root/affiliates"
+          className="flex-1"
+        >
+          <Button
+            variant="outline"
+            className="w-full"
+          >
+            {t(
+              'translate.cancel'
+            )}
+          </Button>
         </Link>
+
       </div>
 
-      {/* RIGHT SIDE RESPONSE MESSAGE */}
+      {/* =================================================
+        GLOBAL MESSAGE
+    ================================================== */}
+
       <AppMessage
         visible={visible}
         message={message}
@@ -854,10 +1242,10 @@ function NewTenantContent() {
   );
 }
 
-export default function NewTenantPage() {
-  return (
-    <AdminProvider>
-      <NewTenantContent />
-    </AdminProvider>
-  );
-}
+// export default function NewTenantPage() {
+//   return (
+//     <AdminProvider>
+//       <NewTenantContent />
+//     </AdminProvider>
+//   );
+// }

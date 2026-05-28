@@ -887,8 +887,8 @@ export default function PlanFormPage() {
     <div className="space-y-6 max-w-xl">
 
       {/* =================================================
-          PAGE HEADER
-      ================================================== */}
+        PAGE HEADER
+    ================================================== */}
 
       <div className="flex items-center gap-4">
 
@@ -905,18 +905,22 @@ export default function PlanFormPage() {
         {/* Title */}
         <div>
           <h1 className="text-xl font-medium">
-            Edit Plan
+            {t(
+              'translate.plans_edit_title'
+            )}
           </h1>
 
           <p className="text-sm text-muted-foreground">
-            Update your plan
+            {t(
+              'translate.plans_edit_subtitle'
+            )}
           </p>
         </div>
       </div>
 
       {/* =================================================
-          FORM CARD
-      ================================================== */}
+        FORM CARD
+    ================================================== */}
 
       <Card>
 
@@ -924,12 +928,15 @@ export default function PlanFormPage() {
         <CardHeader>
 
           <CardTitle>
-            Plan Details
+            {t(
+              'translate.plans_details'
+            )}
           </CardTitle>
 
           <CardDescription>
-            Fill plan information in
-            multiple languages
+            {t(
+              'translate.plans_details_description'
+            )}
           </CardDescription>
 
         </CardHeader>
@@ -938,8 +945,8 @@ export default function PlanFormPage() {
         <CardContent className="space-y-4">
 
           {/* =============================================
-              LANGUAGE TABS
-          ============================================== */}
+            LANGUAGE TABS
+        ============================================== */}
 
           <MultiLangTabs
             currentLang={currentLang}
@@ -947,11 +954,13 @@ export default function PlanFormPage() {
           />
 
           {/* =============================================
-              PLAN NAME
-          ============================================== */}
+            PLAN NAME
+        ============================================== */}
 
           <MultiLangInput
-            label="Plan Name"
+            label={t(
+              'translate.plans_name'
+            )}
             value={formData.name}
             currentLang={currentLang}
             onChange={(l, v) =>
@@ -965,11 +974,13 @@ export default function PlanFormPage() {
           />
 
           {/* =============================================
-              DESCRIPTION
-          ============================================== */}
+            DESCRIPTION
+        ============================================== */}
 
           <MultiLangTextarea
-            label="Description"
+            label={t(
+              'translate.description'
+            )}
             value={formData.description}
             currentLang={currentLang}
             onChange={(l, v) =>
@@ -982,8 +993,8 @@ export default function PlanFormPage() {
           />
 
           {/* =============================================
-              CURRENCY + PRICE
-          ============================================== */}
+            CURRENCY + PRICE
+        ============================================== */}
 
           <div className="flex gap-2">
 
@@ -991,7 +1002,9 @@ export default function PlanFormPage() {
             <div className="flex-1">
 
               <Label className="mb-2 block">
-                Currency
+                {t(
+                  'translate.currency'
+                )}
               </Label>
 
               <Dropdown
@@ -1015,7 +1028,9 @@ export default function PlanFormPage() {
             <div className="flex-1">
 
               <Label className="mb-2 block">
-                Price
+                {t(
+                  'translate.price'
+                )}
               </Label>
 
               <Input
@@ -1032,8 +1047,8 @@ export default function PlanFormPage() {
           </div>
 
           {/* =============================================
-              PLAN TYPE + STATUS
-          ============================================== */}
+            PLAN TYPE + STATUS
+        ============================================== */}
 
           <div className="flex gap-2">
 
@@ -1041,11 +1056,20 @@ export default function PlanFormPage() {
             <div className="flex-1">
 
               <Label className="mb-2 block">
-                Plan Type
+                {t(
+                  'translate.plan_type'
+                )}
               </Label>
 
               <Dropdown
-                options={PLAN_TYPES}
+                options={PLAN_TYPES.map(
+                  (type) => ({
+                    ...type,
+                    label: t(
+                      `translate.plans_interval_${type.id.toLowerCase()}`
+                    )
+                  })
+                )}
                 value={formData.duration}
                 onChange={(v: string) =>
                   handleInputChange(
@@ -1060,11 +1084,20 @@ export default function PlanFormPage() {
             <div className="flex-1">
 
               <Label className="mb-2 block">
-                Status
+                {t(
+                  'translate.status'
+                )}
               </Label>
 
               <Dropdown
-                options={STATUS_TYPES}
+                options={STATUS_TYPES.map(
+                  (status) => ({
+                    ...status,
+                    label: t(
+                      `translate.plans_${status.id.toLowerCase()}`
+                    )
+                  })
+                )}
                 value={formData.status}
                 onChange={(v: string) =>
                   handleInputChange(
@@ -1077,8 +1110,8 @@ export default function PlanFormPage() {
           </div>
 
           {/* =============================================
-              SUBMIT BUTTON
-          ============================================== */}
+            SUBMIT BUTTON
+        ============================================== */}
 
           <Button
             onClick={handleSave}
@@ -1088,16 +1121,20 @@ export default function PlanFormPage() {
             <Save className="w-4 h-4 mr-2" />
 
             {isLoading
-              ? 'Saving...'
-              : 'Update Plan'}
+              ? t(
+                'translate.saving'
+              )
+              : t(
+                'translate.plans_update'
+              )}
           </Button>
 
         </CardContent>
       </Card>
 
       {/* =================================================
-          GLOBAL MESSAGE
-      ================================================== */}
+        GLOBAL MESSAGE
+    ================================================== */}
 
       <AppMessage
         visible={visible}

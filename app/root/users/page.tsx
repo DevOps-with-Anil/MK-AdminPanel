@@ -38,8 +38,9 @@ interface AdminUser {
   photo?: string;
 }
 
-function UsersPageContent() {
-  const { hasPermission } = useAdmin();
+export default function UsersPageContent() {
+
+  const { t } = useAdmin();
 
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,20 +55,31 @@ function UsersPageContent() {
   /**
   * Delete confirmation dialog state
   */
-  const [
-    confirmDialog,
-    setConfirmDialog
-  ] = useState({
+  // const [
+  //   confirmDialog,
+  //   setConfirmDialog
+  // ] = useState({
+  //   open: false,
+  //   title: '',
+  //   description: '',
+  //   cancelText: '',
+  //   confirmText: '',
+  //   loading: false,
+  //   onConfirm: () => { }
+  // });
+
+  const [confirmDialog, setConfirmDialog] = useState({
     open: false,
-    title: '',
-    description: '',
-    confirmText: '',
-    loading: false,
-    onConfirm: () => { }
+    title: "",
+    description: "",
+    buttons: [] as {
+      label: string;
+      variant?: | "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+      loading?: boolean;
+      disabled?: boolean;
+      onClick: () => void;
+    }[],
   });
-
-
-
 
   // Debounced search
   useEffect(() => {
@@ -81,7 +93,7 @@ function UsersPageContent() {
   // Fetch users whenever page, limit, or search changes
   useEffect(() => {
     fetchUsers();
-  }, [page, limit, debouncedSearch]);
+  }, [page, limit, debouncedSearch, t]);
 
   const fetchUsers = async () => {
     try {
@@ -221,70 +233,103 @@ function UsersPageContent() {
     id: string,
     userName: string
   ) => {
-
     setConfirmDialog({
       open: true,
-      title: `Delete User - ${userName}`,
-      description: 'Are you sure you want to delete this user? This action cannot be undone.',
-      confirmText: 'Delete User',
-      loading: false,
-      onConfirm: () => handleDeleteUser(id),
+      title: `${t("translate.delete_user_title")} - ${userName}`,
+      description: t("translate.delete_user_description"),
+      buttons: [
+        {
+          label: t("translate.cancel"),
+          variant: "outline",
+          onClick: () =>
+            setConfirmDialog((prev) => ({
+              ...prev,
+              open: false,
+            })),
+        },
+        {
+          label: t("translate.delete_user_confirm"),
+          variant: "destructive",
+          onClick: () => handleDeleteUser(id),
+        },
+      ],
     });
   };
 
-
   return (
     <div className="space-y-6">
-      {/* Header */}
+
+      {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+
         <div className="flex items-start gap-4">
           <Users className="text-primary w-7 h-7 mt-1" />
+
           <div>
-            <h1 className="text-xl font-medium">System Users</h1>
-            <p className="text-muted-foreground">Manage system administrators and sub-admins</p>
+            <h1 className="text-xl font-medium">
+              {t("translate.system_users_title")}
+            </h1>
+
+            <p className="text-muted-foreground">
+              {t("translate.system_users_description")}
+            </p>
           </div>
         </div>
 
         <div className="flex flex-col md:flex-row gap-2">
-          {/* Search */}
+
+          {/* SEARCH */}
           <div className="relative w-full md:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+
             <Input
-              placeholder="Search by name or email..."
+              placeholder={t("translate.system_users_search")}
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
           </div>
 
-          {/* New User Button */}
+          {/* NEW USER */}
           <Link href="/root/users/new">
             <Button className="gap-2">
-              <Plus className="w-4 h-4" /> New User
+              <Plus className="w-4 h-4" />
+              {t("translate.system_users_new")}
             </Button>
           </Link>
+
         </div>
+
       </div>
 
-      {/* Users Table */}
+      {/* TABLE */}
       <Card>
+
         <CardHeader className="flex items-center justify-between">
+
           <div className="flex flex-col">
-            <CardTitle>Users Directory</CardTitle>
-            <CardDescription>{users.length} user(s)</CardDescription>
+            <CardTitle>
+              {t("translate.system_users_directory")}
+            </CardTitle>
+
+            <CardDescription>
+              {users.length} {t("translate.system_users_count")}
+            </CardDescription>
           </div>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
-                Show: {limit}
+                {t("translate.system_users_show")}: {limit}
               </Button>
             </DropdownMenuTrigger>
+
             <DropdownMenuContent align="end">
-              {PAGE_LIMIT_OPTIONS.map(option => (
+              {PAGE_LIMIT_OPTIONS.map((option) => (
                 <DropdownMenuItem
                   key={option}
                   onClick={() => {
-                    const newLimit: number | 'All' = option === 'All' ? 'All' : Number(option);
+                    const newLimit = option === "All" ? "All" : Number(option);
                     setLimit(newLimit);
                     setPage(1);
                   }}
@@ -298,80 +343,113 @@ function UsersPageContent() {
         </CardHeader>
 
         <CardContent>
+
           <div className="overflow-x-auto">
+
             <table className="w-full">
+
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-3 px-4">Image</th>
-                  <th className="text-left py-3 px-4">Name</th>
-                  <th className="text-left py-3 px-4">Email</th>
-                  <th className="text-left py-3 px-4">Role</th>
-                  <th className="text-left py-3 px-4">Status</th>
-                  <th className="text-left py-3 px-4">Created</th>
-                  <th className="text-right py-3 px-4">Actions</th>
+
+                  <th className="text-left py-3 px-4">
+                    {t("translate.user_col_image")}
+                  </th>
+
+                  <th className="text-left py-3 px-4">
+                    {t("translate.user_col_name")}
+                  </th>
+
+                  <th className="text-left py-3 px-4">
+                    {t("translate.user_col_email")}
+                  </th>
+
+                  <th className="text-left py-3 px-4">
+                    {t("translate.user_col_role")}
+                  </th>
+
+                  <th className="text-left py-3 px-4">
+                    {t("translate.user_col_status")}
+                  </th>
+
+                  <th className="text-left py-3 px-4">
+                    {t("translate.user_col_created")}
+                  </th>
+
+                  <th className="text-right py-3 px-4">
+                    {t("translate.user_col_actions")}
+                  </th>
+
                 </tr>
               </thead>
 
               <tbody>
+
                 {loading ? (
                   <tr>
                     <td colSpan={7} className="text-center py-6">
-                      Loading users...
+                      {t("translate.loading_users")}
                     </td>
                   </tr>
                 ) : users.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-center py-6">
-                      No users found
+                      {t("translate.no_users_found")}
                     </td>
                   </tr>
                 ) : (
                   users.map((user) => (
                     <tr key={user.id} className="border-b hover:bg-muted/50">
 
-                      {/* IMAGE COLUMN */}
+                      {/* IMAGE */}
                       <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          {user.photo ? (
-                            <img
-                              src={user.photo}
-                              alt={user.name}
-                              className="w-14 h-14 rounded-full object-cover border"
-                            />
-                          ) : (
-                            <div className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center text-3xl font-bold">
-                              {user.name?.charAt(0)?.toUpperCase()}
-                            </div>
-                          )}
-                        </div>
+                        {user.photo ? (
+                          <img
+                            src={user.photo}
+                            alt={user.name}
+                            className="w-14 h-14 rounded-full object-cover border"
+                          />
+                        ) : (
+                          <div className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center text-3xl font-bold">
+                            {user.name?.charAt(0)?.toUpperCase()}
+                          </div>
+                        )}
                       </td>
 
                       {/* NAME */}
-                      <td className="py-4 px-4 font-medium">{user.name}</td>
+                      <td className="py-4 px-4 font-medium">
+                        {user.name}
+                      </td>
 
                       {/* EMAIL */}
-                      <td className="py-4 px-4 text-muted-foreground">{user.email}</td>
+                      <td className="py-4 px-4 text-muted-foreground">
+                        {user.email}
+                      </td>
 
                       {/* ROLE */}
                       <td className="py-4 px-4">
                         <Badge variant="secondary">
-                          {user.role.replace('-', ' ')}
+                          {user.role.replace("-", " ")}
                         </Badge>
                       </td>
 
                       {/* STATUS */}
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-2">
+
                           <Switch
-                            checked={user.status === 'active'}
+                            checked={user.status === "active"}
                             disabled={user.updating}
                             onCheckedChange={() =>
                               handleToggleStatus(user.id, user.status)
                             }
                           />
+
                           <span className="text-sm">
-                            {user.status === 'active' ? 'Active' : 'Inactive'}
+                            {user.status === "active"
+                              ? t("translate.active")
+                              : t("translate.inactive")}
                           </span>
+
                         </div>
                       </td>
 
@@ -382,6 +460,7 @@ function UsersPageContent() {
 
                       {/* ACTIONS */}
                       <td className="py-4 px-4 text-right">
+
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm">
@@ -390,48 +469,60 @@ function UsersPageContent() {
                           </DropdownMenuTrigger>
 
                           <DropdownMenuContent align="end">
+
                             <DropdownMenuItem asChild>
                               <Link
                                 href={`/root/users/edit/${user.id}`}
                                 className="flex items-center gap-2"
                               >
-                                <Edit2 className="w-4 h-4" /> Edit
+                                <Edit2 className="w-4 h-4" />
+                                {t("translate.edit")}
                               </Link>
                             </DropdownMenuItem>
 
                             <DropdownMenuItem
                               className="text-destructive flex items-center gap-2"
-                              onClick={() => openDeleteUserDialog(user.id, user.name)}
+                              onClick={() =>
+                                openDeleteUserDialog(user.id, user.name)
+                              }
                             >
-                              <Trash2 className="w-4 h-4" /> Delete
+                              <Trash2 className="w-4 h-4" />
+                              {t("translate.delete")}
                             </DropdownMenuItem>
+
                           </DropdownMenuContent>
+
                         </DropdownMenu>
+
                       </td>
+
                     </tr>
                   ))
                 )}
+
               </tbody>
 
             </table>
+
           </div>
 
           {/* PAGINATION */}
           <div className="flex justify-end gap-2 p-4">
+
             <Button
               size="sm"
               variant="outline"
               disabled={page === 1}
               onClick={() => setPage((p) => p - 1)}
             >
-              Prev
+              {t("translate.prev")}
             </Button>
 
             {[...Array(totalPages)].map((_, i) => (
               <Button
                 key={i}
                 size="sm"
-                variant={page === i + 1 ? 'default' : 'outline'}
+                variant={page === i + 1 ? "default" : "outline"}
                 onClick={() => setPage(i + 1)}
               >
                 {i + 1}
@@ -444,50 +535,29 @@ function UsersPageContent() {
               disabled={page === totalPages}
               onClick={() => setPage((p) => p + 1)}
             >
-              Next
+              {t("translate.next")}
             </Button>
+
           </div>
+
         </CardContent>
       </Card>
 
-
-      {/* =================================================
-          DELETE CONFIRMATION DIALOG
-      ================================================== */}
-
+      {/* CONFIRM DIALOG */}
       <ConfirmDialog
         open={confirmDialog.open}
-
         title={confirmDialog.title}
-
-        description={
-          confirmDialog.description
-        }
-
-        confirmText={
-          confirmDialog.confirmText
-        }
-
-        loading={confirmDialog.loading}
-
-        variant="destructive"
-
+        description={confirmDialog.description}
+        buttons={confirmDialog.buttons}
         onCancel={() =>
           setConfirmDialog((prev) => ({
             ...prev,
-            open: false
+            open: false,
           }))
-        }
-
-        onConfirm={
-          confirmDialog.onConfirm
         }
       />
 
-      {/* =================================================
-          GLOBAL APP MESSAGE
-      ================================================== */}
-
+      {/* MESSAGE */}
       <AppMessage
         visible={visible}
         message={message}
@@ -495,15 +565,7 @@ function UsersPageContent() {
         onClose={clearMessage}
       />
 
-
     </div>
   );
-}
 
-export default function AdminUsersPage() {
-  return (
-    <AdminProvider>
-      <UsersPageContent />
-    </AdminProvider>
-  );
 }

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useAdmin } from '@/contexts/AdminContext';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -155,6 +157,8 @@ function NewAdminContent() {
     photo: null as File | null
   });
 
+  const { t } = useAdmin();
+
   const [roles, setRoles] = useState<{ id: string; label: string }[]>([]);
   const [loadingRoles, setLoadingRoles] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -173,20 +177,20 @@ function NewAdminContent() {
 
   // Handle image upload
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  if (e.target.files && e.target.files[0]) {
-    const file = e.target.files[0];
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
 
-    // ✅ real file for backend
-    handleInputChange('photo', file);
+      // ✅ real file for backend
+      handleInputChange('photo', file);
 
-    // preview only
-    const reader = new FileReader();
-    reader.onload = () => {
-      handleInputChange('photo', reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  }
-};
+      // preview only
+      const reader = new FileReader();
+      reader.onload = () => {
+        handleInputChange('photo', reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Validate form fields
   const validateForm = () => {
@@ -287,134 +291,309 @@ function NewAdminContent() {
       }
     };
     fetchRoles();
-  }, []);
+  }, [t]);
 
   // ---------------------- Render ----------------------
+
   return (
     <div className="space-y-6 max-w-8xl">
-      {/* Header & Breadcrumb */}
+
+      {/* HEADER */}
       <div className="flex items-center gap-4">
+
         <Link href="/root/users">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="w-4 h-4" />
           </Button>
         </Link>
+
         <div>
-          <h1 className="text-xl font-medium">Create New Admin User</h1>
-          <p className="text-muted-foreground">Add a new administrator and configure permissions</p>
-          {errors.global && <p className="text-red-500 mt-2">{errors.global}</p>}
+          <h1 className="text-xl font-medium">
+            {t("translate.create_admin_title")}
+          </h1>
+
+          <p className="text-muted-foreground">
+            {t("translate.create_admin_description")}
+          </p>
+
+          {errors.global && (
+            <p className="text-red-500 mt-2">{errors.global}</p>
+          )}
         </div>
+
       </div>
 
-      {/* Form Card */}
+      {/* FORM */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
         <div className="lg:col-span-2 space-y-6">
+
           <Card>
+
             <CardHeader>
-              <CardTitle>User Information</CardTitle>
-              <CardDescription>Enter basic admin details</CardDescription>
+              <CardTitle>
+                {t("translate.admin_user_info_title")}
+              </CardTitle>
+
+              <CardDescription>
+                {t("translate.admin_user_info_desc")}
+              </CardDescription>
             </CardHeader>
+
             <CardContent className="space-y-6">
 
-              {/* Name */}
+              {/* NAME */}
               <div>
-                <Label className="mb-2 block">Full Name *</Label>
-                <Input value={formData.name} onChange={e => handleInputChange('name', e.target.value)} placeholder="Full Name" />
-                {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+                <Label className="mb-2 block">
+                  {t("translate.full_name")} *
+                </Label>
+
+                <Input
+                  value={formData.name}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
+                  placeholder={t("translate.full_name")}
+                />
+
+                {errors.name && (
+                  <p className="text-red-500 text-sm">{errors.name}</p>
+                )}
               </div>
 
-              {/* Email */}
+              {/* EMAIL */}
               <div>
-                <Label className="mb-2 block">Email *</Label>
-                <Input type="email" value={formData.email} onChange={e => handleInputChange('email', e.target.value)} placeholder="Email" />
-                {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
+                <Label className="mb-2 block">
+                  {t("translate.email")} *
+                </Label>
+
+                <Input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
+                  placeholder={t("translate.email")}
+                />
+
+                {errors.email && (
+                  <p className="text-red-500 text-sm">{errors.email}</p>
+                )}
               </div>
 
-              {/* Password */}
+              {/* PASSWORD */}
               <div>
-                <Label className="mb-2 block">Password *</Label>
+                <Label className="mb-2 block">
+                  {t("translate.password")} *
+                </Label>
+
                 <div className="relative">
-                  <Input type={showPassword ? 'text' : 'password'} value={formData.password} onChange={e => handleInputChange('password', e.target.value)} placeholder="Password" />
-                  <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2" onClick={() => setShowPassword(!showPassword)}>
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(e) =>
+                      handleInputChange("password", e.target.value)
+                    }
+                    placeholder={t("translate.password")}
+                  />
+
+                  <button
+                    type="button"
+                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
-                {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
+
+                {errors.password && (
+                  <p className="text-red-500 text-sm">{errors.password}</p>
+                )}
               </div>
 
-              {/* Phone */}
-              <div className="grid grid-cols-[120px_1fr] gap-4">
+              {/* PHONE */}
+              <div className="grid grid-cols-[150px_1fr] gap-4">
+
                 <div>
-                  <Label className="mb-2 block">Phone Code *</Label>
-                  <Dropdown options={PHONE_CODES} value={formData.phoneCode} onChange={val => handleInputChange('phoneCode', val)} placeholder="Select code" />
+                  <Label className="mb-2 block">
+                    {t("translate.phone_code")} *
+                  </Label>
+
+                  <Dropdown
+                    options={PHONE_CODES}
+                    value={formData.phoneCode}
+                    onChange={(val) =>
+                      handleInputChange("phoneCode", val)
+                    }
+                    placeholder={t("translate.select_code")}
+                  />
                 </div>
+
                 <div>
-                  <Label className="mb-2 block">Phone Number *</Label>
-                  <Input type="number" value={formData.phoneNumber} onChange={e => handleInputChange('phoneNumber', e.target.value)} placeholder="Phone Number" />
-                  {errors.phoneNumber && <p className="text-red-500 text-sm">{errors.phoneNumber}</p>}
+                  <Label className="mb-2 block">
+                    {t("translate.phone_number")} *
+                  </Label>
+
+                  <Input
+                    type="number"
+                    value={formData.phoneNumber}
+                    onChange={(e) =>
+                      handleInputChange("phoneNumber", e.target.value)
+                    }
+                    placeholder={t("translate.phone_number")}
+                  />
+
+                  {errors.phoneNumber && (
+                    <p className="text-red-500 text-sm">
+                      {errors.phoneNumber}
+                    </p>
+                  )}
                 </div>
+
               </div>
 
-              {/* Role & Status */}
+              {/* ROLE & STATUS */}
               <div className="grid grid-cols-2 gap-4">
+
                 <div>
-                  <Label className="mb-2 block">Role *</Label>
-                  {loadingRoles ? <div>Loading roles...</div> :
-                    <Dropdown options={roles} value={formData.role} onChange={val => handleInputChange('role', val)} placeholder="Select role" />
+                  <Label className="mb-2 block">
+                    {t("translate.role")} *
+                  </Label>
+
+                  {loadingRoles ? (
+                    <div>{t("translate.loading_roles")}</div>
+                  ) : (
+                    <Dropdown
+                      options={roles}
+                      value={formData.role}
+                      onChange={(val) =>
+                        handleInputChange("role", val)
+                      }
+                      placeholder={t("translate.select_role")}
+                    />
+                  )}
+
+                  {errors.role && (
+                    <p className="text-red-500 text-sm">{errors.role}</p>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="mb-2 block">
+                    {t("translate.status")} *
+                  </Label>
+
+                  <Dropdown
+                    options={[
+                      { label: t("translate.active"), id: "ACTIVE" },
+                      { label: t("translate.inactive"), id: "INACTIVE" }
+                    ]}
+                    value={formData.status}
+                    onChange={(val) =>
+                      handleInputChange("status", val)
+                    }
+                    placeholder={t("translate.select_status")}
+                  />
+
+                  {errors.status && (
+                    <p className="text-red-500 text-sm">{errors.status}</p>
+                  )}
+                </div>
+
+              </div>
+
+              {/* COUNTRIES */}
+              <div>
+                <Label className="mb-2 block">
+                  {t("translate.allowed_countries")} *
+                </Label>
+
+                <CountryMultiSelect
+                  selected={formData.allowedCountries}
+                  onChange={(val) =>
+                    handleInputChange("allowedCountries", val)
                   }
-                  {errors.role && <p className="text-red-500 text-sm">{errors.role}</p>}
-                </div>
-                <div>
-                  <Label className="mb-2 block">Status *</Label>
-                  <Dropdown options={[{ label: 'Active', id: 'ACTIVE' }, { label: 'Inactive', id: 'INACTIVE' }]} value={formData.status} onChange={val => handleInputChange('status', val)} placeholder="Select status" />
-                  {errors.status && <p className="text-red-500 text-sm">{errors.status}</p>}
-                </div>
+                />
+
+                {errors.allowedCountries && (
+                  <p className="text-red-500 text-sm">
+                    {errors.allowedCountries}
+                  </p>
+                )}
               </div>
 
-              {/* Allowed Countries */}
+              {/* IMAGE */}
               <div>
-                <Label className="mb-2 block">Allowed Countries *</Label>
-                <CountryMultiSelect selected={formData.allowedCountries} onChange={val => handleInputChange('allowedCountries', val)} />
-                {errors.allowedCountries && <p className="text-red-500 text-sm">{errors.allowedCountries}</p>}
-              </div>
+                <Label className="mb-2 block">
+                  {t("translate.admin_image")}
+                </Label>
 
-              {/* Admin Image */}
-              <div>
-                <Label className="mb-2 block">Admin Image</Label>
                 <div className="flex items-center gap-4">
-                  {formData.photo && <img src={formData.photo} alt="Admin" className="w-20 h-20 rounded-full object-cover border" />}
+
+                  {formData.photo && (
+                    <img
+                      src={formData.photo}
+                      alt="Admin"
+                      className="w-20 h-20 rounded-full object-cover border"
+                    />
+                  )}
+
                   <label className="flex items-center gap-2 cursor-pointer px-3 py-2 border rounded-md">
-                    <Upload className="w-4 h-4" /> Upload Image
-                    <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                    <Upload className="w-4 h-4" />
+                    {t("translate.upload_image")}
+
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageChange}
+                    />
                   </label>
+
                 </div>
-
-                
               </div>
 
-              {/* Buttons */}
+              {/* BUTTONS */}
               <div className="flex gap-3 mt-4">
-                <Button onClick={handleSave} className="gap-2 bg-primary flex-1" disabled={isLoading}>
-                  <Save className="w-4 h-4" /> {isLoading ? 'Saving...' : 'Save Admin'}
+
+                <Button
+                  onClick={handleSave}
+                  className="gap-2 bg-primary flex-1"
+                  disabled={isLoading}
+                >
+                  <Save className="w-4 h-4" />
+
+                  {isLoading
+                    ? t("translate.saving")
+                    : t("translate.save_admin")}
                 </Button>
+
                 <Link href="/root/users" className="flex-1">
-                  <Button variant="outline" className="w-full">Cancel</Button>
+                  <Button variant="outline" className="w-full">
+                    {t("translate.cancel")}
+                  </Button>
                 </Link>
+
               </div>
+
             </CardContent>
           </Card>
+
         </div>
+
       </div>
 
-      {/* RIGHT SIDE RESPONSE MESSAGE */}
+      {/* MESSAGE */}
       <AppMessage
         visible={visible}
         message={message}
         type={type}
         onClose={clearMessage}
       />
+
     </div>
   );
+
 }
 
 export default NewAdminContent;

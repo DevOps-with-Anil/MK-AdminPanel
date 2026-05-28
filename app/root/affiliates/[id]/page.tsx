@@ -1,6 +1,6 @@
 'use client';
 
-import { AdminProvider } from '@/contexts/AdminContext';
+import { AdminProvider, useAdmin } from '@/contexts/AdminContext';
 import { useParams, useRouter } from 'next/navigation';
 import {
     useEffect,
@@ -218,7 +218,8 @@ interface SubscriptionPlan {
 
 /* ================= COMPONENT ================= */
 
-function ViewTenantContent() {
+export default function ViewTenantContent() {
+    const { t } = useAdmin();
     const params = useParams();
     const router = useRouter();
     const { message, type, visible, showMessage, clearMessage } = useAppMessage();
@@ -258,13 +259,18 @@ function ViewTenantContent() {
     const [loading, setLoading] = useState(true);
     const [kybDocuments, setKybDocuments] = useState<any[]>([]);
     const [kybStatus, setKybStatus] = useState<string>('PENDING');
+
     const [confirmDialog, setConfirmDialog] = useState({
         open: false,
         title: "",
         description: "",
-        confirmText: "",
-        loading: false,
-        onConfirm: () => { },
+        buttons: [] as {
+            label: string;
+            variant?: | "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+            loading?: boolean;
+            disabled?: boolean;
+            onClick: () => void;
+        }[],
     });
 
 
@@ -290,25 +296,48 @@ function ViewTenantContent() {
     const openCancelSubscriptionDialog = () => {
         setConfirmDialog({
             open: true,
-            title: "Cancel Subscription",
-            description:
-                "Are you sure you want to cancel this subscription? This action cannot be undone.",
-            confirmText: "Confirm Cancel Subscription",
-            loading: false,
-            onConfirm: handleCancelPlan,
+            title: t("translate.cancel_subscription_title"),
+            description: t("translate.cancel_subscription_description"),
+            buttons: [
+                {
+                    label: t("translate.cancel"),
+                    variant: "outline",
+                    onClick: () =>
+                        setConfirmDialog((prev) => ({
+                            ...prev,
+                            open: false,
+                        })),
+                },
+                {
+                    label: t("translate.confirm_cancel_subscription"),
+                    variant: "destructive",
+                    onClick: handleCancelPlan,
+                },
+            ],
         });
     };
-
 
     const openDeleteAccountDialog = () => {
         setConfirmDialog({
             open: true,
-            title: "Delete Account",
-            description:
-                "Are you sure you want to delete this account? This action cannot be undone.",
-            confirmText: "Confirm Delete Account",
-            loading: false,
-            onConfirm: handleDeleteAccount,
+            title: t("translate.delete_account_title"),
+            description: t("translate.delete_account_description"),
+            buttons: [
+                {
+                    label: t("translate.cancel"),
+                    variant: "outline",
+                    onClick: () =>
+                        setConfirmDialog((prev) => ({
+                            ...prev,
+                            open: false,
+                        })),
+                },
+                {
+                    label: t("translate.confirm_delete_account"),
+                    variant: "destructive",
+                    onClick: handleDeleteAccount,
+                },
+            ],
         });
     };
 
@@ -810,7 +839,7 @@ function ViewTenantContent() {
         };
 
         fetchAll();
-    }, [AffiliateId]);
+    }, [AffiliateId, t]);
 
     // ================= FETCH PLANS =================
 
@@ -1108,29 +1137,35 @@ function ViewTenantContent() {
             <Card className="shadow-sm border">
                 <CardContent className="p-6">
                     <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-8">
+
                         {/* LEFT CONTENT */}
                         <div className="flex-1 space-y-5">
+
                             {/* COMPANY INFO */}
                             <div>
                                 <h1 className="text-3xl font-semibold text-foreground leading-tight">
                                     {tenant.companyName}
                                 </h1>
+
                                 <div className="text-xm font-semibold text-muted-foreground mt-1">
-                                    Tenant ID: {tenant.tenantId}
+                                    {t("translate.tenant_id")}: {tenant.tenantId}
                                 </div>
                             </div>
 
                             {/* CONTACT INFO */}
                             <div className="flex flex-wrap items-center gap-5 text-xm text-muted-foreground">
+
                                 <div className="flex items-center gap-2">
                                     <Mail className="w-4 h-4" />
-                                    {tenant.contact?.email || 'N/A'}
+                                    {tenant.contact?.email || t("translate.na")}
                                 </div>
+
                                 <div className="flex items-center gap-2">
                                     <Phone className="w-4 h-4" />
-                                    {tenant.contact?.phone?.code}{' '}
-                                    {tenant.contact?.phone?.number || 'N/A'}
+                                    {tenant.contact?.phone?.code}{" "}
+                                    {tenant.contact?.phone?.number || t("translate.na")}
                                 </div>
+
                                 {tenant.platform?.website && (
                                     <div className="flex items-center gap-2">
                                         <Globe className="w-4 h-4" />
@@ -1150,6 +1185,7 @@ function ViewTenantContent() {
                             {/* ADDRESS */}
                             <div className="flex items-start gap-2 text-xm text-muted-foreground">
                                 <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
+
                                 <div className="space-y-1">
                                     <p>
                                         {[
@@ -1161,9 +1197,11 @@ function ViewTenantContent() {
                                             tenant.address?.country
                                         ]
                                             .filter(Boolean)
-                                            .join(', ')
+                                            .join(", ")
                                             .concat(
-                                                tenant.address?.zipCode ? ` - ${tenant.address.zipCode}` : ''
+                                                tenant.address?.zipCode
+                                                    ? ` - ${tenant.address.zipCode}`
+                                                    : ""
                                             )}
                                     </p>
                                 </div>
@@ -1172,6 +1210,7 @@ function ViewTenantContent() {
 
                         {/* RIGHT LOGO */}
                         <div className="flex flex-col items-center gap-3">
+
                             {/* LOGO PREVIEW BOX */}
                             <div className="w-28 h-28 rounded-2xl border border-gray-300 bg-muted/20 flex items-center justify-center overflow-hidden">
                                 {logoForm.photoUrl ? (
@@ -1188,7 +1227,8 @@ function ViewTenantContent() {
                             {/* UPLOAD BUTTON */}
                             <label className="flex items-center justify-center gap-1 text-sm px-1 py-2 rounded-md bg-orange-500 text-white hover:bg-orange-600 active:scale-95 transition cursor-pointer">
                                 <Upload className="w-4 h-4" />
-                                Update Logo
+                                {t("translate.update_logo")}
+
                                 <input
                                     type="file"
                                     accept="image/*"
@@ -1207,17 +1247,21 @@ function ViewTenantContent() {
                     {/* New KYB DOCUMENTS */}
                     <Card className="shadow-sm border">
                         <CardHeader className="border-b pb-4">
+
                             <div className="flex items-center justify-between gap-4">
+
                                 <div className="space-y-1">
+
                                     <CardTitle>
-                                        Business Verification Documents
+                                        {t("translate.business_verification_documents")}
                                     </CardTitle>
 
                                     <CardDescription>
-                                        View all submitted KYB business verification documents.
+                                        {t("translate.kyb_documents_description")}
                                     </CardDescription>
 
                                 </div>
+
                                 {/* SUBMIT BUTTON */}
                                 {!isKYBLocked && (
                                     <Button
@@ -1227,43 +1271,45 @@ function ViewTenantContent() {
                                         {uploadLoading ? (
                                             <>
                                                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                                Submitting...
+                                                {t("translate.submitting")}
                                             </>
                                         ) : (
                                             <>
                                                 <Plus className="w-4 h-4 mr-2" />
-                                                Submit KYB Request
+                                                {t("translate.submit_kyb_request")}
                                             </>
                                         )}
                                     </Button>
                                 )}
+
                             </div>
 
-                            {/* KYB Current STATUS MESSAGE */}
+                            {/* KYB STATUS MESSAGES */}
+
                             {tenant?.kybStatus === "PENDING" && (
                                 <div className="mt-4 rounded-xl border border-yellow-200 bg-yellow-100 px-4 py-3 text-sm text-yellow-900">
-                                    KYB verification is pending. Please upload all required documents
-                                    to complete business verification.
+                                    {t("translate.kyb_pending_message")}
                                 </div>
                             )}
+
                             {tenant?.kybStatus === "UPLOADED" && (
                                 <div className="mt-4 rounded-xl border border-blue-200 bg-blue-100 px-4 py-3 text-sm text-blue-900">
-                                    KYB request has already been submitted. Document fields and uploads
-                                    are locked until the review process is completed.
+                                    {t("translate.kyb_uploaded_message")}
                                 </div>
                             )}
+
                             {tenant?.kybStatus === "REJECTED" && (
                                 <div className="mt-4 rounded-xl border border-red-200 bg-red-100 px-4 py-3 text-sm text-red-900">
-                                    KYB verification was rejected. Please review and re-upload the
-                                    required documents.
+                                    {t("translate.kyb_rejected_message")}
                                 </div>
                             )}
+
                             {tenant?.kybStatus === "UNDER_REVIEW" && (
                                 <div className="mt-4 rounded-xl border border-blue-200 bg-blue-100 px-4 py-3 text-sm text-blue-900">
-                                    Your KYB documents are currently under review. You will be notified
-                                    once the verification process is completed.
+                                    {t("translate.kyb_under_review_message")}
                                 </div>
                             )}
+
                         </CardHeader>
 
                         <CardContent className="space-y-6">
@@ -1314,7 +1360,7 @@ function ViewTenantContent() {
                                                     {/* DOCUMENT NUMBER */}
                                                     <div className="space-y-2">
                                                         <Label>
-                                                            Document Number
+                                                            <Label>{t("translate.document_number")}</Label>
                                                         </Label>
 
                                                         <Input
@@ -1333,7 +1379,7 @@ function ViewTenantContent() {
 
                                                     {/* ISSUE DATE */}
                                                     <div className="space-y-2">
-                                                        <Label>Valid From</Label>
+                                                        <Label>{t("translate.valid_from")}</Label>
 
                                                         <DateTimePicker
                                                             disabled={isKYBLocked || doc.status == 'APPROVED' || doc.status == 'UNDER_REVIEW' || doc.status == 'UPLOADED'}
@@ -1347,8 +1393,7 @@ function ViewTenantContent() {
 
                                                     {/* EXPIRY DATE */}
                                                     <div className="space-y-2">
-                                                        <Label>Valid To</Label>
-
+                                                        <Label>{t("translate.valid_to")}</Label>
                                                         <DateTimePicker
                                                             disabled={isKYBLocked || doc.status == 'APPROVED' || doc.status == 'UNDER_REVIEW' || doc.status == 'UPLOADED'}
                                                             value={doc.expiryDate}
@@ -1650,8 +1695,7 @@ function ViewTenantContent() {
                                                     </div>
 
                                                     <div className="text-sm font-medium">
-                                                        Add Files
-                                                    </div>
+                                                        {t("translate.add_files")}                                                    </div>
 
                                                     <div className="text-[10px] text-muted-foreground mt-1">
                                                         PNG, JPG, PDF
@@ -1673,83 +1717,76 @@ function ViewTenantContent() {
                     {/* ACCOUNT SUMMARY CARD */}
                     <Card>
                         <CardHeader className="border-b pb-4">
+
                             <div className="flex items-center justify-between gap-4">
+
                                 <div className="space-y-1">
+
                                     <CardTitle>
-                                        Account Summary
+                                        {t("translate.account_summary")}
                                     </CardTitle>
+
                                     <CardDescription>
-                                        Overview of tenant account, subscription, and platform status
+                                        {t("translate.account_summary_description")}
                                     </CardDescription>
+
                                 </div>
+
                                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
                                     <Settings className="w-6 h-6 text-primary" />
                                 </div>
+
                             </div>
+
                         </CardHeader>
 
-                        {/* ACCOUNT SUMMARY CONTENT */}
                         <CardContent className="space-y-3 text-sm">
+
                             <div className="flex justify-between">
-                                <span>Account Status:</span>
+                                <span>{t("translate.account_status")}:</span>
                                 <Badge className={getConsistentBadgeColor(tenant.status)}>
                                     {tenant.status}
                                 </Badge>
                             </div>
-                            <div className="flex justify-between">
-                                <span>KYB Status:</span>
 
+                            <div className="flex justify-between">
+                                <span>{t("translate.kyb_status")}:</span>
                                 <Badge className={getConsistentBadgeColor(tenant.kybStatus)}>
                                     {tenant.kybStatus}
                                 </Badge>
                             </div>
 
-                            {/* ACTIVE SUBSCRIPTION DETAILS */}
                             {tenant.currentSubscriptionId ? (
                                 <>
                                     <div className="flex justify-between">
-                                        <span>Current Plan:</span>
-
+                                        <span>{t("translate.current_plan")}:</span>
                                         <span className="font-medium">
                                             {tenant.currentSubscriptionId.planName}
                                         </span>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <span>Plan Status:</span>
 
-                                        <Badge
-                                            className={getConsistentBadgeColor(
-                                                tenant.currentSubscriptionId.status
-                                            )}
-                                        >
+                                    <div className="flex justify-between">
+                                        <span>{t("translate.plan_status")}:</span>
+                                        <Badge className={getConsistentBadgeColor(tenant.currentSubscriptionId.status)}>
                                             {tenant.currentSubscriptionId.status}
                                         </Badge>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <span>Start Date:</span>
 
-                                        <span>
-                                            {formatDate(
-                                                tenant.currentSubscriptionId.startDate
-                                            )}
-                                        </span>
-                                    </div>
                                     <div className="flex justify-between">
-                                        <span>Expiry Date:</span>
-                                        <span>
-                                            {formatDate(
-                                                tenant.currentSubscriptionId.expiryDate
-                                            )}
-                                        </span>
+                                        <span>{t("translate.start_date")}:</span>
+                                        <span>{formatDate(tenant.currentSubscriptionId.startDate)}</span>
+                                    </div>
+
+                                    <div className="flex justify-between">
+                                        <span>{t("translate.expiry_date")}:</span>
+                                        <span>{formatDate(tenant.currentSubscriptionId.expiryDate)}</span>
                                     </div>
 
                                     <div className="flex flex-col gap-2 pt-2">
-                                        <Button
-                                            className="w-full"
-                                            onClick={handleUpdateSubscription}
-                                        >
+
+                                        <Button className="w-full" onClick={handleUpdateSubscription}>
                                             <CircleFadingArrowUp className="w-4 h-4 mr-2" />
-                                            Update Membership
+                                            {t("translate.update_membership")}
                                         </Button>
 
                                         <Button
@@ -1758,33 +1795,34 @@ function ViewTenantContent() {
                                             onClick={openCancelSubscriptionDialog}
                                         >
                                             <X className="w-4 h-4 mr-2" />
-                                            Cancel Plan
+                                            {t("translate.cancel_plan")}
                                         </Button>
 
                                     </div>
+
                                 </>
                             ) : (
                                 <div className="space-y-4">
+
                                     <div className="text-red-500 text-center">
-                                        No active subscription found
+                                        {t("translate.no_subscription_found")}
                                     </div>
-                                    <Button
-                                        className="w-full"
-                                        onClick={handleUpdateSubscription}
-                                    >
+
+                                    <Button className="w-full" onClick={handleUpdateSubscription}>
                                         <UploadCloud className="w-4 h-4 mr-2" />
-                                        Add Subscription
+                                        {t("translate.add_subscription")}
                                     </Button>
 
                                 </div>
                             )}
+
                             <Button
                                 variant="destructive"
                                 className="w-full"
                                 onClick={openDeleteAccountDialog}
                             >
                                 <Trash2 className="w-4 h-4 mr-2" />
-                                Delete Account
+                                {t("translate.delete_account")}
                             </Button>
 
                         </CardContent>
@@ -1793,16 +1831,21 @@ function ViewTenantContent() {
                     {/* ADMIN DETAILS CARD */}
                     <Card>
                         <CardHeader className="border-b pb-2">
+
                             <div className="flex items-center justify-between gap-4">
+
                                 <div className="space-y-1">
+
                                     <CardTitle>
-                                        Admin Details
+                                        {t("translate.admin_details")}
                                     </CardTitle>
+
                                     <CardDescription>
-                                        Primary administrator and tenant account management information
+                                        {t("translate.admin_details_description")}
                                     </CardDescription>
 
                                 </div>
+
                                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
                                     <User className="w-6 h-6 text-primary" />
                                 </div>
@@ -1811,19 +1854,22 @@ function ViewTenantContent() {
 
                         </CardHeader>
 
-                        {/* ADMIN DETAILS CONTENT */}
                         <CardContent className="p-2 space-y-5">
+
                             <div className="rounded-2xl border p-5 bg-muted/10">
+
+                                {/* ADMIN INFO */}
                                 <div className="flex items-start gap-4">
+
                                     <div className="w-18 h-18 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+
                                         {tenant?.admin?.photo ? (
                                             <img
-                                                src={tenant?.admin?.photo}
+                                                src={tenant.admin.photo}
                                                 alt={tenant.admin.name}
                                                 className="w-full h-full object-cover"
                                             />
                                         ) : (
-                                            /* FALLBACK INITIAL */
                                             <span className="text-primary font-semibold text-lg">
                                                 {tenant.admin?.name?.charAt(0)?.toUpperCase()}
                                             </span>
@@ -1831,35 +1877,45 @@ function ViewTenantContent() {
 
                                     </div>
 
-                                    {/* ADMIN BASIC DETAILS */}
                                     <div className="space-y-1">
+
                                         <div className="text-lg font-semibold">
                                             {tenant.admin?.name}
                                         </div>
+
                                         <div className="text-xs text-muted-foreground">
                                             {formatDate(tenant.admin?.lastLoginAt)}
                                         </div>
-                                        <Badge className={getConsistentBadgeColor('ACTIVE')}>
-                                            ACTIVE
+
+                                        <Badge className={getConsistentBadgeColor("ACTIVE")}>
+                                            {t("translate.active")}
                                         </Badge>
+
                                     </div>
+
                                 </div>
+
+                                {/* EMAIL */}
                                 <div>
                                     <div className="text-xs text-muted-foreground mb-1 pt-6">
-                                        Email Address
+                                        {t("translate.email_address")}
                                     </div>
                                     <div className="font-medium">
                                         {tenant.admin?.email}
                                     </div>
                                 </div>
+
+                                {/* PHONE */}
                                 <div className="text-xs text-muted-foreground mb-1 pt-2">
-                                    Contact Number
+                                    {t("translate.contact_number")}
                                 </div>
                                 <div className="font-medium">
                                     {tenant.admin?.phoneCode} {tenant.admin?.phoneNumber}
                                 </div>
+
+                                {/* ROLE */}
                                 <div className="text-xs text-muted-foreground mb-1 pt-2">
-                                    Access Role
+                                    {t("translate.access_role")}
                                 </div>
                                 <div className="font-medium">
                                     {tenant.admin?.role?.name}
@@ -1872,14 +1928,19 @@ function ViewTenantContent() {
 
                     {/* PLATFORM INFORMATION CARD */}
                     <Card>
+
                         <CardHeader className="border-b pb-4">
+
                             <div className="flex items-center justify-between">
+
                                 <div>
+
                                     <CardTitle>
-                                        Platform Information
+                                        {t("translate.platform_information")}
                                     </CardTitle>
+
                                     <CardDescription>
-                                        Connected platform endpoints and service domains
+                                        {t("translate.platform_information_description")}
                                     </CardDescription>
 
                                 </div>
@@ -1887,25 +1948,30 @@ function ViewTenantContent() {
                                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
                                     <Building2 className="w-6 h-6 text-primary" />
                                 </div>
+
                             </div>
 
                         </CardHeader>
 
-                        {/* PLATFORM CONTENT */}
                         <CardContent className="space-y-2 text-sm">
+
                             <div className="grid gap-y-2 text-sm">
-                                <span>Admin Panel:</span>
+
+                                <span>{t("translate.admin_panel")}:</span>
+
                                 <a
-                                    href={tenant.platform?.adminPanelUrl || '#'}
+                                    href={tenant.platform?.adminPanelUrl || "#"}
                                     target="_blank"
                                     className="text-primary underline flex items-center gap-1"
                                 >
-                                    {tenant.platform?.adminPanelUrl || 'N/A'}
+                                    {tenant.platform?.adminPanelUrl || "N/A"}
                                     <ExternalLink className="w-4 h-4" />
                                 </a>
 
-                                <span>API Domains:</span>
+                                <span>{t("translate.api_domains")}:</span>
+
                                 <div className="flex flex-col gap-1">
+
                                     {Array.isArray(tenant.apiDomains) &&
                                         tenant.apiDomains.length > 0 ? (
 
@@ -1914,11 +1980,9 @@ function ViewTenantContent() {
                                                 key={index}
                                                 href={domain}
                                                 target="_blank"
-                                                rel="noopener noreferrer"
                                                 className="text-primary underline flex items-center gap-1 break-all"
                                             >
                                                 {domain}
-
                                                 <ExternalLink className="w-4 h-4" />
                                             </a>
                                         ))
@@ -1926,10 +1990,14 @@ function ViewTenantContent() {
                                     ) : (
                                         <span>N/A</span>
                                     )}
+
                                 </div>
+
                             </div>
+
                         </CardContent>
                     </Card>
+
                 </div>
 
                 {/* ================= MODEL TO UPDATE SUBSCRIPTION PLAN ================= */}
@@ -2035,16 +2103,13 @@ function ViewTenantContent() {
                     open={confirmDialog.open}
                     title={confirmDialog.title}
                     description={confirmDialog.description}
-                    confirmText={confirmDialog.confirmText}
-                    loading={confirmDialog.loading}
-                    variant="destructive"
+                    buttons={confirmDialog.buttons}
                     onCancel={() =>
                         setConfirmDialog((prev) => ({
                             ...prev,
                             open: false,
                         }))
                     }
-                    onConfirm={confirmDialog.onConfirm}
                 />
 
             </div>
@@ -2192,7 +2257,8 @@ function ViewTenantContent() {
                                                     });
                                                 }}
                                             >
-                                                Reset
+                                                {t("translate.reset")}
+
                                             </Button>
                                         </>
                                     )}
@@ -2209,7 +2275,8 @@ function ViewTenantContent() {
                                     }
                                 >
                                     <Download className="mr-2 h-4 w-4" />
-                                    Download
+                                    {t("translate.download")}
+
                                 </Button>
 
                                 {/* CLOSE BUTTON */}
@@ -2302,11 +2369,12 @@ function ViewTenantContent() {
                                             <div className="flex h-full w-full flex-col items-center justify-center text-white">
                                                 <File className="mb-4 h-16 w-16 text-blue-400" />
                                                 <div className="text-lg font-medium">
-                                                    DOC Preview Not Available
+                                                    {t("translate.doc_preview_not_available")}
                                                 </div>
+
                                                 <div className="mt-2 text-sm text-zinc-400">
-                                                    Browser cannot preview local DOC/DOCX files.
-                                                </div>s
+                                                    {t("translate.doc_preview_description")}
+                                                </div>
                                                 <Button
                                                     className="mt-6"
                                                     onClick={() =>
@@ -2316,8 +2384,7 @@ function ViewTenantContent() {
                                                         )
                                                     }
                                                 >
-                                                    Download to Open File
-                                                </Button>
+                                                    {t("translate.download_to_open_file")}                                                </Button>
                                             </div>
                                         );
                                     }
@@ -2417,11 +2484,11 @@ function ViewTenantContent() {
                                         <FileText className="mb-4 w-16 h-16 text-zinc-400" />
 
                                         <div className="text-lg font-medium">
-                                            Preview not available
+                                            {t("translate.preview_not_available")}
                                         </div>
 
                                         <div className="mt-1 text-sm text-zinc-500">
-                                            This file type cannot be previewed.
+                                            {t("translate.preview_not_available_desc")}
                                         </div>
                                     </div>
                                 );
@@ -2513,16 +2580,6 @@ function ViewTenantContent() {
                 onClose={clearMessage}
             />
         </div>
-    );
-}
-
-/* ================= PAGE ================= */
-
-export default function ViewTenantPage() {
-    return (
-        <AdminProvider>
-            <ViewTenantContent />
-        </AdminProvider>
     );
 }
 

@@ -17,8 +17,6 @@ import Image from 'next/image';
 import { login, profile } from '@/services/auth.service';
 import { useTranslation } from '@/hooks/useTranslation';
 import { I18nContext } from '@/i18n/provider';
-// import { tokenStorage } from '@/utils/token';
-
 
 export default function RootLoginPage() {
   const { t } = useTranslation();
@@ -129,17 +127,17 @@ export default function RootLoginPage() {
             />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">
-            {t('translate.title')}
+            {t('translate.singinHeading')}
           </h1>
         </div>
 
         <Card className="border-slate-800 bg-slate-900 shadow-2xl">
           <CardHeader className="space-y-1 border-b border-slate-800">
             <CardTitle className="text-white">
-              {t('translate.signIn')}
+              {t('translate.signinTitle')}
             </CardTitle>
             <CardDescription className="text-slate-400">
-              {t('translate.description')}
+              {t('translate.singinSubtitle')}
             </CardDescription>
           </CardHeader>
 

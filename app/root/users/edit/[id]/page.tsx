@@ -1,6 +1,6 @@
 'use client';
 
-import { AdminProvider } from '@/contexts/AdminContext';
+import { AdminProvider, useAdmin } from '@/contexts/AdminContext';
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -140,7 +140,8 @@ function CountryMultiSelect({ selected, onChange }: { selected: string[]; onChan
   );
 }
 
-function EditUserContent() {
+export default function EditUserContent() {
+  const { t } = useAdmin();
   const params = useParams();
   const userId = params.id as string;
 
@@ -212,7 +213,7 @@ function EditUserContent() {
       payload.append("role", formData.role.id);
       payload.append("status", formData.status);
       formData.allowedCountries.forEach((c) =>
-      payload.append("allowedCountries[]", c)
+        payload.append("allowedCountries[]", c)
       );
 
       // ✅ IMPORTANT: only send file if user selected new image
@@ -266,7 +267,7 @@ function EditUserContent() {
     };
 
     fetchRoles();
-  }, []);
+  }, [t]);
 
   // Fetch user after roles loaded
   useEffect(() => {
@@ -312,109 +313,221 @@ function EditUserContent() {
     fetchUser();
   }, [roles, userId]);
 
+
   return (
     <div className="space-y-6 max-w-6xl">
+
+      {/* HEADER */}
       <div className="flex items-center gap-4">
+
         <Link href="/root/users">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="w-4 h-4" />
           </Button>
         </Link>
+
         <div>
-          <h1 className="text-xl font-medium">Edit Admin User</h1>
-          <p className="text-muted-foreground">Modify user details and permissions</p>
+          <h1 className="text-xl font-medium">
+            {t("translate.edit_admin_title")}
+          </h1>
+
+          <p className="text-muted-foreground">
+            {t("translate.edit_admin_description")}
+          </p>
         </div>
+
       </div>
 
+      {/* FORM */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
         <div className="lg:col-span-2 space-y-6">
+
           <Card>
+
             <CardHeader>
-              <CardTitle>User Information</CardTitle>
-              <CardDescription>Update admin details</CardDescription>
+              <CardTitle>
+                {t("translate.admin_user_info_title")}
+              </CardTitle>
+
+              <CardDescription>
+                {t("translate.admin_user_info_desc")}
+              </CardDescription>
             </CardHeader>
+
             <CardContent className="space-y-6">
+
+              {/* NAME */}
               <div>
-                <Label>Full Name</Label>
+                <Label>
+                  {t("translate.full_name")}
+                </Label>
+
                 <Input
                   value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("name", e.target.value)
+                  }
                   disabled={!isEditing}
                 />
-                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+
+                {errors.name && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.name}
+                  </p>
+                )}
               </div>
 
+              {/* EMAIL */}
               <div>
-                <Label>Email</Label>
+                <Label>
+                  {t("translate.email")}
+                </Label>
+
                 <Input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("email", e.target.value)
+                  }
                   disabled={!isEditing}
                 />
-                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+
+                {errors.email && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.email}
+                  </p>
+                )}
               </div>
 
-              <div className="grid grid-cols-[120px_1fr] gap-4">
+              {/* PHONE */}
+              <div className="grid grid-cols-[150px_1fr] gap-4">
+
                 <div>
-                  <Label>Phone Code</Label>
-                  <Dropdown options={PHONE_CODES} value={formData.phoneCode} onChange={(val) => handleInputChange('phoneCode', val)} />
+                  <Label>
+                    {t("translate.phone_code")}
+                  </Label>
+
+                  <Dropdown
+                    options={PHONE_CODES}
+                    value={formData.phoneCode}
+                    onChange={(val) =>
+                      handleInputChange("phoneCode", val)
+                    }
+                  />
                 </div>
+
                 <div>
-                  <Label>Phone Number</Label>
+                  <Label>
+                    {t("translate.phone_number")}
+                  </Label>
+
                   <Input
                     type="number"
                     value={formData.phoneNumber}
-                    onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("phoneNumber", e.target.value)
+                    }
                   />
-                  {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>}
+
+                  {errors.phoneNumber && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.phoneNumber}
+                    </p>
+                  )}
                 </div>
+
               </div>
 
+              {/* ROLE & STATUS */}
               <div className="grid grid-cols-2 gap-4">
+
                 <div>
-                  <Label>Role</Label>
+                  <Label>
+                    {t("translate.role")}
+                  </Label>
+
                   {loadingRoles ? (
-                    <div>Loading roles...</div>
+                    <div>
+                      {t("translate.loading_roles")}
+                    </div>
                   ) : (
                     <Dropdown
                       options={roles}
                       value={formData.role}
-                      onChange={(val) => handleInputChange('role', val)}
-                      placeholder="Select role"
+                      onChange={(val) =>
+                        handleInputChange("role", val)
+                      }
+                      placeholder={t("translate.select_role")}
                     />
                   )}
-                  {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
+
+                  {errors.role && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.role}
+                    </p>
+                  )}
                 </div>
 
                 <div>
-                  <Label>Status</Label>
+                  <Label>
+                    {t("translate.status")}
+                  </Label>
+
                   <Dropdown
                     options={[
-                      { id: 'ACTIVE', label: 'Active' },
-                      { id: 'INACTIVE', label: 'Inactive' },
+                      { id: "ACTIVE", label: t("translate.active") },
+                      { id: "INACTIVE", label: t("translate.inactive") }
                     ]}
-                    value={{ id: formData.status, label: formData.status === 'ACTIVE' ? 'Active' : 'Inactive' }}
-                    onChange={(val) => handleInputChange('status', val.id as StatusType)}
+                    value={{
+                      id: formData.status,
+                      label:
+                        formData.status === "ACTIVE"
+                          ? t("translate.active")
+                          : t("translate.inactive")
+                    }}
+                    onChange={(val) =>
+                      handleInputChange("status", val.id as StatusType)
+                    }
                   />
-                  {errors.status && <p className="text-red-500 text-sm mt-1">{errors.status}</p>}
+
+                  {errors.status && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.status}
+                    </p>
+                  )}
                 </div>
+
               </div>
 
+              {/* COUNTRIES */}
               <div>
-                <Label>Allowed Countries</Label>
+                <Label>
+                  {t("translate.allowed_countries")}
+                </Label>
+
                 <CountryMultiSelect
                   selected={formData.allowedCountries}
-                  onChange={(val) => handleInputChange('allowedCountries', val)}
+                  onChange={(val) =>
+                    handleInputChange("allowedCountries", val)
+                  }
                 />
-                {errors.allowedCountries && <p className="text-red-500 text-sm mt-1">{errors.allowedCountries}</p>}
+
+                {errors.allowedCountries && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.allowedCountries}
+                  </p>
+                )}
               </div>
 
+              {/* IMAGE */}
               <div>
-                <Label>Admin Image</Label>
+                <Label>
+                  {t("translate.admin_image")}
+                </Label>
+
                 <div className="flex items-center gap-4">
 
-                  {/* IMAGE PREVIEW */}
                   {formData.photoUrl ? (
                     <img
                       src={formData.photoUrl}
@@ -422,14 +535,14 @@ function EditUserContent() {
                     />
                   ) : (
                     <div className="w-20 h-20 rounded-full border flex items-center justify-center text-sm text-gray-500">
-                      No Image
+                      {t("translate.no_image")}
                     </div>
                   )}
 
-                  {/* UPLOAD */}
                   <label className="flex items-center gap-2 cursor-pointer px-3 py-2 border rounded-md">
                     <Upload className="w-4 h-4" />
-                    Upload Image
+                    {t("translate.upload_image")}
+
                     <input
                       type="file"
                       accept="image/*"
@@ -437,37 +550,54 @@ function EditUserContent() {
                       onChange={handleImageChange}
                     />
                   </label>
+
                 </div>
               </div>
 
+              {/* BUTTONS */}
               <div className="flex gap-3 mt-4">
-                <Button onClick={handleSave} className="gap-2 bg-primary flex-1" disabled={isLoading}>
-                  <Save className="w-4 h-4" /> {isLoading ? 'Saving...' : 'Save Changes'}
+
+                <Button
+                  onClick={handleSave}
+                  className="gap-2 bg-primary flex-1"
+                  disabled={isLoading}
+                >
+                  <Save className="w-4 h-4" />
+
+                  {isLoading
+                    ? t("translate.saving")
+                    : t("translate.save_changes")}
                 </Button>
-                <Button onClick={() => setIsEditing(!isEditing)} variant="outline" className="flex-1">
-                  {isEditing ? 'Cancel' : 'Edit'}
+
+                <Button
+                  onClick={() => setIsEditing(!isEditing)}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  {isEditing
+                    ? t("translate.cancel")
+                    : t("translate.edit")}
                 </Button>
+
               </div>
+
             </CardContent>
           </Card>
+
         </div>
+
       </div>
 
-      {/* RIGHT SIDE RESPONSE MESSAGE */}
+      {/* MESSAGE */}
       <AppMessage
         visible={visible}
         message={message}
         type={type}
         onClose={clearMessage}
       />
+
     </div>
   );
+
 }
 
-export default function EditUserPage() {
-  return (
-    <AdminProvider>
-      <EditUserContent />
-    </AdminProvider>
-  );
-}

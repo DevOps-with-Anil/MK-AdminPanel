@@ -1,56 +1,576 @@
+// 'use client';
+
+// import { AdminProvider } from '@/contexts/AdminContext';
+// import { useParams } from 'next/navigation';
+// import { useState, useContext, useEffect } from 'react';
+// import {
+//   Card, CardContent, CardHeader, CardTitle, CardDescription
+// } from '@/components/ui/card';
+// import { Button } from '@/components/ui/button';
+// import { Input } from '@/components/ui/input';
+// import { ArrowLeft, Save, Trash2 } from 'lucide-react';
+// import Link from 'next/link';
+// import {
+//   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+// } from '@/components/ui/select';
+
+// import { LANGUAGES, DEFAULT_LANGUAGE, Language } from '@/i18n/languages';
+// import { I18nContext } from '@/i18n/provider';
+
+// import { MultiLangTabs } from '@/components/common/MultiLangTabs';
+// import { MultiLangInput } from '@/components/common/MultiLangInput';
+// import { MultiLangTextarea } from '@/components/common/MultiLangTextarea';
+
+// import { getTenantByIdtoEdit, updateAffiliate } from '@/services/auth.service';
+
+// import {
+//   createMultiLangObject,
+//   normalizeMultiLang,
+//   MultiLangText
+// } from "@/utils/multilang";
+
+// /* ================= TYPES ================= */
+
+
+// interface TenantForm {
+//   companyName: MultiLangText;
+//   description: MultiLangText;
+//   contact_email: string;
+//   phoneCode: string;
+//   contact_phoneNumber: string;
+//   website: string;
+//   adminPanelUrl: string;
+//   apiDomains: string[];
+//   country: string;
+//   state: string;
+//   city: string;
+//   addressLine1: string;
+//   addressLine2?: string;
+//   landmark?: string;
+//   zipCode: string;
+// }
+
+// export interface UpdateAffiliatePayload {
+//   companyName: {
+//     en: string;
+//     fr?: string;
+//   };
+
+//   description: {
+//     en: string;
+//     fr?: string;
+//   };
+
+//   contact: {
+//     email: string;
+//     phone: {
+//       code: string;
+//       number: string;
+//     };
+//   };
+
+//   platform: {
+//     website: string;
+//     adminPanelUrl: string;
+//   };
+
+//   apiDomains: string[];
+
+//   address: {
+//     addressLine1: string;
+//     addressLine2?: string;
+//     landmark?: string;
+//     zipCode: string;
+//     city: string;
+//     state: string;
+//     country: string;
+//     latitude: string;
+//     longitude: string;
+//   };
+// }
+
+// type Option = {
+//   code?: string;
+//   value?: string;
+//   label: string;
+// };
+
+// interface DropdownProps {
+//   options: Option[];
+//   value?: string;
+//   onChange: (value: string) => void;
+//   placeholder?: string;
+// }
+
+// /* ================= CONSTANTS ================= */
+
+// const PHONE_CODES: Option[] = [
+//   { code: '+91', label: 'India (+91)' },
+//   { code: '+1', label: 'USA (+1)' },
+//   { code: '+49', label: 'Germany (+49)' },
+// ];
+
+// const COUNTRIES: Option[] = [
+//   { value: 'india', label: 'India' },
+//   { value: 'usa', label: 'USA' },
+//   { value: 'germany', label: 'Germany' },
+// ];
+
+// const STATES: Option[] = [
+//   { value: 'mp', label: 'Madhya Pradesh' },
+//   { value: 'maharashtra', label: 'Maharashtra' },
+//   { value: 'delhi', label: 'Delhi' },
+//   { value: 'bavaria', label: 'Bavaria' },
+// ];
+
+// const CITIES: Option[] = [
+//   { value: 'bhopal', label: 'Bhopal' },
+//   { value: 'indore', label: 'Indore' },
+//   { value: 'munich', label: 'Munich' },
+// ];
+
+// /* ================= HELPERS ================= */
+
+// const normalizeValue = (value?: string) =>
+//   value ? value.toLowerCase().trim() : '';
+
+
+// const initialState: TenantForm = {
+//   companyName: createMultiLangObject(),
+//   description: createMultiLangObject(),
+//   contact_email: '',
+//   phoneCode: '+91',
+//   contact_phoneNumber: '',
+//   website: '',
+//   adminPanelUrl: '',
+//   apiDomains: [''],
+//   country: '',
+//   state: '',
+//   city: '',
+//   addressLine1: '',
+//   addressLine2: '',
+//   landmark: '',
+//   zipCode: '',
+// };
+
+// const mapAffiliateToForm = (res: any): TenantForm => {
+//   if (!res) return initialState;
+
+//   return {
+//     companyName: normalizeMultiLang(res.companyName),
+//     description: normalizeMultiLang(res.description),
+
+//     contact_email: res.contact?.email ?? '',
+//     phoneCode: res.contact?.phone?.code ?? '+91',
+//     contact_phoneNumber: res.contact?.phone?.number ?? '',
+
+//     website: res.platform?.website ?? '',
+//     adminPanelUrl: res.platform?.adminPanelUrl ?? '',
+
+//     apiDomains: res.apiDomains?.length ? res.apiDomains : [''],
+
+//     country: normalizeValue(res.address?.country),
+//     state: normalizeValue(res.address?.state),
+//     city: normalizeValue(res.address?.city),
+
+//     addressLine1: res.address?.addressLine1 ?? '',
+//     addressLine2: res.address?.addressLine2 ?? '',
+//     landmark: res.address?.landmark ?? '',
+//     zipCode: res.address?.zipCode ?? '',
+//   };
+// };
+// /* ================= DROPDOWN ================= */
+
+// function Dropdown({ options, value, onChange, placeholder = 'Select' }: DropdownProps) {
+//   return (
+//     <Select value={value || ''} onValueChange={onChange}>
+//       <SelectTrigger className="w-full">
+//         <SelectValue placeholder={placeholder} />
+//       </SelectTrigger>
+//       <SelectContent>
+//         {options.map((opt, i) => {
+//           const val = opt.code || opt.value || '';
+//           return (
+//             <SelectItem key={i} value={val}>
+//               {opt.label}
+//             </SelectItem>
+//           );
+//         })}
+//       </SelectContent>
+//     </Select>
+//   );
+// }
+
+// /* ================= PAGE ================= */
+
+// function UpdateTenantContent() {
+//   const params = useParams();
+//   const AffiliateId = params?.id as string;
+
+//   const { locale } = useContext(I18nContext);
+
+//   const [currentLang, setCurrentLang] = useState<Language>(locale);
+//   const [errors, setErrors] = useState<Record<string, string>>({});
+//   const [successMessage, setSuccessMessage] = useState('');
+//   const [apiError, setApiError] = useState('');
+//   const [isLoading, setIsLoading] = useState(false);
+
+//   const [formData, setFormData] = useState<TenantForm>(initialState);
+
+
+//   const handleInputChange = (
+//     field: 'companyName' | 'description',
+//     value: string,
+//     lang: Language
+//   ) => {
+//     setFormData(prev => ({
+//       ...prev,
+//       [field]: { ...prev[field], [lang]: value },
+//     }));
+//   };
+
+//   const setField = (field: keyof TenantForm, value: string) => {
+//     setFormData(prev => ({ ...prev, [field]: value }));
+//   };
+
+//   const setDomain = (i: number, value: string) => {
+//     const updated = [...formData.apiDomains];
+//     updated[i] = value;
+//     setFormData(prev => ({ ...prev, apiDomains: updated }));
+//   };
+
+//   const addDomain = () => setFormData(prev => ({ ...prev, apiDomains: [...prev.apiDomains, ''] }));
+
+//   const removeDomain = (i: number) => {
+//     if (formData.apiDomains.length === 1) return;
+//     const updated = formData.apiDomains.filter((_, idx) => idx !== i);
+//     setFormData(prev => ({ ...prev, apiDomains: updated }));
+//   };
+
+//   /* ================= LOAD DATA ================= */
+
+//   useEffect(() => {
+//     if (!AffiliateId) return;
+
+//     const fetchAffiliate = async () => {
+//       try {
+//         setIsLoading(true);
+
+//         const res = await getTenantByIdtoEdit(AffiliateId);
+
+//         const data = res?.data;
+
+//         // // console.log("dasdasdas. :  " + JSON.stringify(data));
+
+//         setFormData(mapAffiliateToForm(data));
+
+//       } catch {
+//         setErrors({ global: 'Failed to load affiliate' });
+//       } finally {
+//         setIsLoading(false);
+//       }
+//     };
+
+//     fetchAffiliate();
+//   }, [AffiliateId]);
+
+
+//   const mapFormToAffiliatePayload = (formData: TenantForm): UpdateAffiliatePayload => {
+//     return {
+//       companyName: formData.companyName,
+//       description: formData.description,
+
+//       contact: {
+//         email: formData.contact_email,
+//         phone: {
+//           code: formData.phoneCode,
+//           number: formData.contact_phoneNumber,
+//         },
+//       },
+
+//       platform: {
+//         website: formData.website,
+//         adminPanelUrl: formData.adminPanelUrl,
+//       },
+
+//       apiDomains: formData.apiDomains.filter(Boolean),
+
+//       address: {
+//         addressLine1: formData.addressLine1,
+//         addressLine2: formData.addressLine2 || "",
+//         landmark: formData.landmark || "",
+//         zipCode: formData.zipCode,
+//         city: formData.city,
+//         state: formData.state,
+//         country: formData.country,
+//         latitude: "",
+//         longitude: "",
+//       },
+//     };
+//   };
+
+//   const updateAffiliateData = async () => {
+//     try {
+//       setIsLoading(true);
+
+//       const payload = mapFormToAffiliatePayload(formData);
+
+//       const res = await updateAffiliate(AffiliateId, payload);
+
+//       // console.log("Update Success:", res);
+
+//       // optionally refresh data
+//       const refreshed = await getTenantByIdtoEdit(AffiliateId);
+//       setFormData(mapAffiliateToForm(refreshed?.data));
+
+//     } catch (err) {
+//       console.error(err);
+//       setErrors({ global: "Failed to update affiliate" });
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+
+//   /* ================= UI ================= */
+
+//   return (
+//     <div className="space-y-6 max-w-6xl">
+//       <div className="flex items-center gap-4">
+//         <Link href="/root/affiliates">
+//           <Button variant="ghost" size="sm"><ArrowLeft className="w-4 h-4" /></Button>
+//         </Link>
+//         <div>
+//           <h1 className="text-xl font-medium">Create Tenant</h1>
+//           <p className="text-muted-foreground">Multi-tenant setup</p>
+//         </div>
+//       </div>
+
+
+
+//       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+//         <div className="space-y-6">
+//           <Card>
+//             <CardHeader>
+//               <CardTitle>Company Info</CardTitle>
+//               <CardDescription>Provide company name and description in multiple languages</CardDescription>
+//             </CardHeader>
+//             <CardContent className="space-y-4">
+//               <MultiLangTabs currentLang={currentLang} onChange={setCurrentLang} />
+//               <MultiLangInput
+//                 label="Company Name"
+//                 value={formData.companyName}
+//                 currentLang={currentLang}
+//                 onChange={(lang, value) => handleInputChange('companyName', value, lang)}
+//                 error={errors.companyName}
+//               />
+//               <MultiLangTextarea
+//                 label="Description"
+//                 value={formData.description}
+//                 currentLang={currentLang}
+//                 onChange={(lang, value) => handleInputChange('description', value, lang)}
+//                 error={errors.description}
+//                 rows={3}
+//               />
+//             </CardContent>
+//           </Card>
+
+//           <Card>
+//             <CardHeader>
+//               <CardTitle>Contact Info</CardTitle>
+//               <CardDescription>Basic contact and address details</CardDescription>
+//             </CardHeader>
+//             <CardContent className="space-y-4">
+//               <Input placeholder="Email" value={formData.contact_email} onChange={e => setField('contact_email', e.target.value)} />
+//               {errors.contact_email && <p className="text-red-500 text-xs">{errors.contact_email}</p>}
+
+//               <div className="grid grid-cols-[150px_1fr] gap-2">
+//                 <Dropdown options={PHONE_CODES} value={formData.phoneCode} onChange={(val) => setField('phoneCode', val)} />
+//                 <Input placeholder="Phone Number" value={formData.contact_phoneNumber} onChange={e => setField('contact_phoneNumber', e.target.value.replace(/\D/g, ''))} />
+//               </div>
+//               {errors.contact_phoneNumber && <p className="text-red-500 text-xs">{errors.contact_phoneNumber}</p>}
+
+//               <Input placeholder="Address Line 1" value={formData.addressLine1} onChange={e => setField('addressLine1', e.target.value)} />
+//               {errors.addressLine1 && <p className="text-red-500 text-xs">{errors.addressLine1}</p>}
+//               <Input placeholder="Address Line 2" value={formData.addressLine2} onChange={e => setField('addressLine2', e.target.value)} />
+//               <Input placeholder="Landmark" value={formData.landmark} onChange={e => setField('landmark', e.target.value)} />
+
+//               <div className="grid grid-cols-3 gap-4">
+//                 <Dropdown options={COUNTRIES} value={formData.country} onChange={(v) => setField('country', v)} />
+//                 <Dropdown options={STATES} value={formData.state} onChange={(v) => setField('state', v)} />
+//                 <Dropdown options={CITIES} value={formData.city} onChange={(v) => setField('city', v)} />
+//               </div>
+//               {errors.country && <p className="text-red-500 text-xs">{errors.country}</p>}
+//               {errors.state && <p className="text-red-500 text-xs">{errors.state}</p>}
+//               {errors.city && <p className="text-red-500 text-xs">{errors.city}</p>}
+
+//               <Input placeholder="Pincode" value={formData.zipCode} onChange={e => setField('zipCode', e.target.value)} />
+//             </CardContent>
+//           </Card>
+//         </div>
+
+//         <div className="space-y-6">
+//           <Card>
+//             <CardHeader>
+//               <CardTitle>Platform Config</CardTitle>
+//               <CardDescription>Configure URLs</CardDescription>
+//             </CardHeader>
+//             <CardContent className="space-y-4">
+//               <Input placeholder="Website" value={formData.website} onChange={e => setField('website', e.target.value)} />
+//               {errors.website && <p className="text-red-500 text-xs">{errors.website}</p>}
+
+//               <Input placeholder="Admin Panel URL" value={formData.adminPanelUrl} onChange={e => setField('adminPanelUrl', e.target.value)} />
+//               {errors.adminPanelUrl && <p className="text-red-500 text-xs">{errors.adminPanelUrl}</p>}
+//             </CardContent>
+//           </Card>
+
+//           <Card>
+//             <CardHeader>
+//               <CardTitle>API Domains</CardTitle>
+//             </CardHeader>
+//             <CardContent className="space-y-3">
+//               {formData.apiDomains.map((d, i) => (
+//                 <div key={i} className="flex gap-2">
+//                   <Input value={d} onChange={e => setDomain(i, e.target.value)} />
+//                   <Button variant="ghost" size="icon" onClick={() => removeDomain(i)}>
+//                     <Trash2 className="w-4 h-4 text-red-500" />
+//                   </Button>
+//                 </div>
+//               ))}
+//               {errors.apiDomains && <p className="text-red-500 text-xs">{errors.apiDomains}</p>}
+//               <Button variant="outline" onClick={addDomain}>+ Add Domain</Button>
+//             </CardContent>
+//           </Card>
+//         </div>
+//       </div>
+
+//       {/* Success */}
+//       {successMessage && (
+//         <div className="p-3 rounded-md bg-green-100 text-green-700 border border-green-300">
+//           {successMessage}
+//         </div>
+//       )}
+
+//       {/* Error */}
+//       {errors.global && (
+//         <div className="p-3 rounded-md bg-red-100 text-red-700 border border-red-300">
+//           {errors.global}
+//         </div>
+//       )}
+//       <div className="flex gap-3">
+//         <Button
+//           className="flex-1 flex items-center justify-center gap-2"
+//           disabled={isLoading}
+//           onClick={updateAffiliateData}
+//         >
+//           <Save className="w-4 h-4" />
+//           {isLoading ? "Updating..." : "Update"}
+//         </Button>
+
+//         <Link href="/root/affiliates" className="flex-1">
+//           <Button variant="outline" className="w-full">Cancel</Button>
+//         </Link>
+//       </div>
+//     </div>
+//   );
+// }
+
+// export default function NewTenantPage() {
+//   return (
+//     <AdminProvider>
+//       <UpdateTenantContent />
+//     </AdminProvider>
+//   );
+// }
+
+
+
+
+// Updated code with translations
+
 'use client';
 
-import { AdminProvider } from '@/contexts/AdminContext';
+import { AdminProvider, useAdmin } from '@/contexts/AdminContext';
 import { useParams } from 'next/navigation';
-import { useState, useContext, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
+
 import {
-  Card, CardContent, CardHeader, CardTitle, CardDescription
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
 } from '@/components/ui/card';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Save, Trash2 } from 'lucide-react';
-import Link from 'next/link';
+
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+  ArrowLeft,
+  Plus,
+  Save,
+  Trash2,
+} from 'lucide-react';
+
+import Link from 'next/link';
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 
-import { LANGUAGES, DEFAULT_LANGUAGE, Language } from '@/i18n/languages';
+import {
+  Language,
+} from '@/i18n/languages';
+
 import { I18nContext } from '@/i18n/provider';
 
 import { MultiLangTabs } from '@/components/common/MultiLangTabs';
 import { MultiLangInput } from '@/components/common/MultiLangInput';
 import { MultiLangTextarea } from '@/components/common/MultiLangTextarea';
 
-import { getTenantByIdtoEdit, updateAffiliate } from '@/services/auth.service';
+import {
+  getTenantByIdtoEdit,
+  updateAffiliate,
+} from '@/services/auth.service';
 
 import {
   createMultiLangObject,
   normalizeMultiLang,
-  MultiLangText
-} from "@/utils/multilang";
+  MultiLangText,
+} from '@/utils/multilang';
 
 /* ================= TYPES ================= */
-
 
 interface TenantForm {
   companyName: MultiLangText;
   description: MultiLangText;
+
   contact_email: string;
   phoneCode: string;
   contact_phoneNumber: string;
+
   website: string;
   adminPanelUrl: string;
+
   apiDomains: string[];
+
   country: string;
   state: string;
   city: string;
+
   addressLine1: string;
   addressLine2?: string;
   landmark?: string;
+
   zipCode: string;
 }
 
-export interface UpdateAffiliatePayload {
+interface UpdateAffiliatePayload {
   companyName: {
     en: string;
     fr?: string;
@@ -134,22 +654,27 @@ const CITIES: Option[] = [
 const normalizeValue = (value?: string) =>
   value ? value.toLowerCase().trim() : '';
 
-
 const initialState: TenantForm = {
   companyName: createMultiLangObject(),
   description: createMultiLangObject(),
+
   contact_email: '',
   phoneCode: '+91',
   contact_phoneNumber: '',
+
   website: '',
   adminPanelUrl: '',
+
   apiDomains: [''],
+
   country: '',
   state: '',
   city: '',
+
   addressLine1: '',
   addressLine2: '',
   landmark: '',
+
   zipCode: '',
 };
 
@@ -167,7 +692,9 @@ const mapAffiliateToForm = (res: any): TenantForm => {
     website: res.platform?.website ?? '',
     adminPanelUrl: res.platform?.adminPanelUrl ?? '',
 
-    apiDomains: res.apiDomains?.length ? res.apiDomains : [''],
+    apiDomains: res.apiDomains?.length
+      ? res.apiDomains
+      : [''],
 
     country: normalizeValue(res.address?.country),
     state: normalizeValue(res.address?.state),
@@ -179,17 +706,25 @@ const mapAffiliateToForm = (res: any): TenantForm => {
     zipCode: res.address?.zipCode ?? '',
   };
 };
+
 /* ================= DROPDOWN ================= */
 
-function Dropdown({ options, value, onChange, placeholder = 'Select' }: DropdownProps) {
+function Dropdown({
+  options,
+  value,
+  onChange,
+  placeholder = 'Select',
+}: DropdownProps) {
   return (
     <Select value={value || ''} onValueChange={onChange}>
       <SelectTrigger className="w-full">
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
+
       <SelectContent>
         {options.map((opt, i) => {
           const val = opt.code || opt.value || '';
+
           return (
             <SelectItem key={i} value={val}>
               {opt.label}
@@ -201,285 +736,506 @@ function Dropdown({ options, value, onChange, placeholder = 'Select' }: Dropdown
   );
 }
 
-/* ================= PAGE ================= */
+/* ================= CONTENT ================= */
 
-function UpdateTenantContent() {
+export default function UpdateTenantPage() {
+
+  const { t } = useAdmin();
+
   const params = useParams();
-  const AffiliateId = params?.id as string;
+  const affiliateId = params?.id as string;
 
   const { locale } = useContext(I18nContext);
 
-  const [currentLang, setCurrentLang] = useState<Language>(locale);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [successMessage, setSuccessMessage] = useState('');
-  const [apiError, setApiError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [currentLang, setCurrentLang] =
+    useState<Language>(locale);
 
-  const [formData, setFormData] = useState<TenantForm>(initialState);
+  const [errors, setErrors] =
+    useState<Record<string, string>>({});
 
+  const [successMessage, setSuccessMessage] =
+    useState('');
+
+  const [isLoading, setIsLoading] =
+    useState(false);
+
+  const [formData, setFormData] =
+    useState<TenantForm>(initialState);
+
+  /* ================= SYNC LOCALE ================= */
+
+  useEffect(() => {
+    setCurrentLang(locale);
+  }, [locale]);
+
+  /* ================= HANDLERS ================= */
 
   const handleInputChange = (
     field: 'companyName' | 'description',
     value: string,
     lang: Language
   ) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: { ...prev[field], [lang]: value },
+      [field]: {
+        ...prev[field],
+        [lang]: value,
+      },
     }));
   };
 
-  const setField = (field: keyof TenantForm, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const setField = (
+    field: keyof TenantForm,
+    value: string
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
-  const setDomain = (i: number, value: string) => {
+  const setDomain = (
+    index: number,
+    value: string
+  ) => {
     const updated = [...formData.apiDomains];
-    updated[i] = value;
-    setFormData(prev => ({ ...prev, apiDomains: updated }));
+
+    updated[index] = value;
+
+    setFormData((prev) => ({
+      ...prev,
+      apiDomains: updated,
+    }));
   };
 
-  const addDomain = () => setFormData(prev => ({ ...prev, apiDomains: [...prev.apiDomains, ''] }));
+  const addDomain = () => {
+    setFormData((prev) => ({
+      ...prev,
+      apiDomains: [...prev.apiDomains, ''],
+    }));
+  };
 
-  const removeDomain = (i: number) => {
+  const removeDomain = (index: number) => {
     if (formData.apiDomains.length === 1) return;
-    const updated = formData.apiDomains.filter((_, idx) => idx !== i);
-    setFormData(prev => ({ ...prev, apiDomains: updated }));
+
+    const updated = formData.apiDomains.filter(
+      (_, i) => i !== index
+    );
+
+    setFormData((prev) => ({
+      ...prev,
+      apiDomains: updated,
+    }));
   };
 
   /* ================= LOAD DATA ================= */
 
   useEffect(() => {
-    if (!AffiliateId) return;
+    if (!affiliateId) return;
 
     const fetchAffiliate = async () => {
       try {
         setIsLoading(true);
 
-        const res = await getTenantByIdtoEdit(AffiliateId);
+        const res =
+          await getTenantByIdtoEdit(affiliateId);
 
-        const data = res?.data;
-
-        // // console.log("dasdasdas. :  " + JSON.stringify(data));
-
-        setFormData(mapAffiliateToForm(data));
-
+        setFormData(
+          mapAffiliateToForm(res?.data)
+        );
       } catch {
-        setErrors({ global: 'Failed to load affiliate' });
+        setErrors({
+          global: t('translate.UPDATE_LOAD_ERROR'),
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchAffiliate();
-  }, [AffiliateId]);
+  }, [affiliateId, t]);
 
+  /* ================= PAYLOAD ================= */
 
-  const mapFormToAffiliatePayload = (formData: TenantForm): UpdateAffiliatePayload => {
+  const mapFormToAffiliatePayload = (
+    data: TenantForm
+  ): UpdateAffiliatePayload => {
     return {
-      companyName: formData.companyName,
-      description: formData.description,
+      companyName: data.companyName,
+
+      description: data.description,
 
       contact: {
-        email: formData.contact_email,
+        email: data.contact_email,
+
         phone: {
-          code: formData.phoneCode,
-          number: formData.contact_phoneNumber,
+          code: data.phoneCode,
+          number: data.contact_phoneNumber,
         },
       },
 
       platform: {
-        website: formData.website,
-        adminPanelUrl: formData.adminPanelUrl,
+        website: data.website,
+        adminPanelUrl: data.adminPanelUrl,
       },
 
-      apiDomains: formData.apiDomains.filter(Boolean),
+      apiDomains: data.apiDomains.filter(Boolean),
 
       address: {
-        addressLine1: formData.addressLine1,
-        addressLine2: formData.addressLine2 || "",
-        landmark: formData.landmark || "",
-        zipCode: formData.zipCode,
-        city: formData.city,
-        state: formData.state,
-        country: formData.country,
-        latitude: "",
-        longitude: "",
+        addressLine1: data.addressLine1,
+        addressLine2: data.addressLine2 || '',
+        landmark: data.landmark || '',
+        zipCode: data.zipCode,
+        city: data.city,
+        state: data.state,
+        country: data.country,
+        latitude: '',
+        longitude: '',
       },
     };
   };
+
+  /* ================= UPDATE ================= */
 
   const updateAffiliateData = async () => {
     try {
       setIsLoading(true);
 
-      const payload = mapFormToAffiliatePayload(formData);
+      const payload =
+        mapFormToAffiliatePayload(formData);
 
-      const res = await updateAffiliate(AffiliateId, payload);
+      await updateAffiliate(
+        affiliateId,
+        payload
+      );
 
-      // console.log("Update Success:", res);
+      const refreshed =
+        await getTenantByIdtoEdit(affiliateId);
 
-      // optionally refresh data
-      const refreshed = await getTenantByIdtoEdit(AffiliateId);
-      setFormData(mapAffiliateToForm(refreshed?.data));
+      setFormData(
+        mapAffiliateToForm(refreshed?.data)
+      );
 
+      setSuccessMessage(
+        t('translate.UPDATE_SUCCESS')
+      );
+
+      setErrors({});
     } catch (err) {
       console.error(err);
-      setErrors({ global: "Failed to update affiliate" });
+
+      setErrors({
+        global: t('translate.UPDATE_FAILED'),
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-
   /* ================= UI ================= */
 
   return (
     <div className="space-y-6 max-w-6xl">
+
+      {/* HEADER */}
       <div className="flex items-center gap-4">
+
         <Link href="/root/affiliates">
-          <Button variant="ghost" size="sm"><ArrowLeft className="w-4 h-4" /></Button>
+          <Button variant="ghost" size="sm">
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
         </Link>
+
         <div>
-          <h1 className="text-xl font-medium">Create Tenant</h1>
-          <p className="text-muted-foreground">Multi-tenant setup</p>
+          <h1 className="text-xl font-medium">
+            {t('translate.edit_title')}
+          </h1>
+
+          <p className="text-muted-foreground">
+            {t('translate.edit_description')}
+          </p>
         </div>
       </div>
 
-
-
+      {/* CONTENT */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
+        {/* LEFT SIDE */}
         <div className="space-y-6">
+
+          {/* COMPANY INFO */}
           <Card>
             <CardHeader>
-              <CardTitle>Company Info</CardTitle>
-              <CardDescription>Provide company name and description in multiple languages</CardDescription>
+              <CardTitle>
+                {t('translate.company_info')}
+              </CardTitle>
+
+              <CardDescription>
+                {t('translate.company_info_description')}
+              </CardDescription>
             </CardHeader>
+
             <CardContent className="space-y-4">
-              <MultiLangTabs currentLang={currentLang} onChange={setCurrentLang} />
+
+              <MultiLangTabs
+                currentLang={currentLang}
+                onChange={setCurrentLang}
+              />
+
               <MultiLangInput
-                label="Company Name"
+                label={t('translate.company_name')}
                 value={formData.companyName}
                 currentLang={currentLang}
-                onChange={(lang, value) => handleInputChange('companyName', value, lang)}
+                onChange={(lang, value) =>
+                  handleInputChange('companyName', value, lang)
+                }
                 error={errors.companyName}
               />
+
               <MultiLangTextarea
-                label="Description"
+                label={t('translate.description')}
                 value={formData.description}
                 currentLang={currentLang}
-                onChange={(lang, value) => handleInputChange('description', value, lang)}
+                onChange={(lang, value) =>
+                  handleInputChange('description', value, lang)
+                }
                 error={errors.description}
                 rows={3}
               />
+
             </CardContent>
           </Card>
 
+          {/* CONTACT INFO */}
           <Card>
             <CardHeader>
-              <CardTitle>Contact Info</CardTitle>
-              <CardDescription>Basic contact and address details</CardDescription>
+              <CardTitle>
+                {t('translate.contact_info')}
+              </CardTitle>
+
+              <CardDescription>
+                {t('translate.contact_info_description')}
+              </CardDescription>
             </CardHeader>
+
             <CardContent className="space-y-4">
-              <Input placeholder="Email" value={formData.contact_email} onChange={e => setField('contact_email', e.target.value)} />
-              {errors.contact_email && <p className="text-red-500 text-xs">{errors.contact_email}</p>}
+
+              <Input
+                placeholder={t('translate.email')}
+                value={formData.contact_email}
+                onChange={(e) =>
+                  setField('contact_email', e.target.value)
+                }
+              />
 
               <div className="grid grid-cols-[150px_1fr] gap-2">
-                <Dropdown options={PHONE_CODES} value={formData.phoneCode} onChange={(val) => setField('phoneCode', val)} />
-                <Input placeholder="Phone Number" value={formData.contact_phoneNumber} onChange={e => setField('contact_phoneNumber', e.target.value.replace(/\D/g, ''))} />
-              </div>
-              {errors.contact_phoneNumber && <p className="text-red-500 text-xs">{errors.contact_phoneNumber}</p>}
 
-              <Input placeholder="Address Line 1" value={formData.addressLine1} onChange={e => setField('addressLine1', e.target.value)} />
-              {errors.addressLine1 && <p className="text-red-500 text-xs">{errors.addressLine1}</p>}
-              <Input placeholder="Address Line 2" value={formData.addressLine2} onChange={e => setField('addressLine2', e.target.value)} />
-              <Input placeholder="Landmark" value={formData.landmark} onChange={e => setField('landmark', e.target.value)} />
+                <Dropdown
+                  options={PHONE_CODES}
+                  value={formData.phoneCode}
+                  placeholder={t('translate.select')}
+                  onChange={(val) =>
+                    setField('phoneCode', val)
+                  }
+                />
+
+                <Input
+                  placeholder={t('translate.phone_number')}
+                  value={formData.contact_phoneNumber}
+                  onChange={(e) =>
+                    setField(
+                      'contact_phoneNumber',
+                      e.target.value.replace(/\D/g, '')
+                    )
+                  }
+                />
+
+              </div>
+
+              <Input
+                placeholder={t('translate.address_line_1')}
+                value={formData.addressLine1}
+                onChange={(e) =>
+                  setField('addressLine1', e.target.value)
+                }
+              />
+
+              <Input
+                placeholder={t('translate.address_line_2')}
+                value={formData.addressLine2}
+                onChange={(e) =>
+                  setField('addressLine2', e.target.value)
+                }
+              />
+
+              <Input
+                placeholder={t('translate.landmark')}
+                value={formData.landmark}
+                onChange={(e) =>
+                  setField('landmark', e.target.value)
+                }
+              />
 
               <div className="grid grid-cols-3 gap-4">
-                <Dropdown options={COUNTRIES} value={formData.country} onChange={(v) => setField('country', v)} />
-                <Dropdown options={STATES} value={formData.state} onChange={(v) => setField('state', v)} />
-                <Dropdown options={CITIES} value={formData.city} onChange={(v) => setField('city', v)} />
-              </div>
-              {errors.country && <p className="text-red-500 text-xs">{errors.country}</p>}
-              {errors.state && <p className="text-red-500 text-xs">{errors.state}</p>}
-              {errors.city && <p className="text-red-500 text-xs">{errors.city}</p>}
 
-              <Input placeholder="Pincode" value={formData.zipCode} onChange={e => setField('zipCode', e.target.value)} />
+                <Dropdown
+                  options={COUNTRIES}
+                  value={formData.country}
+                  placeholder={t('translate.select')}
+                  onChange={(v) => setField('country', v)}
+                />
+
+                <Dropdown
+                  options={STATES}
+                  value={formData.state}
+                  placeholder={t('translate.select')}
+                  onChange={(v) => setField('state', v)}
+                />
+
+                <Dropdown
+                  options={CITIES}
+                  value={formData.city}
+                  placeholder={t('translate.select')}
+                  onChange={(v) => setField('city', v)}
+                />
+
+              </div>
+
+              <Input
+                placeholder={t('translate.pincode')}
+                value={formData.zipCode}
+                onChange={(e) =>
+                  setField('zipCode', e.target.value)
+                }
+              />
+
             </CardContent>
           </Card>
         </div>
 
+        {/* RIGHT SIDE */}
         <div className="space-y-6">
+
+          {/* PLATFORM CONFIG */}
           <Card>
             <CardHeader>
-              <CardTitle>Platform Config</CardTitle>
-              <CardDescription>Configure URLs</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Input placeholder="Website" value={formData.website} onChange={e => setField('website', e.target.value)} />
-              {errors.website && <p className="text-red-500 text-xs">{errors.website}</p>}
+              <CardTitle>
+                {t('translate.platform_config')}
+              </CardTitle>
 
-              <Input placeholder="Admin Panel URL" value={formData.adminPanelUrl} onChange={e => setField('adminPanelUrl', e.target.value)} />
-              {errors.adminPanelUrl && <p className="text-red-500 text-xs">{errors.adminPanelUrl}</p>}
+              <CardDescription>
+                {t('translate.platform_config_description')}
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+
+              <Input
+                placeholder={t('translate.website')}
+                value={formData.website}
+                onChange={(e) =>
+                  setField('website', e.target.value)
+                }
+              />
+
+              <Input
+                placeholder={t('translate.admin_panel_url')}
+                value={formData.adminPanelUrl}
+                onChange={(e) =>
+                  setField('adminPanelUrl', e.target.value)
+                }
+              />
+
             </CardContent>
           </Card>
 
+          {/* API DOMAINS */}
           <Card>
             <CardHeader>
-              <CardTitle>API Domains</CardTitle>
+              <CardTitle>
+                {t('translate.api_domains')}
+              </CardTitle>
             </CardHeader>
+
             <CardContent className="space-y-3">
-              {formData.apiDomains.map((d, i) => (
-                <div key={i} className="flex gap-2">
-                  <Input value={d} onChange={e => setDomain(i, e.target.value)} />
-                  <Button variant="ghost" size="icon" onClick={() => removeDomain(i)}>
+
+              {formData.apiDomains.map((domain, index) => (
+                <div key={index} className="flex gap-2">
+
+                  <Input
+                    value={domain}
+                    onChange={(e) =>
+                      setDomain(index, e.target.value)
+                    }
+                  />
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeDomain(index)}
+                  >
                     <Trash2 className="w-4 h-4 text-red-500" />
                   </Button>
+
                 </div>
               ))}
-              {errors.apiDomains && <p className="text-red-500 text-xs">{errors.apiDomains}</p>}
-              <Button variant="outline" onClick={addDomain}>+ Add Domain</Button>
+
+              <Button variant="outline" onClick={addDomain}>
+                <Plus /> {t('translate.add_domain')}
+              </Button>
+
             </CardContent>
           </Card>
+
         </div>
       </div>
 
-      {/* Success */}
+      {/* SUCCESS MESSAGE */}
       {successMessage && (
         <div className="p-3 rounded-md bg-green-100 text-green-700 border border-green-300">
           {successMessage}
         </div>
       )}
 
-      {/* Error */}
+      {/* ERROR MESSAGE */}
       {errors.global && (
         <div className="p-3 rounded-md bg-red-100 text-red-700 border border-red-300">
           {errors.global}
         </div>
       )}
+
+      {/* ACTIONS */}
       <div className="flex gap-3">
+
         <Button
           className="flex-1 flex items-center justify-center gap-2"
           disabled={isLoading}
           onClick={updateAffiliateData}
         >
           <Save className="w-4 h-4" />
-          {isLoading ? "Updating..." : "Update"}
+
+          {isLoading
+            ? t('translate.updating')
+            : t('translate.update')}
         </Button>
 
         <Link href="/root/affiliates" className="flex-1">
-          <Button variant="outline" className="w-full">Cancel</Button>
+          <Button variant="outline" className="w-full">
+            {t('translate.cancel')}
+          </Button>
         </Link>
+
       </div>
     </div>
   );
 }
 
-export default function NewTenantPage() {
-  return (
-    <AdminProvider>
-      <UpdateTenantContent />
-    </AdminProvider>
-  );
-}
+/* ================= PAGE ================= */
+
+// export default function UpdateTenantPage() {
+//   return (
+//     <AdminProvider>
+//       <UpdateTenantContent />
+//     </AdminProvider>
+//   );
+// }

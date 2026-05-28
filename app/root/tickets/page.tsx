@@ -111,7 +111,7 @@ const mockTickets: Ticket[] = [
   },
 ];
 
-function SupportTicketContent() {
+export default function SupportTicketContent() {
   const { t } = useAdmin();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -139,97 +139,117 @@ function SupportTicketContent() {
 
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
         <div className="flex items-start gap-4">
           <CheckCircle className="text-primary w-7 h-7 mt-1" />
+
           <div>
-            <h1 className="text-xl font-medium">Support Tickets</h1>
+            <h1 className="text-xl font-medium">
+              {t("translate.support_tickets_title")}
+            </h1>
+
             <p className="text-muted-foreground">
-              Manage and resolve customer issues
+              {t("translate.support_tickets_description")}
             </p>
           </div>
         </div>
 
         <div className="relative w-full md:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+
           <Input
-            placeholder="Search tickets..."
+            placeholder={t("translate.support_tickets_search")}
             className="pl-10"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
+
       </div>
 
       {/* TABLE */}
       <Card>
 
         <CardHeader className="flex items-center justify-between">
+
           <div>
-            <CardTitle>Ticket Inbox</CardTitle>
+            <CardTitle>
+              {t("translate.support_ticket_inbox")}
+            </CardTitle>
 
             <CardDescription>
-              {filteredTickets.length} tickets
+              {filteredTickets.length} {t("translate.support_tickets_count")}
             </CardDescription>
           </div>
 
-          {/* LIMIT DROPDOWN */}
+          {/* LIMIT */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-              >
-                Show: {limit}
+              <Button variant="outline" size="sm">
+                {t("translate.support_show")}: {limit}
               </Button>
             </DropdownMenuTrigger>
 
             <DropdownMenuContent align="end">
-              {PAGE_LIMIT_OPTIONS.map(
-                (option) => (
-                  <DropdownMenuItem
-                    key={option}
-                    onClick={() => {
-                      setLimit(
-                        option === 'All'
-                          ? 'All'
-                          : Number(option)
-                      );
-
-                      setPage(1);
-                    }}
-                  >
-                    {option}
-                  </DropdownMenuItem>
-                )
-              )}
+              {PAGE_LIMIT_OPTIONS.map((option) => (
+                <DropdownMenuItem
+                  key={option}
+                  onClick={() => {
+                    setLimit(option === "All" ? "All" : Number(option));
+                    setPage(1);
+                  }}
+                >
+                  {option}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
 
         </CardHeader>
 
-
-
         <CardContent>
+
           <div className="overflow-x-auto">
+
             <table className="w-full min-w-[900px]">
+
               <thead>
                 <tr className="border-b bg-muted/30">
-                  <th className="text-left p-4">Ticket</th>
-                  <th className="text-left p-4">Requester</th>
-                  <th className="text-left p-4">Created</th>
-                  <th className="text-left p-4">Priority</th>
-                  <th className="text-left p-4">Assigned To</th>
-                  <th className="text-left p-4">Status</th>
-                  <th className="text-right p-4">Actions</th>
+
+                  <th className="text-left p-4">
+                    {t("translate.ticket_col_ticket")}
+                  </th>
+
+                  <th className="text-left p-4">
+                    {t("translate.ticket_col_requester")}
+                  </th>
+
+                  <th className="text-left p-4">
+                    {t("translate.ticket_col_created")}
+                  </th>
+
+                  <th className="text-left p-4">
+                    {t("translate.ticket_col_priority")}
+                  </th>
+
+                  <th className="text-left p-4">
+                    {t("translate.ticket_col_assigned")}
+                  </th>
+
+                  <th className="text-left p-4">
+                    {t("translate.ticket_col_status")}
+                  </th>
+
+                  <th className="text-right p-4">
+                    {t("translate.ticket_col_actions")}
+                  </th>
+
                 </tr>
               </thead>
 
               <tbody>
                 {filteredTickets.map((ticket) => (
-                  <tr
-                    key={ticket.id}
-                    className="border-b hover:bg-muted/20"
-                  >
+                  <tr key={ticket.id} className="border-b hover:bg-muted/20">
 
                     {/* TICKET */}
                     <td className="p-4">
@@ -244,61 +264,50 @@ function SupportTicketContent() {
                     {/* REQUESTER */}
                     <td className="p-4">
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-md">
+
+                        <div className="flex items-center gap-2">
                           <Building className="w-4 h-4" />
                           {ticket.requester}
                         </div>
+
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Mail className="w-4 h-4" />
                           {ticket.email}
                         </div>
+
                       </div>
                     </td>
 
                     {/* CREATED */}
-                    {/* <td className="p-4 text-sm text-muted-foreground">
-                      <Calendar className="w-4 h-4 inline mr-1" />
-                      {formatDate(ticket.createdAt)}
-                    </td> */}
-
                     <td className="p-4">
-                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="w-4 h-4" />
                         {formatDate(ticket.createdAt)}
                       </div>
                     </td>
 
-
-
                     {/* PRIORITY */}
                     <td className="p-4">
-                      <div
-                        className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getConsistentBadgeColor(
-                          ticket.priority
-                        )}`}
-                      >
+                      <div className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getConsistentBadgeColor(ticket.priority)}`}>
                         {ticket.priority}
                       </div>
                     </td>
 
                     {/* ASSIGNED */}
                     <td className="p-4 text-sm text-muted-foreground">
-                      {ticket.assignedTo || 'Unassigned'}
+                      {ticket.assignedTo || t("translate.ticket_unassigned")}
                     </td>
 
                     {/* STATUS */}
                     <td className="p-4">
-                      <div
-                        className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getConsistentBadgeColor(
-                          ticket.status
-                        )}`}
-                      >
+                      <div className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getConsistentBadgeColor(ticket.status)}`}>
                         {ticket.status}
                       </div>
                     </td>
 
                     {/* ACTIONS */}
                     <td className="p-4 text-right">
+
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon">
@@ -307,54 +316,53 @@ function SupportTicketContent() {
                         </DropdownMenuTrigger>
 
                         <DropdownMenuContent align="end" className="w-44">
+
                           <DropdownMenuItem
                             onClick={() =>
                               (window.location.href = `/root/tickets/${ticket.id}`)
                             }
                           >
                             <Eye className="w-4 h-4 mr-2" />
-                            View Ticket
+                            {t("translate.ticket_view")}
                           </DropdownMenuItem>
 
-                          {ticket.status === 'OPEN' && (
+                          {ticket.status === "OPEN" && (
                             <DropdownMenuItem className="text-green-600">
                               <CheckCheck className="w-4 h-4 mr-2" />
-                              Mark In Progress
+                              {t("translate.ticket_mark_progress")}
                             </DropdownMenuItem>
                           )}
 
-                          {ticket.status !== 'CLOSED' && (
+                          {ticket.status !== "CLOSED" && (
                             <DropdownMenuItem className="text-red-600">
                               <XCircle className="w-4 h-4 mr-2" />
-                              Close Ticket
+                              {t("translate.ticket_close")}
                             </DropdownMenuItem>
                           )}
+
                         </DropdownMenuContent>
                       </DropdownMenu>
+
                     </td>
 
                   </tr>
                 ))}
               </tbody>
+
             </table>
 
             {!filteredTickets.length && (
               <div className="py-10 text-center text-muted-foreground">
-                No support tickets found.
+                {t("translate.ticket_empty")}
               </div>
             )}
+
           </div>
+
         </CardContent>
       </Card>
 
     </div>
   );
-}
 
-export default function SupportTicketPage() {
-  return (
-    <AdminProvider>
-      <SupportTicketContent />
-    </AdminProvider>
-  );
 }
